@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Study — BIO-4018A</title>
+<title>Study, BIO-4018A</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,560;9..144,650&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -245,6 +245,7 @@ button{ font-family:inherit; }
 .fc-btn{
   flex:1; padding:13px; border-radius:12px; border:1px solid var(--line); background:var(--panel);
   color:var(--ink); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s;
+  touch-action:manipulation;
 }
 .fc-btn.again:hover{ border-color:#C05A4C; color:#C05A4C; background:#FBEEEC; }
 .fc-btn.good:hover{ border-color:var(--accent); color:var(--accent-ink); background:var(--accent-soft); }
@@ -431,7 +432,7 @@ function renderNav(){
   DATA.modules.forEach(mod=>{
     const lbl = document.createElement('div');
     lbl.className = 'nav-label';
-    lbl.textContent = mod.name + ' — ' + mod.subtitle;
+    lbl.textContent = mod.name + ', ' + mod.subtitle;
     root.appendChild(lbl);
     const sub = document.createElement('div');
     sub.className = 'nav-sub';
@@ -584,7 +585,7 @@ function renderFlagged(){
       if(flags[k]) items.push({lec, mod, idx:i, heading:s.heading});
     });
   }));
-  let html = '<div class="view"><h1 class="lec-title">Flagged</h1><p class="lec-sub">Sections marked to revisit — click to jump back.</p>';
+  let html = '<div class="view"><h1 class="lec-title">Flagged</h1><p class="lec-sub">Sections marked to revisit. Click to jump back.</p>';
   if(items.length===0){
     html += '<div class="empty-state"><div class="em">⚑</div><div class="t">Nothing flagged yet</div><div class="d">Tap the flag icon next to any section heading while reading a lecture, and it will show up here.</div></div>';
   } else {
@@ -610,7 +611,7 @@ function renderFlagged(){
   syncActiveNav();
 }
 
-/* ---------------- Flashcards — repeatable deck (Quizlet-style) ---------------- */
+/* ---------------- Flashcards, repeatable deck (Quizlet-style) ---------------- */
 const cards = DATA.flashcards;
 let fcOrder = [];     // array of card indices, current deck order
 let fcPos = 0;        // position within fcOrder
@@ -650,7 +651,7 @@ function renderFlashcards(){
 
   let html = '<div class="view fc-wrap">';
   html += '<h1 class="lec-title" style="align-self:flex-start">Flashcards</h1>';
-  html += '<p class="lec-sub" style="align-self:flex-start">Work through the deck as many times as you like — mark cards to track what still needs work.</p>';
+  html += '<p class="lec-sub" style="align-self:flex-start">Work through the deck as many times as you like. Mark cards to track what still needs work.</p>';
   html += '<div class="fc-stats">'
     + '<div class="fc-stat"><div class="n">'+cards.length+'</div><div class="l">total</div></div>'
     + '<div class="fc-stat"><div class="n">'+knowCount+'</div><div class="l">know it</div></div>'
