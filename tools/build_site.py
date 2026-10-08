@@ -337,6 +337,109 @@ class Renderer:
         return {'nodes': nodes, 'edges': data.get('edges', []), 'links': sorted(links)}
 
 
+# ---------------- flashcards ----------------
+CALLOUT_HEAD = re.compile(r'^\[!(question|definition)\]([+-]?)\s*(.*)$')
+MCQ_OPT = re.compile(r'^\s*[-*]\s+\*\*([A-H])[.)]\*\*\s*(.*)$')
+MCQ_ANS = re.compile(r'^\s*\*\*Answer:\s*([A-H])\b\.?\s*(.*?)\*\*\s*(.*)$')
+
+
+def _norm_front(s):
+    s = re.sub(r'\[\[([^\]|]+)\|([^\]]+)\]\]', r'\2', s)
+    s = re.sub(r'\[\[([^\]]+)\]\]', r'\1', s)
+    return re.sub(r'[^a-z0-9]+', ' ', s.lower()).strip()
+
+
+def _callout_blocks(body):
+    lines = body.split('\n')
+    i = 0
+    while i < len(lines):
+        if re.match(r'^\s{0,3}>', lines[i]):
+            blk = []
+            while i < len(lines) and re.match(r'^\s{0,3}>', lines[i]):
+                blk.append(re.sub(r'^\s{0,3}> ?', '', lines[i], count=1))
+                i += 1
+            m = CALLOUT_HEAD.match(blk[0]) if blk else None
+            if m:
+                yield m.group(1), m.group(3).strip(), '\n'.join(blk[1:]).strip()
+            continue
+        i += 1
+
+
+def build_cards(v, r, notes):
+    import hashlib
+    order = {'topic': 0, 'hub': 1, 'key term': 2, 'questions': 3}
+    seen = {}
+    decks = {}
+    cards = []
+
+    def deck_for(nid, fm):
+        t = str(fm.get('type') or '')
+        subj = fm.get('subject')
+        if not subj:
+            ss = fm.get('subjects')
+            subj = ss[0] if isinstance(ss, list) and ss else (ss or 'General')
+        if t == 'key term':
+            name = 'Key terms'
+        else:
+            name = str(fm.get('part_of') or '').strip() or os.path.basename(nid)
+            name = re.sub(r':\s*questions$', '', name)
+        did = re.sub(r'[^a-z0-9]+', '-', (str(subj) + ' ' + name).lower()).strip('-')
+        if did not in decks:
+            hub = None
+            hr = v.resolve(name) if name != 'Key terms' else None
+            if hr and hr.endswith('.md'):
+                hub = hr[:-3]
+            decks[did] = {'id': did, 'name': name, 'subject': str(subj), 'hub': hub, 'count': 0}
+        return did
+
+    ids = sorted(notes, key=lambda n: (order.get(str(notes[n]['props'].get('type')), 5), n))
+    for nid in ids:
+        rel = v.notes[nid]['path']
+        raw = open(os.path.join(v.root, rel), encoding='utf-8').read()
+        fm, body = split_frontmatter(raw)
+        t = str(fm.get('type') or '')
+        if t in ('home', 'tracker'):
+            continue
+        for kind, title, content in _callout_blocks(body):
+            links = set()
+            if kind == 'definition':
+                if t != 'key term' or not content:
+                    continue
+                front_txt = os.path.basename(nid)
+                card = {'type': 'term', 'front': html.escape(str(fm.get('title') or front_txt)),
+                        'back': r.render_md(content, links)}
+            else:
+                if not title:
+                    continue
+                front_txt = title
+                lines = content.split('\n')
+                opts = [(m.group(1), m.group(2)) for m in (MCQ_OPT.match(l) for l in lines) if m]
+                ans = next((MCQ_ANS.match(l) for l in lines if MCQ_ANS.match(l)), None)
+                front_html = md.renderInline(r.wikilinks(title, links))
+                if len(opts) >= 2 and ans:
+                    letter = ans.group(1)
+                    after = lines[[k for k, l in enumerate(lines) if MCQ_ANS.match(l)][0] + 1:]
+                    expl = (ans.group(3) + '\n' + '\n'.join(after)).strip()
+                    card = {'type': 'mcq', 'front': front_html,
+                            'options': [md.renderInline(r.wikilinks(o, links)) for _, o in opts],
+                            'answer': [k for k, _ in opts].index(letter) if letter in [k for k, _ in opts] else 0,
+                            'back': r.render_md(expl, links) if expl else ''}
+                else:
+                    if not content:
+                        continue
+                    card = {'type': 'qa', 'front': front_html, 'back': r.render_md(content, links)}
+            key = ('t:' if card['type'] == 'term' else 'q:') + _norm_front(front_txt)
+            if key in seen:
+                continue
+            seen[key] = True
+            card['id'] = hashlib.sha1(key.encode('utf-8')).hexdigest()[:12]
+            card['deck'] = deck_for(nid, fm)
+            card['note'] = nid
+            decks[card['deck']]['count'] += 1
+            cards.append(card)
+    return {'decks': sorted(decks.values(), key=lambda d: (d['subject'], d['name'] == 'Key terms', d['name'])), 'cards': cards}
+
+
 def build_tree(paths):
     tree = {}
     for p in paths:
@@ -385,6 +488,7 @@ def main():
         except Exception as e:
             print('failed to render', nid, e, file=sys.stderr)
     canvases = {rel: r.canvas(rel) for rel in sorted(v.canvases)}
+    deck = build_cards(v, r, notes)
     # attachments
     out_att = os.path.join(a.out, 'attachments')
     if os.path.isdir(out_att):
@@ -423,11 +527,20 @@ def main():
         'graph': graph_settings(a.vault), 'bookmarks': bookmarks,
         'home': 'Home' if 'Home' in notes else (sorted(notes)[0] if notes else ''),
     }
+    # optional site settings (book library address etc.)
+    cfg_path = os.path.join(a.out, 'site.config.json')
+    if os.path.exists(cfg_path):
+        try:
+            data['config'] = json.load(open(cfg_path, encoding='utf-8'))
+        except Exception as e:
+            print('site.config.json not read:', e, file=sys.stderr)
     os.makedirs(os.path.join(a.out, 'data'), exist_ok=True)
     with open(os.path.join(a.out, 'data', 'vault.json'), 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
+    with open(os.path.join(a.out, 'data', 'cards.json'), 'w', encoding='utf-8') as f:
+        json.dump(deck, f, ensure_ascii=False, separators=(',', ':'))
     n_links = sum(len(n['links']) for n in notes.values())
-    print(f'{len(notes)} notes, {len(canvases)} canvases, {len(v.used_files)} attachments, {n_links} links')
+    print(f'{len(notes)} notes, {len(canvases)} canvases, {len(v.used_files)} attachments, {n_links} links, {len(deck["cards"])} flashcards in {len(deck["decks"])} decks')
 
 
 if __name__ == '__main__':
