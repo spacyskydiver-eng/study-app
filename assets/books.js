@@ -27,19 +27,35 @@ async function call(path) {
   if (!ct.includes('json')) throw new EngineError('auth', 'Sign in to the book library, then try again.');
   return res.json();
 }
+// Our engine's /search rows carry `kind` (not `type`), no book name or book id (there's only
+// one book right now), and `figure_refs` as bare figure numbers like "1-2", not URLs — so those
+// get turned into fetchable /figure/<id> addresses here rather than in the engine.
+function parseBookIdFromRowId(id) {
+  const core = String(id || '').replace(/^fig:/, '');
+  const m = core.match(/^([a-z0-9]+?)(?::|_fig)/);
+  return m ? m[1] : '';
+}
 function normResult(r) {
-  const figs = (r.figures || r.figure_refs || []).map(f => typeof f === 'string' ? { url: f } : {
-    url: f.thumb || f.thumb_url || f.thumbnail || f.url || f.image_url || f.signed_url || '',
-    full: f.url || f.image_url || f.signed_url || f.thumb || '',
+  const kind = r.type || r.kind || (r.figure_number ? 'figure' : 'text');
+  const parsedBookId = parseBookIdFromRowId(r.id);
+  const book = r.book_short || r.short_name || r.book_name || r.book || (parsedBookId && shortName(parsedBookId)) || '';
+  const bid = r.book_id || r.bookId || parsedBookId || bookId(book);
+  const figSources = r.figures || (
+    kind === 'figure'
+      ? [{ id: String(r.id || '').replace(/^fig:/, '') }]
+      : (r.figure_refs || []).map(ref => ({ id: `${bid}_fig${ref}`, number: ref }))
+  );
+  const figs = figSources.map(f => typeof f === 'string' ? { url: f } : {
+    url: f.thumb || f.thumb_url || f.thumbnail || f.url || f.image_url || f.signed_url || f.id || '',
+    full: f.url || f.image_url || f.signed_url || f.thumb || f.id || '',
     label: f.number || f.figure || f.figure_number || f.label || '', caption: f.caption || '',
-  }).filter(f => f.url);
-  const book = r.book_short || r.short_name || r.book_name || r.book || '';
+  }).filter(f => f.url).map(f => ({ ...f, url: `${C.api}/figure/${f.url}`, full: `${C.api}/figure/${f.full || f.url.split('/figure/').pop()}` }));
   return {
     id: r.id || r.chunk_id || '',
-    type: r.type || (r.figure_number ? 'figure' : 'text'),
+    type: kind,
     text: r.highlight || r.highlighted || r.snippet || r.text || r.caption || '',
     plain: r.text || r.caption || '',
-    book, bookId: r.book_id || r.bookId || bookId(book),
+    book, bookId: bid,
     page: r.page || r.printed_page || r.page_printed || r.pageNumber || '',
     chapter: r.chapter_title || r.chapter || '', section: r.section_title || r.section || '',
     figure: r.figure_number || '', figures: figs,

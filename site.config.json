@@ -2,7 +2,7 @@
   "books": {
     "label": "Book library",
     "api": "https://books.alexbiomedstuff.bid",
-    "reader": "",
+    "reader": "https://books.alexbiomedstuff.bid/?page={page}",
     "ids": { "Alberts 7e": "alberts7e" },
     "books": [ { "id": "alberts7e", "short": "Alberts 7e" } ]
   }
