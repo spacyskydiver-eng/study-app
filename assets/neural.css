@@ -1,0 +1,325 @@
+/* =====================================================================
+   NEURAL  ·  a dark, glowing study theme for the Biomedicine vault
+   One accent colour per module. Gold is reserved for key terms.
+   ===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,650&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ---------- 1. tokens ---------------------------------------------- */
+body {
+  --font-text-theme: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --font-interface-theme: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --font-monospace-theme: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --file-line-width: 780px;
+  --radius-card: 16px;
+}
+.theme-dark {
+  --bg0: #080B16;  --bg1: #0D1120;  --bg2: #131933;  --bg3: #1A2142;
+  --ink: #E8EBF8;  --ink2: #A7AFD2; --ink3: #6E769C;
+  --background-primary: var(--bg1);
+  --background-primary-alt: var(--bg2);
+  --background-secondary: var(--bg0);
+  --background-secondary-alt: #060813;
+  --background-modifier-border: rgba(140,155,255,.14);
+  --background-modifier-border-hover: rgba(140,155,255,.28);
+  --background-modifier-hover: rgba(140,155,255,.09);
+  --background-modifier-active-hover: rgba(140,155,255,.16);
+  --text-normal: var(--ink); --text-muted: var(--ink2); --text-faint: var(--ink3);
+  --interactive-accent: #34D399; --interactive-accent-hover: #6EE7B7;
+  --text-selection: rgba(124,140,248,.35);
+  --scrollbar-thumb-bg: rgba(140,155,255,.18);
+  --scrollbar-active-thumb-bg: rgba(140,155,255,.34);
+  --code-background: rgba(140,155,255,.09);
+  --table-border-color: rgba(140,155,255,.16);
+  --graph-line: rgba(150,170,255,.20);
+  --graph-node: #9AA6D8;
+  --graph-node-unresolved: #4A5273;
+  --graph-node-focused: #FFFFFF;
+  --graph-text: #C9D0F2;
+}
+.theme-light {
+  --bg0: #EDEEF6;  --bg1: #FAFAFD;  --bg2: #FFFFFF;  --bg3: #F1F2FA;
+  --ink: #1B2040;  --ink2: #51597F; --ink3: #8189AB;
+  --background-primary: var(--bg1);
+  --background-primary-alt: var(--bg2);
+  --background-secondary: var(--bg0);
+  --background-modifier-border: rgba(40,50,110,.12);
+  --text-normal: var(--ink); --text-muted: var(--ink2); --text-faint: var(--ink3);
+  --graph-line: rgba(60,70,150,.22);
+  --graph-node: #5B65A0;
+}
+
+/* subject palette (set on the page body by the cssclasses property) */
+.subject-genetics { --subj:#34D399; --subj-rgb:52,211,153;  --subj-name:"MOLECULAR BIOLOGY AND GENETICS"; }
+.subject-biomed   { --subj:#A78BFA; --subj-rgb:167,139,250; --subj-name:"INTRODUCTION TO BIOMEDICINE"; }
+.subject-biochem  { --subj:#FBBF24; --subj-rgb:251,191,36;  --subj-name:"BIOLOGICAL CHEMISTRY"; }
+.subject-cell     { --subj:#38BDF8; --subj-rgb:56,189,248;  --subj-name:"CELL BIOLOGY AND PHYSIOLOGY"; }
+.subject-skills   { --subj:#FB7185; --subj-rgb:251,113,133; --subj-name:"PROFESSIONAL SKILLS FOR BIOSCIENCES"; }
+.subject-terms    { --subj:#FDE68A; --subj-rgb:253,230,138; --subj-name:"KEY TERM"; }
+.subject-home     { --subj:#8B9CFF; --subj-rgb:139,156,255; --subj-name:"BIOMEDICINE · YEAR 1"; }
+.theme-light .subject-terms { --subj:#B7791F; --subj-rgb:183,121,31; }
+.theme-light .subject-genetics { --subj:#0E9F6E; --subj-rgb:14,159,110; }
+.theme-light .subject-biomed { --subj:#7C5CE0; --subj-rgb:124,92,224; }
+.theme-light .subject-home { --subj:#4F5FE0; --subj-rgb:79,95,224; }
+
+/* ---------- 2. page canvas + banner -------------------------------- */
+.markdown-preview-view[class*="subject-"],
+.markdown-source-view[class*="subject-"] {
+  background-image:
+    radial-gradient(900px 340px at 50% -90px, rgba(var(--subj-rgb), .20), transparent 72%),
+    radial-gradient(520px 260px at 92% 8%, rgba(var(--subj-rgb), .07), transparent 70%);
+  background-repeat: no-repeat;
+  --link-color: var(--subj); --link-color-hover: var(--subj);
+  --text-accent: var(--subj); --text-accent-hover: var(--subj);
+  --interactive-accent: var(--subj);
+  --list-marker-color: var(--subj);
+  --checkbox-color: var(--subj);
+}
+.markdown-preview-view[class*="subject-"] .markdown-preview-sizer::before {
+  content: var(--subj-name);
+  display: inline-block;
+  margin: 18px 0 18px;
+  padding: 6px 14px 5px;
+  font-size: 11px; font-weight: 700; letter-spacing: .16em;
+  color: var(--subj);
+  background: rgba(var(--subj-rgb), .10);
+  border: 1px solid rgba(var(--subj-rgb), .38);
+  border-radius: 999px;
+  box-shadow: 0 0 22px -6px rgba(var(--subj-rgb), .65);
+}
+/* properties are for editing mode; hide in reading mode */
+.markdown-preview-view[class*="page-"] .metadata-container { display: none; }
+.markdown-source-view [class*="page-"] .metadata-container, .metadata-container { font-size: 13px; }
+
+/* ---------- 3. headings -------------------------------------------- */
+.markdown-preview-view h1, .markdown-preview-view .inline-title {
+  font-family: var(--serif); font-weight: 650; font-size: 2.6rem; line-height: 1.12;
+  letter-spacing: -.02em; color: var(--text-normal); margin: .15em 0 .55em;
+}
+.markdown-preview-view[class*="subject-"] h1::after {
+  content: ""; display: block; width: 64px; height: 4px; margin-top: 16px; border-radius: 4px;
+  background: linear-gradient(90deg, var(--subj), rgba(var(--subj-rgb), 0));
+  box-shadow: 0 0 18px rgba(var(--subj-rgb), .8);
+}
+.markdown-preview-view h2 {
+  font-family: var(--font-text-theme); font-weight: 650; font-size: 1.32rem; letter-spacing: -.01em;
+  margin: 2.3em 0 .7em; padding: .08em 0 .08em .8rem; border-left: 3px solid var(--subj, var(--interactive-accent));
+  color: var(--text-normal);
+}
+.markdown-preview-view h3 {
+  font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--subj, var(--text-muted)); margin: 1.9em 0 .6em;
+}
+.markdown-preview-view h4 { font-weight: 650; color: var(--text-muted); }
+.markdown-preview-view h2[data-heading="Test yourself"] { border-left-color: #818CF8; color: #C7CCFF; }
+.markdown-preview-view h2[data-heading="Related"] { border-left-color: var(--text-faint); color: var(--text-muted); }
+.markdown-preview-view h2[data-heading^="From "] { border-left-style: dashed; color: var(--text-muted); font-size: 1.05rem; }
+
+/* ---------- 4. text, lists, links, tags ---------------------------- */
+.markdown-preview-view { font-size: 1rem; line-height: 1.72; }
+.markdown-preview-view strong { color: var(--subj, var(--text-normal)); font-weight: 650; }
+.markdown-preview-view em { color: var(--text-muted); }
+.markdown-preview-view a.internal-link {
+  color: var(--subj, var(--link-color)); text-decoration: none; font-weight: 500;
+  border-bottom: 1px dotted rgba(var(--subj-rgb, 139,156,255), .55);
+  transition: border-color .15s, text-shadow .15s;
+}
+.markdown-preview-view a.internal-link:hover {
+  border-bottom: 1px solid var(--subj, var(--link-color)); text-shadow: 0 0 14px rgba(var(--subj-rgb, 139,156,255), .6);
+}
+.markdown-preview-view a.external-link { color: var(--ink2); text-decoration-color: rgba(140,155,255,.4); }
+.markdown-preview-view ul > li::marker, .markdown-preview-view ol > li::marker { color: var(--subj, var(--text-faint)); }
+.markdown-preview-view hr { border: none; height: 1px; background: linear-gradient(90deg, transparent, var(--background-modifier-border-hover), transparent); margin: 2.4em 0; }
+.tag { background: rgba(139,156,255,.12); color: var(--ink2); border: 1px solid rgba(139,156,255,.25); border-radius: 999px; padding: 1px 9px; font-weight: 500; }
+.markdown-preview-view input[type="checkbox"] { border-radius: 6px; }
+.markdown-preview-view code { border-radius: 6px; padding: .12em .45em; }
+
+/* ---------- 5. callouts -------------------------------------------- */
+.callout {
+  --callout-radius: 14px;
+  border: 1px solid rgba(var(--callout-color), .30);
+  background: linear-gradient(180deg, rgba(var(--callout-color), .10), rgba(var(--callout-color), .045));
+  border-radius: 14px; padding: 14px 18px; margin: 1.1em 0;
+  box-shadow: 0 10px 30px -18px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.015);
+  overflow: hidden;
+}
+.callout-title { font-weight: 650; letter-spacing: .01em; }
+.callout-icon .svg-icon { stroke-width: 2.1; }
+.callout[data-callout="abstract"], .callout[data-callout="definition"] { --callout-color: var(--subj-rgb, 139,156,255); }
+.callout[data-callout="definition"] { --callout-icon: lucide-book-open; }
+.callout[data-callout="definition"] .callout-content { font-size: 1.02rem; }
+.page-term .callout[data-callout="definition"] { padding: 20px 24px; }
+.page-term .callout[data-callout="definition"] .callout-content { font-size: 1.12rem; line-height: 1.6; }
+.callout[data-callout="key"]      { --callout-color: 250,204,21; --callout-icon: lucide-key-round; }
+.callout[data-callout="tip"]      { --callout-color: 45,212,191; }
+.callout[data-callout="note"]     { --callout-color: 253,230,138; --callout-icon: lucide-pencil-line; border-style: dashed; }
+.callout[data-callout="question"] { --callout-color: 129,140,248; --callout-icon: lucide-circle-help; cursor: pointer; transition: transform .15s, border-color .15s, box-shadow .15s; }
+.callout[data-callout="question"]:hover { transform: translateY(-1px); border-color: rgba(129,140,248,.6); box-shadow: 0 12px 30px -14px rgba(129,140,248,.45); }
+.callout[data-callout="question"] .callout-title { font-weight: 600; }
+.callout[data-callout="question"] .callout-content { border-top: 1px solid rgba(129,140,248,.2); margin-top: 10px; padding-top: 10px; }
+.callout[data-callout="quote"]    { --callout-color: 139,156,255; --callout-icon: lucide-sparkles; }
+.callout[data-callout="figure"]   { --callout-color: 139,156,255; --callout-icon: lucide-image; background: rgba(255,255,255,.02); }
+.callout[data-callout="figure"] .callout-title { color: var(--ink2); font-weight: 500; font-size: .86rem; order: 2; }
+.callout[data-callout="figure"] .callout-title-inner { font-style: italic; }
+.callout[data-callout="figure"] .callout-content { padding: 4px 0 0; }
+.callout[data-callout="figure"] img { display: block; margin: 8px auto 6px; max-height: 540px; width: auto; max-width: 100%; background: #fff; border-radius: 10px; padding: 10px; box-shadow: 0 8px 26px -10px rgba(0,0,0,.7); }
+.callout[data-callout="path"] {
+  background: none; border: none; box-shadow: none; padding: 0; margin: -4px 0 1.2em; --callout-icon: none;
+}
+.callout[data-callout="path"] .callout-icon { display: none; }
+.callout[data-callout="path"] .callout-title { font-weight: 500; font-size: .86rem; color: var(--text-faint); gap: 0; }
+.callout[data-callout="path"] a.internal-link { color: var(--ink2); border-bottom-color: transparent; font-weight: 500; }
+.callout[data-callout="path"] a.internal-link:hover { color: var(--subj, #fff); }
+
+/* ---------- 6. tables ---------------------------------------------- */
+.markdown-preview-view table { border-collapse: separate; border-spacing: 0; width: 100%; border: 1px solid var(--table-border-color, var(--background-modifier-border)); border-radius: 12px; overflow: hidden; margin: 1.2em 0; }
+.markdown-preview-view th { background: rgba(var(--subj-rgb, 139,156,255), .13); color: var(--subj, var(--text-normal)); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; padding: 11px 16px; border: none; }
+.markdown-preview-view td { padding: 11px 16px; border: none; border-top: 1px solid var(--table-border-color, var(--background-modifier-border)); vertical-align: top; }
+.markdown-preview-view tbody tr:nth-child(even) td { background: rgba(139,156,255,.035); }
+.markdown-preview-view tbody tr:hover td { background: rgba(var(--subj-rgb, 139,156,255), .07); }
+.callout table { border: none; border-radius: 0; margin: .4em 0 0; }
+
+/* ---------- 7. hub pages: topics as numbered cards, terms as pills -- */
+.page-hub ol { counter-reset: topic; list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.page-hub ol > li { counter-increment: topic; display: block; padding: 11px 16px 11px 58px; position: relative; border: 1px solid var(--background-modifier-border); border-radius: 12px; background: var(--bg2); transition: border-color .15s, transform .15s; }
+.page-hub ol > li:hover { border-color: rgba(var(--subj-rgb), .55); transform: translateX(2px); }
+.page-hub ol > li::before { content: counter(topic, decimal-leading-zero); position: absolute; left: 16px; top: 11px; font-weight: 700; font-size: .85rem; color: var(--subj); font-variant-numeric: tabular-nums; }
+.page-hub ol > li::marker { content: ""; }
+.page-hub ol > li em { display: block; font-size: .87rem; color: var(--text-faint); font-style: normal; margin-top: 2px; }
+.page-hub div:has(> h2[data-heading="Key terms"]) + div > ul,
+.page-hub div:has(> h2[data-heading^="Key terms in this module"]) + div > ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 7px; }
+.page-hub div:has(> h2[data-heading="Key terms"]) + div > ul > li,
+.page-hub div:has(> h2[data-heading^="Key terms in this module"]) + div > ul > li { margin: 0; padding: 0; }
+.page-hub div:has(> h2[data-heading="Key terms"]) + div > ul > li a,
+.page-hub div:has(> h2[data-heading^="Key terms in this module"]) + div > ul > li a { display: inline-block; padding: 3px 12px; border-radius: 999px; background: rgba(253,230,138,.09); border: 1px solid rgba(253,230,138,.32); color: #FDE68A; font-size: .85rem; border-bottom: 1px solid rgba(253,230,138,.32); }
+.page-hub div:has(> h2[data-heading="Key terms"]) + div > ul > li a:hover,
+.page-hub div:has(> h2[data-heading^="Key terms in this module"]) + div > ul > li a:hover { background: rgba(253,230,138,.2); }
+.page-hub ul > li::marker { content: ""; }
+.page-hub div:has(> h2[data-heading="Key terms"]) + div > ul > li::marker { content: ""; }
+
+/* ---------- 8. home dashboard -------------------------------------- */
+.page-home h1 { font-size: 3.4rem; }
+.page-home table, .page-home td { border: none; }
+.page-home table { border-collapse: separate; border-spacing: 14px; margin: .2em -14px; width: calc(100% + 28px); background: none; border-radius: 0; overflow: visible; }
+.page-home thead { display: none; }
+.page-home td {
+  width: 33.3%; padding: 18px 20px 16px; border: 1px solid var(--background-modifier-border) !important; border-radius: var(--radius-card);
+  background: linear-gradient(160deg, var(--bg3), var(--bg2)) !important; position: relative; overflow: hidden;
+  transition: transform .18s, border-color .18s, box-shadow .18s; font-size: .93rem; line-height: 1.5; color: var(--text-muted);
+}
+.page-home td:hover { transform: translateY(-3px); }
+.page-home td::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--card, #8B9CFF); box-shadow: 0 0 20px var(--card, #8B9CFF); }
+.markdown-preview-view.page-home td a.internal-link { font-size: 1.04rem; font-weight: 650; color: var(--card, #8B9CFF); border-bottom: none; text-shadow: none; }
+.page-home td em { color: var(--text-faint); font-style: normal; font-size: .8rem; letter-spacing: .02em; }
+.page-home td:hover { border-color: var(--card, #8B9CFF) !important; box-shadow: 0 16px 40px -18px var(--card, #8B9CFF); }
+.page-home tbody tr:nth-child(1) td:nth-child(1) { --card:#34D399; }
+.page-home tbody tr:nth-child(1) td:nth-child(2) { --card:#A78BFA; }
+.page-home tbody tr:nth-child(1) td:nth-child(3) { --card:#FBBF24; }
+.page-home tbody tr:nth-child(2) td:nth-child(1) { --card:#38BDF8; }
+.page-home tbody tr:nth-child(2) td:nth-child(2) { --card:#FB7185; }
+.page-home tbody tr:nth-child(2) td:nth-child(3) { --card:#8B9CFF; }
+.page-home div:has(> h2[data-heading^="Jump into"]) + div tbody tr td { --card: #8B9CFF; padding: 12px 16px; font-size: .86rem; }
+.page-home div:has(> h2[data-heading^="Jump into"]) + div tbody tr:nth-child(-n+2) td:nth-child(n) { --card: #34D399; }
+.page-home div:has(> h2[data-heading^="Jump into"]) + div tbody tr:nth-child(2) td:nth-child(2),
+.page-home div:has(> h2[data-heading^="Jump into"]) + div tbody tr:nth-child(2) td:nth-child(3) { --card: #A78BFA; }
+.markdown-preview-view.page-home div:has(> h2[data-heading^="Jump into"]) + div td a.internal-link { font-size: .95rem; }
+.page-guide h1 { font-size: 2.3rem; }
+
+/* ---------- 9. file explorer, tabs, chrome ------------------------- */
+.nav-files-container { padding: 6px 8px; }
+.nav-folder-title, .nav-file-title { border-radius: 0 8px 8px 0; margin: 1px 0; transition: background .12s; }
+.nav-file-title.is-active, .nav-file-title.is-active:hover { background: rgba(139,156,255,.16); color: #fff; }
+.nav-folder:has(> .nav-folder-title[data-path="04 Attachments"]) { display: none; }
+.nav-folder-title[data-path="00 Start Here"], .nav-folder-title[data-path="00 Start Here"] .nav-folder-title-content { color: #8B9CFF; }
+.nav-folder-title[data-path="02 Key Terms"], .nav-folder-title[data-path="02 Key Terms"] .nav-folder-title-content { color: #FDE68A; }
+.nav-folder-title[data-path="03 Templates"] { opacity: .6; }
+.nav-folder-title[data-path="01 Year 1"] .nav-folder-title-content { font-weight: 650; }
+/* module colour-coding down the whole tree */
+.nav-folder-title[data-path^="01 Year 1/Molecular Biology and Genetics"], .nav-file-title[data-path^="01 Year 1/Molecular Biology and Genetics"] { box-shadow: inset 2px 0 0 #34D399; }
+.nav-folder-title[data-path^="01 Year 1/Introduction to Biomedicine"], .nav-file-title[data-path^="01 Year 1/Introduction to Biomedicine"] { box-shadow: inset 2px 0 0 #A78BFA; }
+.nav-folder-title[data-path^="01 Year 1/Biological Chemistry"], .nav-file-title[data-path^="01 Year 1/Biological Chemistry"] { box-shadow: inset 2px 0 0 #FBBF24; }
+.nav-folder-title[data-path^="01 Year 1/Cell Biology and Physiology"], .nav-file-title[data-path^="01 Year 1/Cell Biology and Physiology"] { box-shadow: inset 2px 0 0 #38BDF8; }
+.nav-folder-title[data-path^="01 Year 1/Professional Skills for Biosciences"], .nav-file-title[data-path^="01 Year 1/Professional Skills for Biosciences"] { box-shadow: inset 2px 0 0 #FB7185; }
+.nav-folder-title[data-path="01 Year 1/Molecular Biology and Genetics"] .nav-folder-title-content { color: #34D399; font-weight: 650; }
+.nav-folder-title[data-path="01 Year 1/Introduction to Biomedicine"] .nav-folder-title-content { color: #A78BFA; font-weight: 650; }
+.nav-folder-title[data-path="01 Year 1/Biological Chemistry"] .nav-folder-title-content { color: #FBBF24; font-weight: 650; }
+.nav-folder-title[data-path="01 Year 1/Cell Biology and Physiology"] .nav-folder-title-content { color: #38BDF8; font-weight: 650; }
+.nav-folder-title[data-path="01 Year 1/Professional Skills for Biosciences"] .nav-folder-title-content { color: #FB7185; font-weight: 650; }
+
+.workspace-tab-header.is-active .workspace-tab-header-inner-title { font-weight: 650; }
+.workspace-tabs .workspace-tab-header.is-active { box-shadow: inset 0 2px 0 var(--tab-accent, var(--interactive-accent)); }
+body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-genetics) { --tab-accent: #34D399; }
+body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-biomed) { --tab-accent: #A78BFA; }
+body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-biochem) { --tab-accent: #FBBF24; }
+body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-cell) { --tab-accent: #38BDF8; }
+body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-skills) { --tab-accent: #FB7185; }
+body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-terms) { --tab-accent: #FDE68A; }
+.status-bar { border-radius: 10px 0 0 0; background: var(--bg0); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+
+/* ---------- 10. graph: a small brain ------------------------------- */
+.workspace-leaf-content[data-type="graph"] .view-content {
+  background:
+    radial-gradient(60% 55% at 50% 48%, rgba(124,140,248,.16), transparent 70%),
+    radial-gradient(35% 30% at 20% 75%, rgba(52,211,153,.07), transparent 70%),
+    radial-gradient(35% 30% at 80% 25%, rgba(167,139,250,.08), transparent 70%),
+    #05070F;
+}
+.workspace-leaf-content[data-type="graph"] canvas { filter: drop-shadow(0 0 5px rgba(150,170,255,.55)) saturate(1.25); }
+.workspace-leaf-content[data-type="localgraph"] canvas { filter: drop-shadow(0 0 4px rgba(150,170,255,.5)); }
+
+/* ---------- 11. canvas -------------------------------------------- */
+.canvas-wrapper { --canvas-dot-pattern: rgba(140,155,255,.22); }
+.canvas-node-container { border-radius: 16px; box-shadow: 0 14px 40px -20px rgba(0,0,0,.9); }
+.canvas-node-content { font-size: 1.05rem; padding: 4px 8px; }
+.canvas-node-content h1, .canvas-node-content h2, .canvas-node-content h3 { font-family: var(--serif); margin-top: .1em; border: none; padding: 0; text-transform: none; letter-spacing: -.01em; color: var(--text-normal); }
+.canvas-node-content a.internal-link { border-bottom: 1px dotted currentColor; }
+
+/* ---------- 12. editing mode basics -------------------------------- */
+.markdown-source-view.mod-cm6 .cm-header-1 { font-family: var(--serif); }
+.markdown-source-view .cm-line .cm-hmd-internal-link { color: var(--subj, var(--link-color)); }
+.markdown-source-view.mod-cm6 .cm-header-2 { color: var(--text-normal); }
+.cm-s-obsidian .HyperMD-header-2 { border-left: 3px solid var(--subj, var(--interactive-accent)); padding-left: .6rem; }
+
+/* small refinements */
+.markdown-preview-view p > em:only-child { font-size: .82rem; color: var(--text-faint); letter-spacing: .01em; }
+.callout[data-callout="figure"] .callout-title-inner { font-weight: 500; }
+.page-home .markdown-preview-sizer > div, .page-home .el-table { overflow: visible !important; }
+
+.page-hub ol > li em { display: block; }
+
+.canvas-node.is-themed .canvas-node-content a.internal-link { color: var(--canvas-color); font-weight: 650; }
+.canvas-node.is-themed .canvas-node-content { color: var(--text-normal); }
+
+.metadata-property { min-height: 0; }
+.metadata-container { --metadata-label-width: 110px; }
+
+/* pill lists: remove the leftover bullet widgets */
+.page-hub div:has(> h2[data-heading="Key terms"]) + div .list-bullet,
+.page-hub div:has(> h2[data-heading^="Key terms in this module"]) + div .list-bullet,
+.page-hub div:has(> h2[data-heading="Key terms"]) + div .list-collapse-indicator,
+.page-hub div:has(> h2[data-heading^="Key terms in this module"]) + div .list-collapse-indicator { display: none; }
+.page-hub div:has(> h2[data-heading="Key terms"]) + div li, .page-hub div:has(> h2[data-heading^="Key terms in this module"]) + div li { padding-inline-start: 0; margin-inline-start: 0; }
+
+/* ---------- phones and narrow windows ------------------------------ */
+@media (max-width: 700px) {
+  .page-home table, .page-home tbody, .page-home tr, .page-home td { display: block; width: 100% !important; }
+  .page-home table { border-spacing: 0; margin: 0; }
+  .page-home td { margin: 0 0 12px; }
+  .page-home td:empty { display: none; }
+  .page-home h1 { font-size: 2.5rem; }
+  .markdown-preview-view h1 { font-size: 2.1rem; }
+  .markdown-preview-view h2 { font-size: 1.2rem; }
+  .markdown-preview-view[class*="subject-"] .markdown-preview-sizer::before { font-size: 10px; letter-spacing: .12em; }
+  .page-hub ol > li { padding-left: 50px; }
+}
+
+/* ---------- the Atlas: invisible title labels, borderless illustration layers ---------- */
+.canvas-node[style*="--canvas-color: #010101"] .canvas-node-container { background: transparent !important; border: none !important; box-shadow: none !important; }
+.canvas-node[style*="--canvas-color: #010101"] .canvas-node-content { background: transparent !important; overflow: visible !important; }
+.canvas-node[style*="--canvas-color: #010101"] .markdown-preview-view, .canvas-node[style*="--canvas-color: #010101"] .markdown-preview-sizer { background: transparent !important; padding: 0 !important; overflow: visible !important; min-height: 0 !important; }
+.canvas-node[style*="--canvas-color: #010101"] a.internal-link { border: none; }
+.canvas-node-group .canvas-node-container { border-color: transparent !important; box-shadow: none !important; background: transparent !important; }
+.canvas-node-group .canvas-node-label { display: none !important; }
+
