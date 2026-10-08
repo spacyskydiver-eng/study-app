@@ -1,0 +1,5 @@
+.git
+.gitignore
+wrangler.toml
+.DS_Store
+.wrangler
