@@ -9,7 +9,7 @@ let C = { api: '', reader: '', ids: {}, label: 'Book library' };
 
 B.onBoot(V => {
   const c = ((V.config || {}).books) || {};
-  C = { api: String(c.api || '').replace(/\/+$/, ''), reader: c.reader || '', ids: c.ids || {}, label: c.label || 'Book library', books: c.books || [] };
+  C = { api: String(c.api || '').replace(/\/+$/, ''), reader: c.reader || '', ids: c.ids || {}, label: c.label || 'Book library', books: c.books || [], sectioned: c.sectioned || [] };
 });
 
 /* ---------- engine adapter. Field names are read loosely so small API differences don't break the view. */
@@ -76,7 +76,10 @@ function safeHl(s, q) {
   return out.replace(/<(\/?)(b|strong)>/g, '<$1mark>');
 }
 const readerUrl = (book, page) => C.reader ? C.reader.replace('{api}', C.api).replace('{book}', encodeURIComponent(bookId(book))).replace('{page}', encodeURIComponent(page)) : '';
-const quoteCallout = (book, page, text) => `> [!quote] ${book}, p. ${page}\n> ${String(text).replace(/\s+/g, ' ').trim()}`;
+// books with no printed pages are cited by section ("Genetics in Medicine, §1.4"); the engine page is then a screen index
+const secOf = (book, section) => (C.sectioned || []).includes(bookId(book)) ? (String(section || '').match(/\d+(?:\.\d+)+|\d+/) || [''])[0] : '';
+const citeOf = (book, page, section) => { const s = secOf(book, section); return s ? `${book}, §${s}` : (C.sectioned || []).includes(bookId(book)) ? `${book}, screen ${page}` : `${book}, p. ${page}`; };
+const quoteCallout = (book, page, text, section) => `> [!quote] ${citeOf(book, page, section)}\n> ${String(text).replace(/\s+/g, ' ').trim()}`;
 async function copy(text, msg) { try { await navigator.clipboard.writeText(text); B.toast(msg || 'Copied'); } catch (e) { B.toast('Copy failed'); } }
 
 function authPanel(err, retry) {
@@ -121,7 +124,7 @@ B.registerView('books', {
         const list = (Array.isArray(d) ? d : (d.results || d.hits || d.items || [])).map(normResult);
         status.textContent = `${list.length} result${list.length === 1 ? '' : 's'}` + (d.took_ms ? ` · ${d.took_ms} ms` : '');
         results.innerHTML = list.map((r, i) => `<div class="book-hit" data-i="${i}">
-          <div class="book-hit-cite">${icon(r.type === 'figure' ? 'image' : 'book-open')}<span>${esc(r.book)}${r.page ? `, p. ${esc(r.page)}` : ''}</span>${r.chapter ? `<span class="book-hit-ch">${esc(r.chapter)}${r.section ? ' › ' + esc(r.section) : ''}</span>` : ''}</div>
+          <div class="book-hit-cite">${icon(r.type === 'figure' ? 'image' : 'book-open')}<span>${esc(r.page ? citeOf(r.book, r.page, r.section) : r.book)}</span>${r.chapter ? `<span class="book-hit-ch">${esc(r.chapter)}${r.section ? ' › ' + esc(r.section) : ''}</span>` : ''}</div>
           <div class="book-hit-text">${safeHl(r.text, q)}</div>
           ${r.figures.length ? `<div class="book-hit-figs">${r.figures.slice(0, 4).map(f => `<figure data-full="${esc(f.full || f.url)}"><img src="${esc(f.url)}" alt="" loading="lazy"><figcaption>${esc(f.label ? 'Figure ' + f.label : '')}</figcaption></figure>`).join('')}</div>` : ''}
           <div class="book-hit-actions">
@@ -134,7 +137,7 @@ B.registerView('books', {
           const fig = e.target.closest('figure[data-full]'); if (fig) { const lb = h(`<div class="lightbox"><img src="${esc(fig.dataset.full)}" alt=""></div>`); lb.onclick = () => lb.remove(); document.body.appendChild(lb); return; }
           const a = e.target.closest('[data-a]'); if (!a) return;
           if (a.dataset.a === 'page') { store.set('bookHighlight', { book: r.book, page: String(r.page), text: r.plain }); B.go(`book/${r.book}/${r.page}`, null, e.ctrlKey || e.metaKey); }
-          else if (a.dataset.a === 'copy') copy(quoteCallout(r.book, r.page, r.plain), 'Quote copied');
+          else if (a.dataset.a === 'copy') copy(quoteCallout(r.book, r.page, r.plain, r.section), 'Quote copied');
           else if (a.dataset.a === 'notes') { const s = $('#search'); document.querySelector('[data-act="pane-search"]').click(); setTimeout(() => { s.value = r.plain.split(/\s+/).slice(0, 6).join(' '); s.dispatchEvent(new Event('input')); }, 50); }
         };
       } catch (err) {
@@ -155,7 +158,7 @@ B.registerView('books', {
 /* ---------- page view: book/<short name>/<printed page> */
 B.registerView('book', {
   prefix: 'book/', icon: 'book-open', cls: 'books-host',
-  title: id => { const [, b, p] = id.split('/'); return `${b} · p. ${p}`; },
+  title: id => { const [, b, p] = id.split('/'); return `${b} · ${(C.sectioned || []).includes(bookId(b)) ? 'screen' : 'p.'} ${p}`; },
   show(view, id) {
     const [, book, pageStr] = id.split('/'); const page = parseInt(pageStr, 10);
     const hl = store.get('bookHighlight', null);
@@ -163,7 +166,7 @@ B.registerView('book', {
     view.innerHTML = `<div class="book-page-view">
       <div class="book-page-bar">
         <button class="clickable-icon" data-nav="-1" title="Previous page">${icon('chevron-left')}</button>
-        <div class="book-page-title">${esc(book)} <span>p. ${page}</span></div>
+        <div class="book-page-title">${esc(book)} <span>${(C.sectioned || []).includes(bookId(book)) ? 'screen' : 'p.'} ${page}</span></div>
         <button class="clickable-icon" data-nav="1" title="Next page">${icon('chevron-right')}</button>
         <div class="spacer"></div>
         ${readerUrl(book, page) ? `<a class="clickable-icon" href="${esc(readerUrl(book, page))}" target="_blank" rel="noopener" title="Open in the book reader">${icon('link-out')}</a>` : ''}
@@ -193,31 +196,63 @@ B.registerView('book', {
   },
 });
 
-/* ---------- quotes and figures in notes: click to open the source page */
+/* ---------- quotes and figures in notes: click to open the source page.
+   Two citation forms: "Alberts 7e, p. 412" (printed page) and "Genetics in Medicine, §1.4" (books with no
+   printed pages; the page is found by searching the engine for the quote or caption within that book). */
 const SRC = /([A-Z][A-Za-z.'’&-]*(?: [A-Za-z.'’&-]+)*? \d+(?:e|th|st|nd|rd)?),\s*p\.\s*(\d+)/;
+const SEC = /([A-Z][A-Za-z.'’&-]*(?: [A-Za-z.'’&-]+)*?),\s*§\s*(\d+(?:\.\d+)*)/;
+const words = s => String(s).replace(/[^\p{L}\p{N}\s'’-]/gu, ' ').split(/\s+/).filter(Boolean);
+async function findPage(book, text) {
+  const q = words(text).slice(0, 16).join(' ');
+  if (!q) return null;
+  const id = bookId(book);
+  const d = await call(`/search?q=${encodeURIComponent(q)}&book=${encodeURIComponent(id)}&limit=5`);
+  const list = (Array.isArray(d) ? d : (d.results || d.hits || d.items || [])).map(normResult)
+    .filter(r => r.page && (!r.bookId || r.bookId === id || r.book === book));
+  if (!list.length) return null;
+  const head = words(text).slice(0, 6).join(' ').toLowerCase();
+  const exact = list.find(r => words(r.plain || r.text).join(' ').toLowerCase().includes(head));
+  return +(exact || list[0]).page;
+}
 B.onHydrate(root => {
   $$('.callout[data-callout="quote"], .callout[data-callout="figure"]', root).forEach(c => {
     const title = $(':scope > .callout-title .callout-title-inner', c); if (!title) return;
-    const m = title.textContent.match(SRC); if (!m) return;
-    const book = m[1].trim(), page = m[2];
+    const tt = title.textContent;
+    const m = tt.match(SRC), ms = m ? null : tt.match(SEC);
+    if (!m && !ms) return;
+    const book = (m || ms)[1].trim();
+    let page = m ? +m[2] : null;
+    const sec = ms ? ms[2] : '';
+    const cite = m ? `${book}, p. ${page}` : `${book}, §${sec}`;
     c.classList.add('has-book-source');
-    const btn = h(`<button class="callout-source-btn" title="Open ${esc(book)}, p. ${page}">${icon('book-open')}<span>p. ${page}</span></button>`);
+    const btn = h(`<button class="callout-source-btn" title="Open ${esc(cite)}">${icon('book-open')}<span>${m ? 'p. ' + page : '§' + esc(sec)}</span></button>`);
     $(':scope > .callout-title', c).appendChild(btn);
+    const isQuote = c.dataset.callout === 'quote';
     const text = () => { const body = $(':scope > .callout-content', c); return body ? body.textContent.replace(/\s+/g, ' ').trim() : ''; };
+    const caption = () => tt.replace(SRC, '').replace(SEC, '').replace(/^\s*Figure\s+[\d.]+[:.]?\s*/i, '').replace(/[()\s]+$/, '').trim();
+    const open = async newTab => {
+      if (page == null) {
+        try { page = await findPage(book, isQuote ? text() : caption()); }
+        catch (err) { B.toast(err.kind === 'auth' || err.kind === 'unset' ? err.message || 'Sign in to the book library, then try again.' : 'The book library did not answer.'); return; }
+        if (page == null) { store.set('bookQuery', words(isQuote ? text() : caption()).slice(0, 10).join(' ')); B.go('books'); return; }
+      }
+      store.set('bookHighlight', { book, page, text: isQuote ? text() : '' });
+      B.go(`book/${book}/${page}`, null, newTab);
+    };
     const menu = anchor => {
       const items = [
-        { icon: 'book-open', title: `Open ${book}, p. ${page}`, run: () => { store.set('bookHighlight', { book, page, text: c.dataset.callout === 'quote' ? text() : '' }); B.go(`book/${book}/${page}`, null, false); } },
-        { icon: 'link-out', title: 'Open in a new tab', run: () => { store.set('bookHighlight', { book, page, text: c.dataset.callout === 'quote' ? text() : '' }); B.go(`book/${book}/${page}`, null, true); } },
-        { icon: 'search', title: 'Find in the books', run: () => { store.set('bookQuery', (c.dataset.callout === 'quote' ? text() : title.textContent.replace(SRC, '')).split(/\s+/).slice(0, 10).join(' ')); B.go('books'); } },
+        { icon: 'book-open', title: `Open ${cite}`, run: () => open(false) },
+        { icon: 'link-out', title: 'Open in a new tab', run: () => open(true) },
+        { icon: 'search', title: 'Find in the books', run: () => { store.set('bookQuery', (isQuote ? text() : caption()).split(/\s+/).slice(0, 10).join(' ')); B.go('books'); } },
         '-',
-        { icon: 'copy', title: 'Copy citation', run: () => copy(`${book}, p. ${page}`, 'Citation copied') },
+        { icon: 'copy', title: 'Copy citation', run: () => copy(cite, 'Citation copied') },
       ];
-      if (c.dataset.callout === 'quote') items.push({ icon: 'quote', title: 'Copy as quote callout', run: () => copy(quoteCallout(book, page, text()), 'Quote copied') });
-      if (readerUrl(book, page)) items.push({ icon: 'link-out', title: 'Open in the book reader', run: () => window.open(readerUrl(book, page), '_blank', 'noopener') });
+      if (isQuote) items.push({ icon: 'quote', title: 'Copy as quote callout', run: () => copy(`> [!quote] ${cite}\n> ${text()}`, 'Quote copied') });
+      if (page != null && readerUrl(book, page)) items.push({ icon: 'link-out', title: 'Open in the book reader', run: () => window.open(readerUrl(book, page), '_blank', 'noopener') });
       B.showMenu(anchor, items);
     };
     btn.addEventListener('click', e => { e.stopPropagation(); menu(btn); });
-    if (c.dataset.callout === 'quote') c.addEventListener('click', e => {
+    if (isQuote) c.addEventListener('click', e => {
       if (e.target.closest('a,button')) return;
       const sel = window.getSelection(); if (sel && String(sel).length > 2) return;
       menu({ x: e.clientX, y: e.clientY });

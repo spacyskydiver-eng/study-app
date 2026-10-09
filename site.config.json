@@ -3,7 +3,22 @@
     "label": "Book library",
     "api": "https://books.alexbiomedstuff.bid",
     "reader": "https://books.alexbiomedstuff.bid/?page={page}",
-    "ids": { "Alberts 7e": "alberts7e" },
-    "books": [ { "id": "alberts7e", "short": "Alberts 7e" } ]
+    "ids": {
+      "Alberts 7e": "alberts7e",
+      "Genetics in Medicine": "geneticsinmedicine"
+    },
+    "books": [
+      {
+        "id": "alberts7e",
+        "short": "Alberts 7e"
+      },
+      {
+        "id": "geneticsinmedicine",
+        "short": "Genetics in Medicine"
+      }
+    ],
+    "sectioned": [
+      "geneticsinmedicine"
+    ]
   }
 }
