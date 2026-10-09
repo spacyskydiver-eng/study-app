@@ -2,7 +2,7 @@
   "books": {
     "label": "Book library",
     "api": "https://books.alexbiomedstuff.bid",
-    "reader": "https://books.alexbiomedstuff.bid/?page={page}",
+    "reader": "https://books.alexbiomedstuff.bid/reader/{book}/{page}",
     "ids": {
       "Alberts 7e": "alberts7e",
       "Genetics in Medicine": "geneticsinmedicine"
