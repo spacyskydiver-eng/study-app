@@ -5,7 +5,8 @@
     "reader": "https://books.alexbiomedstuff.bid/reader/{book}/{page}",
     "ids": {
       "Alberts 7e": "alberts7e",
-      "Genetics in Medicine": "geneticsinmedicine"
+      "Genetics in Medicine": "geneticsinmedicine",
+      "Klug 12e": "klug12e"
     },
     "books": [
       {
@@ -15,6 +16,10 @@
       {
         "id": "geneticsinmedicine",
         "short": "Genetics in Medicine"
+      },
+      {
+        "id": "klug12e",
+        "short": "Klug 12e"
       }
     ],
     "sectioned": [
