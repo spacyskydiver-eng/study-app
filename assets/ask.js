@@ -166,13 +166,8 @@ function closePanel() {
   if (!panel) return;
   panel.remove(); panel = null;
   document.removeEventListener('keydown', onKey, true);
-  document.removeEventListener('pointerdown', onOutside, true);
 }
 function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); closePanel(); } }
-function onOutside(e) {
-  if (!panel || panel.contains(e.target) || e.target.closest('.hover-popover, .menu, .ask-fab')) return;
-  closePanel();
-}
 function place(p, info) {
   if (B.isMobile()) { p.classList.add('is-sheet'); return; }
   const W = p.offsetWidth, H = Math.min(p.offsetHeight, window.innerHeight * 0.7), r = info.rect, f = info.first;
@@ -262,7 +257,6 @@ function openPanel(info) {
   $('.ask-form', panel).addEventListener('submit', e => { e.preventDefault(); ask(input.value); });
   setTimeout(() => {
     document.addEventListener('keydown', onKey, true);
-    document.addEventListener('pointerdown', onOutside, true);
     if (!B.isMobile()) input.focus({ preventScroll: true });
   }, 0);
 }

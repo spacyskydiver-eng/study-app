@@ -338,3 +338,32 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
 .ask-send { width: 36px; border-radius: 10px; border: none; background: var(--fc-violet); color: #0B0E24; display: grid; place-items: center; cursor: pointer; }
 .ask-send .svg-icon { width: 16px; height: 16px; }
 .ask-foot { padding: 0 14px 10px; font-size: .7rem; color: var(--text-faint); }
+
+/* ---------- annotation layer ---------- */
+.ann-layer { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 3; }
+.ann-layer.is-editing { pointer-events: auto; cursor: crosshair; }
+.ann-layer.is-editing .ann-shape { cursor: move; pointer-events: all; }
+.ann-shape.is-selected { filter: drop-shadow(0 0 0 2px var(--fc-violet)); }
+.ann-text-box { padding: 6px 8px; outline: none; white-space: pre-wrap; word-break: break-word; font-family: inherit; line-height: 1.35; height: 100%; box-sizing: border-box; }
+.ann-edit-box { position: absolute; z-index: 4; resize: none; padding: 6px 8px; border-radius: 6px; border: none; background: var(--background-secondary); box-shadow: 0 0 0 2px var(--fc-violet); font-family: inherit; line-height: 1.35; outline: none; }
+
+.ann-toolbar { position: fixed; z-index: 60; width: 300px; max-width: calc(100vw - 20px); display: flex; flex-direction: column; gap: 8px; background: var(--background-primary); border: 1px solid var(--background-modifier-border-hover); border-radius: 14px; box-shadow: 0 30px 70px -24px rgba(0,0,0,.9); padding: 10px; font-size: .9rem; cursor: grab; }
+.ann-toolbar.ann-locked { cursor: default; width: 320px; }
+.ann-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ann-tools { padding-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border); }
+.ann-tool { width: 30px; height: 30px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--text-muted); display: grid; place-items: center; cursor: pointer; }
+.ann-tool:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.ann-tool.is-active { background: rgba(139,156,255,.16); border-color: rgba(139,156,255,.5); color: var(--fc-violet); }
+.ann-tool .svg-icon, .ann-tool svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.ann-opts { padding-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border); }
+.ann-colors { display: flex; gap: 5px; }
+.ann-color { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.ann-color.is-active { border-color: var(--text-normal); }
+.ann-width { flex: 1; min-width: 60px; accent-color: var(--fc-violet); }
+.ann-draw { gap: 6px; }
+.ann-draw-input { flex: 1; min-width: 0; padding: 8px 11px; border-radius: 10px; border: 1px solid var(--background-modifier-border-hover); background: var(--background-secondary); color: var(--text-normal); font-size: .85rem; outline: none; }
+.ann-draw-input:focus { border-color: rgba(139,156,255,.65); box-shadow: 0 0 0 3px rgba(139,156,255,.12); }
+.ann-draw-go { width: 36px; padding: 0; justify-content: center; }
+.ann-draw-go .svg-icon { width: 15px; height: 15px; }
+.ann-done { justify-content: flex-end; }
+.ann-done .mod-cta .svg-icon { width: 14px; height: 14px; }
