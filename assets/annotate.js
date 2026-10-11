@@ -236,6 +236,7 @@ function openToolbar() {
       <div class="ann-colors">${COLORS.map((c) => `<button class="ann-color${c === color ? ' is-active' : ''}" data-color="${c}" style="background:${c}"></button>`).join('')}</div>
       <input type="range" min="1" max="12" value="${strokeWidth}" class="ann-width" title="Stroke width">
       <input type="number" min="8" max="96" step="1" value="16" class="ann-fontsize" title="Text size" hidden>
+      <button class="ann-tool ann-edit-text" data-act="edit-text" title="Edit text" hidden>${wicon('pen')}</button>
       <button class="ann-tool" data-act="undo" title="Undo (⌘Z)">${wicon('undo')}</button>
       <button class="ann-tool" data-act="redo" title="Redo (⌘⇧Z)">${wicon('redo')}</button>
       <button class="ann-tool" data-act="delete" title="Delete selected">${wicon('trash')}</button>
@@ -253,6 +254,7 @@ function openToolbar() {
   $$('.ann-color', toolbar).forEach((b) => b.onclick = () => { color = b.dataset.color; $$('.ann-color', toolbar).forEach((x) => x.classList.toggle('is-active', x === b)); applyStyleToSelected(); });
   $('.ann-width', toolbar).oninput = (e) => { strokeWidth = +e.target.value; applyStyleToSelected(); };
   $('.ann-fontsize', toolbar).oninput = (e) => applyFontSize(+e.target.value);
+  $('.ann-edit-text', toolbar).onclick = () => { const sh = currentShape(); if (sh) editText(sh); };
   $('[data-act="undo"]', toolbar).onclick = undo;
   $('[data-act="redo"]', toolbar).onclick = redo;
   $('[data-act="delete"]', toolbar).onclick = deleteSelected;
@@ -316,6 +318,8 @@ function syncOptsToSelection() {
   const isText = sh && (sh.type === 'text' || sh.type === 'callout');
   const fs = $('.ann-fontsize', toolbar);
   if (fs) { fs.hidden = !isText; if (isText) fs.value = sh.fontSize || 16; }
+  const ed = $('.ann-edit-text', toolbar);
+  if (ed) ed.hidden = !isText;
 }
 
 /* ---------- resize handles: 4 corners + 4 edge midpoints for box/points shapes, 2 endpoints for lines */
