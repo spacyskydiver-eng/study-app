@@ -178,8 +178,38 @@ function place(p, info) {
   const W = p.offsetWidth, H = Math.min(p.offsetHeight, window.innerHeight * 0.7), r = info.rect, f = info.first;
   let top = r.bottom + 10;
   if (top + H > window.innerHeight - 10) top = Math.max(10, f.top - H - 10);
+  top = Math.max(10, Math.min(top, window.innerHeight - H - 10));
   const left = Math.max(10, Math.min(r.left - 40, window.innerWidth - W - 10));
   p.style.left = left + 'px'; p.style.top = top + 'px';
+  enableDrag(p);
+}
+
+/* ---------- drag the panel by its header, so it can be pulled off the bottom edge */
+function enableDrag(panel) {
+  const handle = panel.querySelector('.ask-head');
+  if (!handle) return;
+  panel.classList.add('is-draggable');
+  let dragging = false, sx = 0, sy = 0, sl = 0, st = 0;
+  handle.addEventListener('pointerdown', e => {
+    if (e.target.closest('.ask-close') || e.button !== 0) return;
+    dragging = true;
+    sx = e.clientX; sy = e.clientY;
+    const r = panel.getBoundingClientRect();
+    sl = r.left; st = r.top;
+    handle.setPointerCapture(e.pointerId);
+    panel.classList.add('is-dragging');
+    e.preventDefault();
+  });
+  handle.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const W = panel.offsetWidth, H = panel.offsetHeight;
+    const left = Math.max(8, Math.min(sl + (e.clientX - sx), window.innerWidth - W - 8));
+    const top = Math.max(8, Math.min(st + (e.clientY - sy), window.innerHeight - H - 8));
+    panel.style.left = left + 'px'; panel.style.top = top + 'px';
+  });
+  const stop = () => { dragging = false; panel.classList.remove('is-dragging'); };
+  handle.addEventListener('pointerup', stop);
+  handle.addEventListener('pointercancel', stop);
 }
 function openPanel(info) {
   closePanel();

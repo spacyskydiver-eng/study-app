@@ -300,7 +300,10 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
 
 .ask-panel { position: fixed; z-index: 55; width: 440px; max-width: calc(100vw - 20px); max-height: 70vh; display: flex; flex-direction: column; background: var(--background-primary); border: 1px solid var(--background-modifier-border-hover); border-radius: 14px; box-shadow: 0 30px 70px -24px rgba(0,0,0,.9); overflow: hidden; animation: askIn .16s ease-out; font-size: .9rem; }
 .ask-panel.is-sheet { left: 0 !important; right: 0; bottom: 0; top: auto !important; width: 100%; max-width: none; max-height: 78vh; border-radius: 16px 16px 0 0; }
+.ask-panel.is-dragging { animation: none; user-select: none; }
 .ask-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 8px 14px; }
+.ask-panel.is-draggable .ask-head { cursor: grab; touch-action: none; }
+.ask-panel.is-draggable.is-dragging .ask-head { cursor: grabbing; }
 .ask-badge { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: rgba(139,156,255,.14); color: var(--fc-violet); flex: none; }
 .ask-badge .svg-icon { width: 16px; height: 16px; }
 .ask-head-text { flex: 1; min-width: 0; }
