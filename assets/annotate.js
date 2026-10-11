@@ -64,7 +64,21 @@ function bboxPoints(type, x, y, w, h) {
   return null;
 }
 function ptsAttr(pts) { return pts.map((p) => p[0] + ',' + p[1]).join(' '); }
-function pathD(pts) { return pts.length ? 'M ' + pts.map((p) => p[0] + ',' + p[1]).join(' L ') : ''; }
+// Freehand pen points connected straight (M...L...L...) look faceted on curves like a circle,
+// since consecutive pointermove samples are joined by hard corners. Drawing a quadratic curve
+// through each pair's midpoint instead rounds those corners into a smooth stroke.
+function pathD(pts) {
+  if (pts.length === 0) return '';
+  if (pts.length < 3) return 'M ' + pts.map((p) => p[0] + ',' + p[1]).join(' L ');
+  let d = `M ${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+    d += ` Q ${pts[i][0]},${pts[i][1]} ${mx},${my}`;
+  }
+  const last = pts[pts.length - 1];
+  d += ` L ${last[0]},${last[1]}`;
+  return d;
+}
 
 function svgEl(tag, attrs) {
   const el = document.createElementNS(SVGNS, tag);
@@ -247,8 +261,14 @@ function openToolbar() {
 }
 function closeToolbar() { if (toolbar) { toolbar.remove(); toolbar = null; } document.removeEventListener('keydown', onToolbarKey, true); selectShape(null); }
 function onToolbarKey(e) {
-  if ((e.key === 'Backspace' || e.key === 'Delete') && selectedId && !e.target.closest('input,textarea,[contenteditable]')) { e.preventDefault(); deleteSelected(); }
-  if (e.key === 'Escape') toggleEdit();
+  const typing = e.target.closest('input,textarea,[contenteditable]');
+  if ((e.key === 'Backspace' || e.key === 'Delete') && selectedId && !typing) { e.preventDefault(); deleteSelected(); }
+  if (e.key === 'Escape') { toggleEdit(); return; }
+  if ((e.metaKey || e.ctrlKey) && !typing && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    if (e.shiftKey) redo(); else undo();
+  }
+  if ((e.metaKey || e.ctrlKey) && !typing && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
 }
 function enableDragToolbar(panel) {
   const handle = panel;
