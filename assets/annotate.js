@@ -235,8 +235,9 @@ function openToolbar() {
     <div class="ann-row ann-opts">
       <div class="ann-colors">${COLORS.map((c) => `<button class="ann-color${c === color ? ' is-active' : ''}" data-color="${c}" style="background:${c}"></button>`).join('')}</div>
       <input type="range" min="1" max="12" value="${strokeWidth}" class="ann-width" title="Stroke width">
-      <button class="ann-tool" data-act="undo" title="Undo">${wicon('undo')}</button>
-      <button class="ann-tool" data-act="redo" title="Redo">${wicon('redo')}</button>
+      <input type="number" min="8" max="96" step="1" value="16" class="ann-fontsize" title="Text size" hidden>
+      <button class="ann-tool" data-act="undo" title="Undo (⌘Z)">${wicon('undo')}</button>
+      <button class="ann-tool" data-act="redo" title="Redo (⌘⇧Z)">${wicon('redo')}</button>
       <button class="ann-tool" data-act="delete" title="Delete selected">${wicon('trash')}</button>
     </div>
     <div class="ann-row ann-draw">
@@ -251,6 +252,7 @@ function openToolbar() {
   $$('.ann-tool[data-tool]', toolbar).forEach((b) => b.onclick = () => { tool = b.dataset.tool; $$('.ann-tool[data-tool]', toolbar).forEach((x) => x.classList.toggle('is-active', x === b)); selectShape(null); });
   $$('.ann-color', toolbar).forEach((b) => b.onclick = () => { color = b.dataset.color; $$('.ann-color', toolbar).forEach((x) => x.classList.toggle('is-active', x === b)); applyStyleToSelected(); });
   $('.ann-width', toolbar).oninput = (e) => { strokeWidth = +e.target.value; applyStyleToSelected(); };
+  $('.ann-fontsize', toolbar).oninput = (e) => applyFontSize(+e.target.value);
   $('[data-act="undo"]', toolbar).onclick = undo;
   $('[data-act="redo"]', toolbar).onclick = redo;
   $('[data-act="delete"]', toolbar).onclick = deleteSelected;
@@ -292,6 +294,8 @@ function enableDragToolbar(panel) {
 function selectShape(id) {
   selectedId = id;
   $$('.ann-shape').forEach((el) => el.classList.toggle('is-selected', el.dataset.id === id));
+  drawHandles();
+  syncOptsToSelection();
 }
 function currentShape() { const s = sceneOf(activeId).scene; return s.shapes.find((x) => x.id === selectedId); }
 function applyStyleToSelected() {
@@ -299,6 +303,69 @@ function applyStyleToSelected() {
   pushHistory();
   sh.color = color; sh.strokeWidth = strokeWidth; if (sh.type === 'highlight') sh.fill = color;
   renderScene($('#ann-layer'), sceneOf(activeId).scene); selectShape(sh.id); scheduleSave();
+}
+function applyFontSize(size) {
+  const sh = currentShape(); if (!sh || (sh.type !== 'text' && sh.type !== 'callout')) return;
+  pushHistory();
+  sh.fontSize = size;
+  renderScene($('#ann-layer'), sceneOf(activeId).scene); selectShape(sh.id); scheduleSave();
+}
+function syncOptsToSelection() {
+  if (!toolbar) return;
+  const sh = currentShape();
+  const isText = sh && (sh.type === 'text' || sh.type === 'callout');
+  const fs = $('.ann-fontsize', toolbar);
+  if (fs) { fs.hidden = !isText; if (isText) fs.value = sh.fontSize || 16; }
+}
+
+/* ---------- resize handles: 4 corners + 4 edge midpoints for box/points shapes, 2 endpoints for lines */
+const HANDLE_SIZE = 9;
+const HANDLE_CURSOR = { nw: 'nwse-resize', se: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize', n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize', p1: 'crosshair', p2: 'crosshair' };
+function shapeBBox(sh) {
+  if (BOX.has(sh.type)) return { x: sh.x, y: sh.y, w: sh.w, h: sh.h };
+  if (LINE.has(sh.type)) return { x: Math.min(sh.x1, sh.x2), y: Math.min(sh.y1, sh.y2), w: Math.abs(sh.x2 - sh.x1), h: Math.abs(sh.y2 - sh.y1) };
+  if (POINTS.has(sh.type) && sh.points.length) {
+    const xs = sh.points.map((p) => p[0]), ys = sh.points.map((p) => p[1]);
+    const x = Math.min(...xs), y = Math.min(...ys);
+    return { x, y, w: Math.max(...xs) - x || 1, h: Math.max(...ys) - y || 1 };
+  }
+  return { x: 0, y: 0, w: 0, h: 0 };
+}
+function drawHandles() {
+  const svg = $('#ann-layer'); if (!svg) return;
+  const old = svg.querySelector('#ann-handles'); if (old) old.remove();
+  const sh = currentShape(); if (!sh || tool !== 'select') return;
+  const g = svgEl('g', { id: 'ann-handles' });
+  const mk = (x, y, key) => svgEl('rect', { x: x - HANDLE_SIZE / 2, y: y - HANDLE_SIZE / 2, width: HANDLE_SIZE, height: HANDLE_SIZE, class: 'ann-handle', 'data-handle': key, style: `cursor:${HANDLE_CURSOR[key]}` });
+  if (LINE.has(sh.type)) {
+    g.appendChild(mk(sh.x1, sh.y1, 'p1'));
+    g.appendChild(mk(sh.x2, sh.y2, 'p2'));
+  } else {
+    const b = shapeBBox(sh);
+    const pts = { nw: [b.x, b.y], n: [b.x + b.w / 2, b.y], ne: [b.x + b.w, b.y], w: [b.x, b.y + b.h / 2], e: [b.x + b.w, b.y + b.h / 2], sw: [b.x, b.y + b.h], s: [b.x + b.w / 2, b.y + b.h], se: [b.x + b.w, b.y + b.h] };
+    for (const [k, [x, y]] of Object.entries(pts)) g.appendChild(mk(x, y, k));
+  }
+  svg.appendChild(g);
+}
+// Anchors the edge/corner opposite the dragged handle, so e.g. dragging the SE corner keeps the
+// NW corner fixed. A handle naming only one axis ("n", "e"...) leaves the other axis unanchored,
+// giving a pure horizontal/vertical resize.
+function resizeBox(orig, handle, nx, ny) {
+  let left = orig.x, top = orig.y, right = orig.x + orig.w, bottom = orig.y + orig.h;
+  if (handle.includes('w')) left = nx;
+  if (handle.includes('e')) right = nx;
+  if (handle.includes('n')) top = ny;
+  if (handle.includes('s')) bottom = ny;
+  return { x: Math.min(left, right), y: Math.min(top, bottom), w: Math.max(1, Math.abs(right - left)), h: Math.max(1, Math.abs(bottom - top)) };
+}
+function applyResize(sh, origSh, handle, nx, ny) {
+  if (LINE.has(sh.type)) { if (handle === 'p1') { sh.x1 = nx; sh.y1 = ny; } else { sh.x2 = nx; sh.y2 = ny; } return; }
+  const origBBox = shapeBBox(origSh);
+  const nb = resizeBox(origBBox, handle, nx, ny);
+  if (POINTS.has(sh.type)) {
+    const sx = nb.w / (origBBox.w || 1), sy = nb.h / (origBBox.h || 1);
+    sh.points = origSh.points.map((p) => [nb.x + (p[0] - origBBox.x) * sx, nb.y + (p[1] - origBBox.y) * sy]);
+  } else { sh.x = nb.x; sh.y = nb.y; sh.w = nb.w; sh.h = nb.h; }
 }
 function deleteSelected() {
   if (!selectedId) return;
@@ -341,12 +408,19 @@ async function runAiDraw(prompt) {
 /* ---------- drawing / moving / resizing on the SVG while editing */
 function wireEditing(svg, id) {
   if (svg.__wired) return; svg.__wired = true;
-  let mode = null, startX = 0, startY = 0, orig = null, pts = [];
+  let mode = null, startX = 0, startY = 0, orig = null, pts = [], resizeHandle = null;
   const pt = (e) => { const r = svg.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 
   svg.addEventListener('pointerdown', (e) => {
     if (!editing) return;
     const [x, y] = pt(e);
+    const handleEl = e.target.closest('.ann-handle');
+    if (tool === 'select' && handleEl && selectedId) {
+      orig = JSON.parse(JSON.stringify(currentShape()));
+      mode = 'resize'; resizeHandle = handleEl.dataset.handle;
+      svg.setPointerCapture(e.pointerId); e.stopPropagation();
+      return;
+    }
     const shapeEl = e.target.closest('.ann-shape');
     if (tool === 'select') {
       if (shapeEl) { selectShape(shapeEl.dataset.id); orig = JSON.parse(JSON.stringify(currentShape())); mode = 'move'; startX = x; startY = y; svg.setPointerCapture(e.pointerId); }
@@ -385,14 +459,19 @@ function wireEditing(svg, id) {
       else if (orig.type === 'polygon') { orig.points = orig.points.slice(0, 1).concat([[x, y]]); }
       renderScene(svg, sceneOf(id).scene); selectShape(orig.id);
     }
+    if (mode === 'resize' && orig) {
+      const sh = currentShape(); if (!sh) return;
+      applyResize(sh, orig, resizeHandle, x, y);
+      renderScene(svg, sceneOf(id).scene); selectShape(sh.id);
+    }
   });
   svg.addEventListener('pointerup', () => {
     if (mode === 'pen') {
       svg.querySelectorAll('.ann-pen-preview').forEach((n) => n.remove());
       if (pts.length > 1) { const sh = { ...newShape('path', color, strokeWidth), points: pts }; sceneOf(id).scene.shapes.push(sh); }
       renderScene(svg, sceneOf(id).scene); scheduleSave();
-    } else if (mode === 'move' || mode === 'draw') scheduleSave();
-    mode = null; orig = null; pts = [];
+    } else if (mode === 'move' || mode === 'draw' || mode === 'resize') scheduleSave();
+    mode = null; orig = null; pts = []; resizeHandle = null;
     if (tool !== 'select' && tool !== 'pen' && tool !== 'highlight') { tool = 'select'; const b = $('.ann-tool[data-tool="select"]'); if (b) $$('.ann-tool[data-tool]').forEach((x) => x.classList.toggle('is-active', x === b)); }
   });
   svg.addEventListener('dblclick', (e) => {
