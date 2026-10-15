@@ -139,10 +139,10 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
 .fc-next { font-size: 12.5px; color: var(--text-faint); margin-top: 8px; }
 .fc-hero-side { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .fc-ring { position: relative; width: 104px; height: 104px; }
-.fc-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.fc-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .fc-ring circle { fill: none; stroke-width: 8; }
 .fc-ring .track { stroke: rgba(130,140,190,.18); }
-.fc-ring .fill { stroke: var(--fc-accent); stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(52,211,153,.6)); transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+.fc-ring .fill { stroke: var(--fc-accent); stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
 .fc-ring-label { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
 .fc-ring-label b { font-size: 24px; line-height: 1; }
 .fc-ring-label span { font-size: 11px; color: var(--text-faint); }

@@ -33,13 +33,13 @@ async function loadCards() {
 const need = L => 80 + 25 * (L - 1);             // XP to go from level L to L+1
 function levelOf(xp) { let L = 1, x = xp; while (x >= need(L)) { x -= need(L); L++; } return { L, into: x, need: need(L) }; }
 const STAGES = [
-  { at: 1, name: 'Protocell', line: 'A membrane and some ambition.' },
-  { at: 3, name: 'Bacterium', line: 'Has a flagellum now. Getting around.' },
-  { at: 6, name: 'Eukaryote', line: 'Nucleus acquired. Things are getting organised.' },
-  { at: 10, name: 'Colony', line: 'Turns out there is strength in numbers.' },
-  { at: 15, name: 'Organoid', line: 'Thinking at tissue level.' },
-  { at: 21, name: 'Medusa', line: 'Bell, tentacles and a nerve net.' },
-  { at: 28, name: 'Siphonophore', line: 'A colony that moves as one animal. Top of the culture.' },
+  { at: 1, name: 'Protocell' },
+  { at: 3, name: 'Bacterium' },
+  { at: 6, name: 'Eukaryote' },
+  { at: 10, name: 'Colony' },
+  { at: 15, name: 'Organoid' },
+  { at: 21, name: 'Medusa' },
+  { at: 28, name: 'Siphonophore' },
 ];
 const stageOf = L => { let i = 0; STAGES.forEach((s, k) => { if (L >= s.at) i = k; }); return i; };
 
@@ -256,7 +256,7 @@ function specimen(canvas, opts = {}) {
     ctx.translate(w / 2 + ox, hh / 2); ctx.scale(sx, sx); ctx.translate(-w / 2, -hh / 2);
     const [c1, c2] = pal[stageIdx % pal.length];
     // soft halo
-    const halo = ctx.createRadialGradient(w / 2, hh / 2, 0, w / 2, hh / 2, Math.min(w, hh) * 0.55);
+    const halo = ctx.createRadialGradient(w / 2, hh / 2, 0, w / 2, hh / 2, Math.min(w, hh) * 0.48);
     halo.addColorStop(0, hexA(c1, 0.12 + glowBoost * 0.05)); halo.addColorStop(1, hexA(c1, 0));
     ctx.fillStyle = halo; ctx.fillRect(0, 0, w, hh);
     if (opts.locked) { ctx.globalAlpha = 0.18; }
@@ -293,7 +293,7 @@ let keyHandler = null;
 
 function ring(frac, label, sub) {
   const r = 34, c = 2 * Math.PI * r, f = clamp(frac, 0, 1);
-  return `<div class="fc-ring"><svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="${r}" class="track"/><circle cx="42" cy="42" r="${r}" class="fill" style="stroke-dasharray:${c};stroke-dashoffset:${c * (1 - f)}"/></svg><div class="fc-ring-label"><b>${label}</b><span>${sub}</span></div></div>`;
+  return `<div class="fc-ring"><svg viewBox="0 0 84 84"><defs><filter id="fc-ring-glow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#34D399" flood-opacity=".6"/></filter></defs><circle cx="42" cy="42" r="${r}" class="track"/><circle cx="42" cy="42" r="${r}" class="fill" filter="url(#fc-ring-glow)" style="stroke-dasharray:${c};stroke-dashoffset:${c * (1 - f)}"/></svg><div class="fc-ring-label"><b>${label}</b><span>${sub}</span></div></div>`;
 }
 
 function dashboard() {
@@ -310,7 +310,7 @@ function dashboard() {
       <div class="fc-hero-main">
         <div class="fc-kicker">Specimen · stage ${st + 1} of ${STAGES.length}</div>
         <div class="fc-name"><span class="fc-name-text">${esc(S.name || stage.name)}</span><button class="clickable-icon fc-rename" title="Name your specimen">${icon('pencil')}</button></div>
-        <div class="fc-stage">${esc(S.name ? stage.name + '. ' : '')}${esc(stage.line)}</div>
+        ${S.name ? `<div class="fc-stage">${esc(stage.name)}</div>` : ''}
         <div class="fc-level"><span class="fc-lv">Level ${lv.L}</span><div class="fc-xpbar"><div style="width:${(lv.into / lv.need * 100).toFixed(1)}%"></div></div><span class="fc-xpnum">${lv.into} / ${lv.need} XP</span></div>
         <div class="fc-next">${next ? `Evolves into a ${esc(next.name)} at level ${next.at}` : 'Final form reached'}</div>
       </div>
