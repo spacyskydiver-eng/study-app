@@ -312,7 +312,7 @@ function dashboard() {
         <div class="fc-name"><span class="fc-name-text">${esc(S.name || stage.name)}</span><button class="clickable-icon fc-rename" title="Name your specimen">${icon('pencil')}</button></div>
         ${S.name ? `<div class="fc-stage">${esc(stage.name)}</div>` : ''}
         <div class="fc-level"><span class="fc-lv">Level ${lv.L}</span><div class="fc-xpbar"><div style="width:${(lv.into / lv.need * 100).toFixed(1)}%"></div></div><span class="fc-xpnum">${lv.into} / ${lv.need} XP</span></div>
-        <div class="fc-next">${next ? `Evolves into a ${esc(next.name)} at level ${next.at}` : 'Final form reached'}</div>
+        <div class="fc-next">${next ? `Next evolution at level ${next.at}` : 'Final form reached'}</div>
       </div>
       <div class="fc-hero-side">
         ${ring(day.n / S.goal, day.n, `of ${S.goal} today`)}
