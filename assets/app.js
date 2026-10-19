@@ -338,7 +338,7 @@ function renderBookmarks() {
   }).join('');
   $('#bookmarks').innerHTML = `<div class="pane-header">Bookmarks</div>` + (items || '<div class="pane-empty">No bookmarks</div>') +
     `<div class="pane-header">Views</div>` +
-    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['books', 'library', 'Book library']].filter(([id]) => exists(id))
+    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['books', 'library', 'Book library'], ['exam', 'clipboard-list', 'Exam practice']].filter(([id]) => exists(id))
       .map(([id, ic, t]) => `<div class="tree-item" data-id="${id}">${icon(ic)} ${t}</div>`).join('') +
     `<a class="tree-item" href="legacy/index.html">${icon('layers')} Old study app</a>`;
   $('#bookmarks').onclick = e => { const t = e.target.closest('.tree-item[data-id]'); if (!t) return; go(t.dataset.id); if (isMobile()) setSide('left', false); };

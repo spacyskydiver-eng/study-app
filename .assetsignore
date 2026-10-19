@@ -4,3 +4,6 @@ wrangler.toml
 .DS_Store
 .wrangler
 src
+content
+tools
+__pycache__
