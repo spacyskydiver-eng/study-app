@@ -833,12 +833,41 @@ function cellLayout(nodes, neighbours) {
 }
 
 function makeGraph(host, opts = {}) {
+  if (opts.local) return makeGraph2D(host, opts);
+  const G = V.graph;
+  const cfg = Object.assign({ nodeSize: G.nodeSize, lineSize: G.lineSize, textFade: G.textFade, center: G.center, repel: G.repel, linkStrength: G.linkStrength, linkDistance: G.linkDistance, showOrphans: G.showOrphans, search: G.search, shape: 'cell', animate: !isMobile(), free3d: false }, store.get('graphCfg2', {}));
+  const surface = document.createElement('div'); surface.className = 'graph-surface'; host.appendChild(surface);
+  let renderer;
+  const is3D = () => cfg.shape === 'free' && cfg.free3d;
+  function mount() {
+    if (renderer) renderer.destroy();
+    surface.replaceChildren();
+    host.classList.toggle('is-3d', !!is3D());
+    renderer = is3D() ? window.BVGraph3D.create(surface, {
+      cfg, getData: () => graphData(Object.assign({}, opts, cfg)), titleOf, icon, esc,
+      onOpen: (id, newTab) => go(id, null, newTab),
+    }) : makeGraph2D(surface, Object.assign({}, opts, { cfg }));
+  }
+  mount();
+  return {
+    cfg, data: () => renderer.data(),
+    update(changes) {
+      const was3D = is3D(); Object.assign(cfg, changes);
+      if (was3D !== is3D()) mount(); else renderer.update(changes);
+      store.set('graphCfg2', Object.assign({}, cfg));
+    },
+    fit() { renderer.fit(); }, restyle() { renderer.restyle(); },
+    destroy() { renderer.destroy(); surface.remove(); host.classList.remove('is-3d'); },
+  };
+}
+
+function makeGraph2D(host, opts = {}) {
   const local = !!opts.local;
   const canvas = host.querySelector('canvas') || host.appendChild(document.createElement('canvas'));
   canvas.classList.add('graph-canvas');
   const ctx = canvas.getContext('2d');
   const G = V.graph;
-  const cfg = Object.assign({ nodeSize: G.nodeSize, lineSize: G.lineSize, textFade: G.textFade, center: G.center, repel: G.repel, linkStrength: G.linkStrength, linkDistance: G.linkDistance, showOrphans: G.showOrphans, search: G.search, shape: 'cell', animate: !isMobile() },
+  const cfg = opts.cfg || Object.assign({ nodeSize: G.nodeSize, lineSize: G.lineSize, textFade: G.textFade, center: G.center, repel: G.repel, linkStrength: G.linkStrength, linkDistance: G.linkDistance, showOrphans: G.showOrphans, search: G.search, shape: 'cell', animate: !isMobile() },
     local ? { shape: 'free' } : store.get('graphCfg2', {}));
   let data = graphData(Object.assign({}, opts, cfg));
   let W = 0, H = 0, dpr = 1, hover = null, sim = null, alive = true, raf = 0, userZoomed = false, last = performance.now(), clock = 0;
@@ -1110,7 +1139,7 @@ function makeGraph(host, opts = {}) {
   if (layout) fit(false);
   else { goal = d3.zoomIdentity.scale(local ? 1 : 0.5); d3.select(canvas).call(zoom.transform, goal); view.x = goal.x; view.y = goal.y; view.k = goal.k; }
   kick();
-  const save = () => { if (!local) store.set('graphCfg2', { nodeSize: cfg.nodeSize, lineSize: cfg.lineSize, textFade: cfg.textFade, center: cfg.center, repel: cfg.repel, linkStrength: cfg.linkStrength, linkDistance: cfg.linkDistance, showOrphans: cfg.showOrphans, search: cfg.search, shape: cfg.shape, animate: cfg.animate }); };
+  const save = () => { if (!local) store.set('graphCfg2', { nodeSize: cfg.nodeSize, lineSize: cfg.lineSize, textFade: cfg.textFade, center: cfg.center, repel: cfg.repel, linkStrength: cfg.linkStrength, linkDistance: cfg.linkDistance, showOrphans: cfg.showOrphans, search: cfg.search, shape: cfg.shape, animate: cfg.animate, free3d: cfg.free3d }); };
   return {
     cfg, data: () => data,
     update(newCfg) {
@@ -1130,13 +1159,15 @@ SPECIAL.graph = {
   title: () => 'Graph view', icon: 'graph', type: 'graph', cls: 'graph-host',
   show(view) {
     graphInst = makeGraph(view, {});
+    const instance = graphInst;
     const c = graphInst.cfg;
     const shapes = [['cell', 'cell', 'Cell'], ['helix', 'dna', 'Helix'], ['free', 'orbit', 'Free']];
     const panel = h(`<div class="graph-controls${store.get('graphPanel', false) ? '' : ' is-collapsed'}">
       <div class="graph-controls-header"><span>${icon('sliders')}</span><span style="flex:1;margin-left:8px">Graph settings</span><span class="graph-count">${graphInst.data().nodes.length} notes</span></div>
       <div class="graph-control-section"><h4>Shape</h4>
         <div class="segmented">${shapes.map(([k, ic, t]) => `<button data-shape="${k}" class="${c.shape === k ? 'is-active' : ''}">${icon(ic)}<span>${t}</span></button>`).join('')}</div>
-        <div class="graph-control-row"><span>Animate</span><input type="checkbox" data-k="animate" ${c.animate ? 'checked' : ''}></div></div>
+        <div class="free-only"><div class="segmented small graph-dimensions" role="group" aria-label="Free graph dimensions"><button data-dimension="2d">2D</button><button data-dimension="3d">3D brain</button></div><p class="graph-dimension-hint">Explore your free graph as a spatial neural network.</p></div>
+        <label class="graph-control-row"><span data-animate-label>Animate</span><input type="checkbox" data-k="animate" ${c.animate ? 'checked' : ''}></label></div>
       <div class="graph-control-section"><h4>Filters</h4>
         <input class="search-input" data-k="search" value="${esc(c.search)}" placeholder="e.g. -path:&quot;Key Terms&quot;">
         <div class="graph-control-row"><span>Orphans</span><input type="checkbox" data-k="showOrphans" ${c.showOrphans ? 'checked' : ''}></div></div>
@@ -1154,18 +1185,28 @@ SPECIAL.graph = {
     view.appendChild(panel);
     const fitBtn = h(`<button class="clickable-icon graph-fit" title="Zoom to fit">${icon('maximize')}</button>`);
     view.appendChild(fitBtn); fitBtn.onclick = () => graphInst.fit();
-    const sync = () => { panel.classList.toggle('is-free', graphInst.cfg.shape === 'free'); $$('[data-shape]', panel).forEach(b => b.classList.toggle('is-active', b.dataset.shape === graphInst.cfg.shape)); };
+    const sync = () => {
+      panel.classList.toggle('is-free', graphInst.cfg.shape === 'free');
+      $$('[data-shape]', panel).forEach(b => { const active = b.dataset.shape === graphInst.cfg.shape; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); });
+      $$('[data-dimension]', panel).forEach(b => { const active = (b.dataset.dimension === '3d') === !!graphInst.cfg.free3d; b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active)); });
+      $('[data-animate-label]', panel).textContent = graphInst.cfg.shape === 'free' && graphInst.cfg.free3d ? 'Auto orbit' : 'Animate';
+      $('.graph-count', panel).textContent = graphInst.data().nodes.length + ' notes';
+    };
     sync();
     $('.graph-controls-header', panel).onclick = () => { panel.classList.toggle('is-collapsed'); store.set('graphPanel', !panel.classList.contains('is-collapsed')); };
-    panel.addEventListener('click', e => { const b = e.target.closest('[data-shape]'); if (!b) return; graphInst.update({ shape: b.dataset.shape }); sync(); });
+    panel.addEventListener('click', e => {
+      const b = e.target.closest('[data-shape], [data-dimension]'); if (!b) return;
+      graphInst.update(b.dataset.shape ? { shape: b.dataset.shape } : { free3d: b.dataset.dimension === '3d' }); sync();
+    });
     let t;
     panel.addEventListener('input', e => {
       const k = e.target.dataset.k; if (!k) return;
       const v = e.target.type === 'checkbox' ? e.target.checked : e.target.type === 'range' ? +e.target.value : e.target.value;
       clearTimeout(t);
-      const apply = () => { if (['textFade', 'nodeSize', 'lineSize', 'animate'].includes(k)) { graphInst.cfg[k] = v; graphInst.restyle(); graphInst.update({}); } else graphInst.update({ [k]: v }); $('.graph-count', panel).textContent = graphInst.data().nodes.length + ' notes'; };
+      const apply = () => { if (graphInst !== instance) return; graphInst.update({ [k]: v }); $('.graph-count', panel).textContent = graphInst.data().nodes.length + ' notes'; };
       k === 'search' ? (t = setTimeout(apply, 300)) : apply();
     });
+    return () => clearTimeout(t);
   },
 };
 

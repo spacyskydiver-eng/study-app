@@ -9,6 +9,12 @@ Also here:
 
 The old flashcard app lives at `legacy/index.html`.
 
+## 3D free graph
+
+In **Graph view → Graph settings → Free**, choose **3D brain**. Cell, Helix and the local graph remain unchanged; the Free graph remembers your 2D/3D preference. The 3D network uses the actual notes and links, with spatial forces inside a soft, two-hemisphere brain-like envelope. Search, groups, orphan visibility and display/force settings still apply.
+
+Drag to orbit, right-drag or Shift-drag to pan, and scroll to zoom. Click the map to activate keyboard controls: **WASD** pans, **Q/E** moves vertically, **arrow keys** orbit, **+/−** zooms, and **Shift** speeds up travel. Click a note to select it, double-click it or choose **Focus** to fly to its neighbourhood, and use **Open note** or **Enter** to read it. **Home** resets the camera; **Escape** deselects. On touch screens, one finger orbits and two fingers pan/pinch. The **Controls** button shows these shortcuts; **Auto orbit** can be turned off. Reduced-motion preferences disable auto orbit and momentum.
+
 ## Rebuild after changing the vault
 
 ```
