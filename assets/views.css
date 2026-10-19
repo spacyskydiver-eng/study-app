@@ -480,3 +480,59 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
   .exam-result { flex-direction: column; align-items: flex-start; }
   .exam-head h1, .exam-result h1 { font-size: 22px; }
 }
+
+/* ---------------------------------------------------------------- flashcard exam plans */
+.fc-plans .fc-section-title { justify-content: space-between; align-items: center; }
+.fc-plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.fc-plan { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--fc-line, var(--background-modifier-border)); background: var(--background-secondary); cursor: pointer; display: grid; gap: 9px; }
+.fc-plan:hover { border-color: var(--interactive-accent); }
+.fc-plan-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.fc-plan-name { font-weight: 700; font-size: 15.5px; color: var(--text-normal); }
+.fc-plan-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+.fc-plan-status { flex: none; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
+.fc-plan-status.ok { background: rgba(52,211,153,.18); color: #6EE7B7; }
+.fc-plan-status.warn { background: rgba(251,191,36,.18); color: #FCD34D; }
+.fc-plan-status.dim { background: var(--background-modifier-hover); color: var(--text-muted); }
+.theme-light .fc-plan-status.ok { color: #047857; } .theme-light .fc-plan-status.warn { color: #92400e; }
+.fc-plan-nums { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--text-muted); }
+.fc-plan-nums b { color: var(--text-normal); }
+.fc-plan-verdict { font-size: 13px; line-height: 1.45; color: var(--text-muted); }
+.fc-plan-verdict.big { font-size: 15px; color: var(--text-normal); margin: 10px 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); }
+.fc-plan-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.fc-plan-actions .fc-mini.mod-cta { background: var(--interactive-accent); color: #06281d; border-color: transparent; font-weight: 650; }
+.fc-plan-empty { color: var(--text-muted); font-size: 13.5px; padding: 4px 4px 8px; }
+.fc-plan-bar { margin-bottom: 10px; }
+.fc-plan-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fc-plan-title h2, .fc-planform h2 { margin: 4px 0; font-size: 24px; }
+.fc-plan-when { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; color: var(--text-muted); font-size: 13.5px; margin-top: 6px; }
+.fc-plan-when input, .fc-field input, .fc-field select { font: inherit; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); color-scheme: dark; }
+.theme-light .fc-plan-when input, .theme-light .fc-field input, .theme-light .fc-field select { color-scheme: light; }
+.fc-plan-when label { display: flex; align-items: center; gap: 8px; }
+.fc-plan-stats { margin: 0 0 14px; }
+.fc-plan-days { display: grid; gap: 6px; }
+.fc-plan-day { display: flex; gap: 14px; align-items: baseline; padding: 10px 14px; border-radius: 10px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); }
+.fc-plan-day.is-today { border-color: var(--interactive-accent); }
+.fc-plan-day.is-review { background: rgba(124,140,248,.08); }
+.fc-plan-day.is-exam { background: rgba(251,191,36,.08); border-color: rgba(251,191,36,.35); }
+.fc-plan-date { flex: none; width: 92px; font-weight: 700; font-size: 13px; }
+.fc-plan-work { flex: 1; font-size: 13.5px; color: var(--text-muted); line-height: 1.45; }
+.fc-plan-work b { color: var(--text-normal); }
+.fc-plan-rev { margin-left: 10px; font-size: 12px; color: var(--text-faint); white-space: nowrap; }
+.fc-plan-covers, .fc-plan-hist { display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-plan-covers span, .fc-plan-hist span, .fc-paper { font-size: 12.5px; padding: 4px 10px; border-radius: 99px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); color: var(--text-muted); }
+.fc-plan-covers em, .fc-paper em { font-style: normal; color: var(--text-faint); margin-left: 4px; }
+.fc-paper { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-normal); }
+.fc-paper:hover { border-color: var(--interactive-accent); }
+.fc-paper .svg-icon { width: 14px; height: 14px; }
+.fc-planform { max-width: 720px; }
+.fc-field { display: grid; gap: 6px; margin: 12px 0; font-size: 13px; color: var(--text-muted); }
+.fc-field > span { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+.fc-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; }
+.fc-pick-item { display: flex; align-items: center; gap: 9px; padding: 8px 12px; border-radius: 9px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); cursor: pointer; color: var(--text-normal); font-size: 13.5px; }
+.fc-pick-item span { flex: 1; } .fc-pick-item em { font-style: normal; color: var(--text-faint); font-size: 12px; }
+.fc-pick-item input, .fc-check input { accent-color: var(--interactive-accent); }
+.fc-check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--text-normal); margin: 8px 0 14px; }
+.fc-plan-preview { font-size: 14px; line-height: 1.5; color: var(--text-muted); padding: 12px 14px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); margin-bottom: 14px; }
+.fc-plan-preview b { color: var(--text-normal); }
+.fc-plan-preview .warn, .fc-planform .warn { color: #FBBF24; }
+@media (max-width: 700px) { .fc-plan-date { width: 70px; } .fc-plan-day { gap: 10px; } }
