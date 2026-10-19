@@ -13,7 +13,7 @@ const GRADE_XP = [2, 6, 10, 12];  // again, hard, good, easy
 /* ---------------------------------------------------------------- state */
 let D = null;           // { decks, cards, byId, deckById }
 let S = load();
-function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, newPerDay: 20, goal: 40, created: Date.now() }; }
+function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
 function load() { const s = store.get(KEY, null); return s && s.v === 1 ? Object.assign(blank(), s) : blank(); }
 function save() { store.set(KEY, S); }
 const today = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -114,6 +114,7 @@ function checkBadges() {
 const deckCards = deckId => D.cards.filter(c => c.deck === deckId).map(c => c.id);
 function scopeCards(scope) {
   if (!scope || scope === 'all') return D.cards.map(c => c.id);
+  if (scope.startsWith('plan:') || scope.startsWith('cram:')) { const p = S.plans.find(x => x.id === scope.slice(5)); return p ? planCardIds(p) : []; }
   if (scope.startsWith('subject:')) { const s = scope.slice(8); return D.cards.filter(c => (D.deckById.get(c.deck) || {}).subject === s).map(c => c.id); }
   return deckCards(scope);
 }
@@ -123,6 +124,252 @@ function counts(ids) {
   return { due, fresh, mast, total: ids.length };
 }
 const newLeftToday = () => Math.max(0, S.newPerDay - (dayRec().fresh || 0));
+
+/* ---------------------------------------------------------------- exam plans
+   A plan is a saved set of decks with a deadline. It only stores which cards it covers and a daily log;
+   all card progress, XP and levels live in S.cards / S.xp as usual, so deleting a plan loses nothing. */
+let termLinks = null;
+function termNotesLinkedFrom() {      // key-term note -> notes that link to it
+  if (termLinks) return termLinks;
+  termLinks = new Map();
+  const termNotes = new Set(D.cards.filter(c => c.type === 'term').map(c => c.note));
+  for (const [nid, n] of Object.entries(B.V.notes)) for (const l of n.links || []) if (termNotes.has(l)) {
+    if (!termLinks.has(l)) termLinks.set(l, []);
+    termLinks.get(l).push(nid);
+  }
+  return termLinks;
+}
+const folderOf = p => p ? p.slice(0, p.lastIndexOf('/') + 1) : '';
+const deckOrder = (a, b) => B.collator.compare((a.hub || '~' + a.name), (b.hub || '~' + b.name));
+function planCardIds(p) {             // in study order: each deck's cards, then the key terms its notes link to
+  const out = [], seen = new Set(), tl = p.terms ? termNotesLinkedFrom() : null;
+  out.owner = new Map();
+  const terms = p.terms ? D.cards.filter(c => c.type === 'term') : [];
+  for (const did of p.decks) {
+    const d = D.deckById.get(did); if (!d) continue;
+    for (const c of D.cards) if (c.deck === did && !seen.has(c.id)) { seen.add(c.id); out.push(c.id); out.owner.set(c.id, did); }
+    if (tl && d.hub) {
+      const f = folderOf(d.hub);
+      for (const c of terms) if (!seen.has(c.id) && (tl.get(c.note) || []).some(n => n.startsWith(f))) { seen.add(c.id); out.push(c.id); out.owner.set(c.id, did); }
+    }
+  }
+  return out;
+}
+const dayStart = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const addDays = (t, n) => { const d = new Date(t); d.setDate(d.getDate() + n); return d.getTime(); };
+const daysBetween = (a, b) => Math.round((dayStart(b) - dayStart(a)) / DAY);
+const fmtDate = t => new Date(t).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+const fmtDateTime = t => new Date(t).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+function fmtLeft(ms) {
+  if (ms <= 0) return 'deadline passed';
+  const m = Math.floor(ms / MIN), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+  return d ? `${d}d ${h}h left` : h ? `${h}h ${mm}m left` : `${mm}m left`;
+}
+const toLocalInput = t => { const d = new Date(t - new Date(t).getTimezoneOffset() * MIN); return d.toISOString().slice(0, 16); };
+const plog = (p, day = today()) => (p.log[day] = p.log[day] || { n: 0, fresh: 0 });
+
+function planStats(p, now = Date.now()) {
+  const ids = planCardIds(p);
+  let fresh = 0, learning = 0, learned = 0, due = 0, mast = 0;
+  for (const id of ids) {
+    const c = S.cards[id];
+    if (!c) { fresh++; continue; }
+    if (c.step >= 0) learning++; else learned++;
+    if (c.due <= now) due++;
+    if (mastered(id)) mast++;
+  }
+  const total = ids.length, msLeft = p.due - now;
+  // days you can still study: today up to the day before the deadline, plus the deadline day itself if it is after 3pm
+  const lastDay = new Date(p.due).getHours() >= 15 ? dayStart(p.due) : addDays(dayStart(p.due), -1);
+  const usable = Math.max(0, daysBetween(now, lastDay) + 1);
+  const span = Math.max(1, daysBetween(p.created, lastDay) + 1);
+  const buffer = span >= 4 ? 1 : 0;                      // keep the last day for review only
+  const newDays = Math.max(0, usable - buffer);
+  const doneToday = (p.log[today()] || {}).fresh || 0;
+  const freshAtStart = fresh + doneToday;
+  const target = freshAtStart ? Math.ceil(freshAtStart / Math.max(1, newDays)) : 0;
+  const todayLeft = Math.max(0, Math.min(fresh, target - doneToday));
+  // pace: new cards a day on the plan's completed days
+  const elapsed = Math.max(0, daysBetween(p.created, now));
+  let pastFresh = 0; for (const [day, r] of Object.entries(p.log)) if (day !== today()) pastFresh += r.fresh || 0;
+  const pace = elapsed ? pastFresh / elapsed : null;
+  let status, verdict;
+  if (!fresh && !learning) { status = 'done'; verdict = `All ${total} cards learned. Keep reviewing what comes due until the exam.`; }
+  else if (msLeft <= 0) { status = 'over'; verdict = `Deadline passed with ${learned} of ${total} cards learned.`; }
+  else if (!usable) { status = 'behind'; verdict = `No study days left before the deadline and ${fresh + learning} cards still to learn.`; }
+  else if (pace != null && fresh > 0 && pace * Math.max(1, newDays) < fresh - doneToday) {
+    status = 'behind';
+    const shortBy = Math.round(fresh - doneToday - pace * Math.max(1, newDays));
+    verdict = `Not on course. At your pace so far (about ${Math.round(pace)} new a day) about ${shortBy} cards would still be unseen at the deadline. Do ${target} new cards a day to finish.`;
+  } else if (!todayLeft) { status = 'ontrack'; verdict = fresh ? `On course. Today's ${target} new cards are done${due ? `; ${due} reviews are due` : ''}.` : `On course. Every card has been seen; finish the ${learning} still in learning.`; }
+  else { status = 'today'; verdict = `On course if you learn ${todayLeft} more new card${todayLeft > 1 ? 's' : ''} today (${target} a day until ${fmtDate(addDays(lastDay, -buffer))}).`; }
+  return { ids, total, fresh, learning, learned, due, mast, msLeft, usable, newDays, buffer, lastDay, target, todayLeft, doneToday, pace, status, verdict };
+}
+
+function planSchedule(p, st) {         // day by day from today
+  const rows = [];
+  const freshIds = st.ids.filter(isNew);
+  let k = 0, left = st.fresh;
+  for (let i = 0; i < st.usable; i++) {
+    const day = dayStart(addDays(Date.now(), i));
+    const isNewDay = i < st.newDays;
+    let n = 0;
+    if (isNewDay) n = i === 0 ? st.todayLeft : Math.ceil(left / Math.max(1, st.newDays - i));
+    n = Math.min(n, left); left -= n;
+    const slice = freshIds.slice(k, k + n); k += n;
+    const decks = [...new Set(slice.map(id => st.ids.owner.get(id)))].map(id => D.deckById.get(id)).filter(Boolean);
+    const dayEnd = day + DAY;
+    const reviews = st.ids.filter(id => { const c = S.cards[id]; return c && c.due < dayEnd && (i === 0 || c.due >= day); }).length;
+    rows.push({ day, n, decks, reviews, review: !isNewDay });
+  }
+  return rows;
+}
+
+function planQueue(p, cram) {
+  const st = planStats(p), now = Date.now();
+  if (cram) {                          // weakest learned cards first, ignoring due dates
+    return st.ids.filter(id => S.cards[id]).sort((a, b) => {
+      const x = S.cards[a], y = S.cards[b];
+      return (y.lapses - x.lapses) || (x.ease - y.ease) || (x.ivl - y.ivl);
+    }).slice(0, 40);
+  }
+  const due = st.ids.filter(id => !isNew(id) && S.cards[id].due <= now).sort((a, b) => S.cards[a].due - S.cards[b].due).slice(0, 300);
+  const fresh = st.ids.filter(isNew).slice(0, st.todayLeft);
+  const q = []; let i = 0, j = 0;
+  while (i < due.length || j < fresh.length) { for (let k = 0; k < 3 && i < due.length; k++) q.push(due[i++]); if (j < fresh.length) q.push(fresh[j++]); }
+  return q;
+}
+
+const STATUS = { done: ['Goal met', 'ok'], over: ['Finished', 'dim'], behind: ['Behind', 'warn'], ontrack: ['On course', 'ok'], today: ['On course', 'ok'] };
+function planCard(p) {
+  const st = planStats(p);
+  const [label, cls] = STATUS[st.status];
+  const pctSeen = st.total ? (st.total - st.fresh) / st.total * 100 : 0, pctLearned = st.total ? st.learned / st.total * 100 : 0;
+  return `<div class="fc-plan" data-plan="${esc(p.id)}">
+    <div class="fc-plan-head"><div><div class="fc-plan-name">${esc(p.name)}</div><div class="fc-plan-sub">${fmtDateTime(p.due)} · <span data-countdown="${p.due}">${fmtLeft(st.msLeft)}</span></div></div><span class="fc-plan-status ${cls}">${label}</span></div>
+    <div class="fc-deck-bar" title="${Math.round(pctSeen)}% seen, ${Math.round(pctLearned)}% learned"><i style="width:${pctSeen}%"></i><b style="width:${pctLearned}%"></b></div>
+    <div class="fc-plan-nums"><span><b>${st.learned}</b> / ${st.total} learned</span><span><b>${st.todayLeft}</b> new left today</span><span><b>${st.due}</b> due</span></div>
+    <div class="fc-plan-verdict">${esc(st.verdict)}</div>
+    <div class="fc-plan-actions"><button class="fc-mini mod-cta" data-plan-study="${esc(p.id)}"${st.due + st.todayLeft ? '' : ' disabled'}>${icon('play')} Study today's cards</button><button class="fc-mini" data-plan-open="${esc(p.id)}">${icon('list')} Plan</button></div>
+  </div>`;
+}
+
+let examPapers = null;
+function loadExams() {
+  if (examPapers) return Promise.resolve(examPapers);
+  return fetch('data/exams.json', { cache: 'no-cache' }).then(r => r.json()).then(x => (examPapers = x.subjects.flatMap(s => s.papers.map(p => Object.assign({ subject: s.subject }, p))))).catch(() => (examPapers = []));
+}
+
+function planView(p) {
+  stopSpecs(); keyHandler = null;
+  const st = planStats(p);
+  const [label, cls] = STATUS[st.status];
+  const rows = planSchedule(p, st);
+  const decks = p.decks.map(id => D.deckById.get(id)).filter(Boolean);
+  const hist = Object.entries(p.log).sort();
+  root.innerHTML = `<div class="fc-view fc-planview">
+    <div class="fc-plan-bar"><button class="fc-mini" data-home>${icon('arrow-left')} Flashcards</button></div>
+    <div class="fc-plan-title"><h2>${esc(p.name)}</h2><span class="fc-plan-status ${cls}">${label}</span></div>
+    <div class="fc-plan-when"><label>Deadline <input type="datetime-local" data-due value="${toLocalInput(p.due)}"></label><span data-countdown="${p.due}">${fmtLeft(st.msLeft)}</span></div>
+    <div class="fc-plan-verdict big">${esc(st.verdict)}</div>
+    <div class="fc-stats fc-plan-stats"><div><b>${st.total}</b><span>cards</span></div><div><b>${st.total - st.fresh}</b><span>seen</span></div><div><b>${st.learned}</b><span>learned</span></div><div><b>${st.mast}</b><span>mastered</span></div></div>
+    <div class="fc-plan-actions"><button class="fc-big mod-cta" data-plan-study="${esc(p.id)}"${st.due + st.todayLeft ? '' : ' disabled'}>${icon('play')}<span><b>Study today's cards</b><small>${st.todayLeft} new · ${st.due} due</small></span></button>
+      <button class="fc-big" data-plan-cram="${esc(p.id)}"${st.total - st.fresh ? '' : ' disabled'}>${icon('zap')}<span><b>Extra practice</b><small>weakest cards you've seen</small></span></button></div>
+    <div class="fc-section-title">Day by day</div>
+    <div class="fc-plan-days">${rows.length ? rows.map((r, i) => `<div class="fc-plan-day${i === 0 ? ' is-today' : ''}${r.review ? ' is-review' : ''}">
+      <div class="fc-plan-date">${i === 0 ? 'Today' : fmtDate(r.day)}</div>
+      <div class="fc-plan-work">${r.review ? '<b>Review only</b>: due cards, Extra practice and the exam papers' : r.n ? `<b>${r.n} new</b> · ${esc(r.decks.map(d => d.name).join(', '))}` : (i === 0 && st.doneToday ? `<b>New cards done</b> (${st.doneToday} today)` : '<b>No new cards</b>')}${r.reviews ? `<span class="fc-plan-rev">${i === 0 ? '' : '~'}${r.reviews} review${r.reviews > 1 ? 's' : ''}</span>` : ''}</div></div>`).join('') : '<div class="fc-plan-day"><div class="fc-plan-work">No study days left before the deadline.</div></div>'}
+      <div class="fc-plan-day is-exam"><div class="fc-plan-date">${fmtDate(p.due)}</div><div class="fc-plan-work"><b>Deadline</b> ${new Date(p.due).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</div></div></div>
+    <div class="fc-plan-papers"></div>
+    <div class="fc-section-title">Covers</div>
+    <div class="fc-plan-covers">${decks.map(d => { const c = counts(deckCards(d.id)); return `<span>${esc(d.subject)} › ${esc(d.name)} <em>${c.total - c.fresh}/${c.total}</em></span>`; }).join('')}${p.terms ? '<span>Key terms linked from these notes</span>' : ''}</div>
+    ${hist.length ? `<div class="fc-section-title">Done so far</div><div class="fc-plan-hist">${hist.map(([d, r]) => `<span><b>${fmtDate(new Date(d + 'T12:00').getTime())}</b> ${r.n} reviews, ${r.fresh} new</span>`).join('')}</div>` : ''}
+    <section class="fc-footer"><span class="spacer"></span><button class="fc-mini fc-danger" data-plan-delete>Delete plan</button></section>
+    <div class="fc-note">Deleting the plan keeps all your card progress, XP and evolution.</div>
+  </div>`;
+  loadExams().then(papers => {
+    const hubs = new Set(decks.map(d => d.hub));
+    const subj = new Set(decks.map(d => d.subject));
+    const practical = decks.some(d => (d.hub || '').includes('/Practicals/'));
+    const deckHubs = new Set(D.decks.map(d => d.hub));
+    const list = papers.filter(x => hubs.has(x.hub) || (practical && subj.has(x.subject) && !deckHubs.has(x.hub)));
+    const box = $('.fc-plan-papers', root);
+    if (box && list.length) box.innerHTML = `<div class="fc-section-title">Exam practice for this plan</div><div class="fc-plan-covers">${list.map(x => `<a class="fc-paper" data-paper="exam/${esc(x.id)}">${icon('clipboard-list')} ${esc(x.lecture)}: ${esc(x.title)} <em>${x.marks} marks</em></a>`).join('')}</div>`;
+  });
+  tickPlans();
+  root.onclick = e => {
+    if (e.target.closest('[data-home]')) return dashboard();
+    const s = e.target.closest('[data-plan-study]'); if (s && !s.disabled) return startSession('plan:' + p.id);
+    const c = e.target.closest('[data-plan-cram]'); if (c && !c.disabled) return startSession('cram:' + p.id);
+    const pp = e.target.closest('[data-paper]'); if (pp) return B.go(pp.dataset.paper);
+    const del = e.target.closest('[data-plan-delete]');
+    if (del) {
+      if (del.dataset.armed) { S.plans = S.plans.filter(x => x.id !== p.id); save(); B.toast('Plan deleted. Card progress kept.'); return dashboard(); }
+      del.dataset.armed = '1'; del.textContent = 'Tap again to delete'; setTimeout(() => { if (del.isConnected) { delete del.dataset.armed; del.textContent = 'Delete plan'; } }, 3000);
+    }
+  };
+  $('[data-due]', root).onchange = e => { const t = new Date(e.target.value).getTime(); if (t > Date.now()) { p.due = t; save(); planView(p); } else B.toast('Pick a time in the future'); };
+}
+
+function planForm() {
+  stopSpecs(); keyHandler = null;
+  const subjects = [...new Set(D.decks.filter(d => d.hub).map(d => d.subject))];
+  const def = new Date(addDays(dayStart(Date.now()), 7)); def.setHours(9, 0, 0, 0);
+  const st = { subject: subjects.find(s => /genetics/i.test(s)) || subjects[0], picked: new Set(), terms: true };
+  const render = () => {
+    const decks = D.decks.filter(d => d.subject === st.subject && d.hub).sort(deckOrder);
+    root.innerHTML = `<div class="fc-view fc-planform">
+      <div class="fc-plan-bar"><button class="fc-mini" data-home>${icon('arrow-left')} Flashcards</button></div>
+      <h2>New exam plan</h2>
+      <label class="fc-field"><span>Name</span><input data-name maxlength="60" value="${esc(st.name || st.subject + ' exam')}"></label>
+      <label class="fc-field"><span>Deadline (exam date and time)</span><input type="datetime-local" data-due value="${st.due || toLocalInput(def.getTime())}"></label>
+      <label class="fc-field"><span>Module</span><select data-subject>${subjects.map(s => `<option${s === st.subject ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></label>
+      <div class="fc-field"><span>Lectures and practicals <button class="fc-mini" data-all>${decks.every(d => st.picked.has(d.id)) ? 'Clear' : 'Select all'}</button></span>
+        <div class="fc-pick">${decks.map(d => `<label class="fc-pick-item"><input type="checkbox" data-deck="${esc(d.id)}"${st.picked.has(d.id) ? ' checked' : ''}><span>${esc(d.name)}</span><em>${d.count}</em></label>`).join('')}</div></div>
+      <label class="fc-check"><input type="checkbox" data-terms${st.terms ? ' checked' : ''}> Include the key terms used in these lectures</label>
+      <div class="fc-plan-preview"></div>
+      <div class="fc-plan-actions"><button class="fc-big mod-cta" data-create>${icon('check')}<span><b>Create plan</b><small>saves this card set</small></span></button></div>
+    </div>`;
+    preview();
+  };
+  const read = () => {
+    st.name = $('[data-name]', root).value; st.due = $('[data-due]', root).value;
+    st.terms = $('[data-terms]', root).checked;
+    st.picked = new Set($$('[data-deck]', root).filter(i => i.checked).map(i => i.dataset.deck));
+  };
+  const draft = () => ({ id: 'p' + Date.now().toString(36), name: (st.name || '').trim() || st.subject + ' exam', decks: D.decks.filter(d => st.picked.has(d.id)).sort(deckOrder).map(d => d.id), terms: st.terms, due: new Date(st.due || toLocalInput(def.getTime())).getTime(), created: Date.now(), log: {} });
+  const preview = () => {
+    read();
+    const box = $('.fc-plan-preview', root);
+    if (!st.picked.size) { box.innerHTML = '<span class="dim">Pick at least one lecture.</span>'; return; }
+    const p = draft();
+    if (!(p.due > Date.now())) { box.innerHTML = '<span class="warn">The deadline must be in the future.</span>'; return; }
+    const s = planStats(p);
+    box.innerHTML = `<b>${s.total}</b> cards, <b>${s.fresh}</b> not seen yet. ${s.usable} study day${s.usable === 1 ? '' : 's'} before the deadline${s.buffer ? ' (the last kept for review)' : ''}: about <b>${s.target}</b> new cards a day, plus reviews.${s.target > 120 ? ' <span class="warn">That is a heavy load.</span>' : ''}`;
+  };
+  render();
+  root.onclick = e => {
+    if (e.target.closest('[data-home]')) return dashboard();
+    if (e.target.closest('[data-all]')) { e.preventDefault(); read(); const decks = D.decks.filter(d => d.subject === st.subject && d.hub); const all = decks.every(d => st.picked.has(d.id)); st.picked = all ? new Set() : new Set(decks.map(d => d.id)); return render(); }
+    if (e.target.closest('[data-create]')) {
+      read();
+      if (!st.picked.size) return B.toast('Pick at least one lecture');
+      const p = draft();
+      if (!(p.due > Date.now())) return B.toast('The deadline must be in the future');
+      S.plans.push(p); save(); return planView(p);
+    }
+  };
+  root.oninput = e => { if (!$('.fc-planform', root)) return; if (e.target.matches('[data-subject]')) { read(); st.subject = e.target.value; st.picked = new Set(); return render(); } preview(); };
+}
+
+let planTimer = null;
+function tickPlans() {
+  clearInterval(planTimer);
+  planTimer = setInterval(() => {
+    if (!root || !root.isConnected) { clearInterval(planTimer); return; }
+    $$('[data-countdown]', root).forEach(el => { el.textContent = fmtLeft(+el.dataset.countdown - Date.now()); });
+  }, 15000);
+}
 
 /* ---------------------------------------------------------------- the specimen */
 function specimen(canvas, opts = {}) {
@@ -286,7 +533,7 @@ B.registerView('flashcards', {
     loadCards().then(() => { if (root === view) dashboard(); }).catch(() => { view.innerHTML = '<div class="pane-empty">Could not load the flashcards.</div>'; });
     const onKey = e => keyHandler && keyHandler(e);
     document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('keydown', onKey); stopSpecs(); root = null; keyHandler = null; clearInterval(sprintTimer); };
+    return () => { document.removeEventListener('keydown', onKey); stopSpecs(); root = null; keyHandler = null; clearInterval(sprintTimer); clearInterval(planTimer); };
   },
 });
 let keyHandler = null;
@@ -324,6 +571,8 @@ function dashboard() {
       <button class="fc-big" data-sprint>${icon('timer')}<span><b>Sprint</b><small>60 seconds · best ${S.best.sprint}</small></span></button>
       <div class="fc-stats"><div><b>${all.total}</b><span>cards</span></div><div><b>${all.total - all.fresh}</b><span>seen</span></div><div><b>${all.mast}</b><span>mastered</span></div><div><b>${totalReviews()}</b><span>reviews</span></div></div>
     </section>
+    <section class="fc-plans"><div class="fc-section-title">Exam plans <button class="fc-mini" data-plan-new>${icon('plus')} New plan</button></div>
+      ${S.plans.length ? `<div class="fc-plan-grid">${S.plans.slice().sort((a, b) => a.due - b.due).map(planCard).join('')}</div>` : '<div class="fc-plan-empty">Set a deadline for some lectures to get a day-by-day plan and a card set for it.</div>'}</section>
     <section class="fc-decks">${subjects.map(sub => {
       const decks = D.decks.filter(d => d.subject === sub);
       const sc = counts(scopeCards('subject:' + sub));
@@ -347,9 +596,13 @@ function dashboard() {
   </div>`;
   const spec = mountSpec($('.fc-spec-canvas', root), { stage: st });
   $$('.fc-evo canvas', root).forEach(cv => { const i = +cv.dataset.stage; mountSpec(cv, { stage: i, locked: i > st, still: i !== st }); });
+  tickPlans();
   if (newBadges.length) B.toast('Badge earned: ' + newBadges.map(b => b.name).join(', '));
   root.onclick = e => {
     const sb = e.target.closest('[data-study]'); if (sb && !sb.disabled) return startSession(sb.dataset.study);
+    if (e.target.closest('[data-plan-new]')) return planForm();
+    const ps = e.target.closest('[data-plan-study]'); if (ps && !ps.disabled) return startSession('plan:' + ps.dataset.planStudy);
+    const po = e.target.closest('[data-plan-open], .fc-plan'); if (po) { const p = S.plans.find(x => x.id === (po.dataset.planOpen || po.dataset.plan)); if (p) return planView(p); }
     if (e.target.closest('[data-sprint]')) return startSprint();
     if (e.target.closest('.fc-rename')) {
       const span = $('.fc-name-text', root); const inp = h(`<input class="fc-name-input" maxlength="28" value="${esc(S.name)}" placeholder="${esc(stage.name)}">`);
@@ -376,6 +629,7 @@ function dashboard() {
 
 /* ---------------------------------------------------------------- study session */
 function buildQueue(scope) {
+  if (scope.startsWith('plan:') || scope.startsWith('cram:')) { const p = S.plans.find(x => x.id === scope.slice(5)); return p ? planQueue(p, scope.startsWith('cram:')) : []; }
   const ids = scopeCards(scope), now = Date.now();
   const due = ids.filter(id => !isNew(id) && S.cards[id].due <= now).sort((a, b) => S.cards[a].due - S.cards[b].due).slice(0, 200);
   const fresh = ids.filter(isNew).slice(0, newLeftToday());
@@ -411,7 +665,7 @@ function startSession(scope) {
   if (!queue.length) { B.toast('Nothing due here right now'); return; }
   stopSpecs();
   const lv = levelOf(S.xp);
-  sess = { scope, queue, total: queue.length, done: 0, right: 0, combo: 0, xp: 0, levels: [], startStage: stageOf(lv.L), startedAt: Date.now(), seen: new Set() };
+  sess = { plan: /^(plan|cram):/.test(scope) ? S.plans.find(x => x.id === scope.slice(5)) : null, scope, queue, total: queue.length, done: 0, right: 0, combo: 0, xp: 0, levels: [], startStage: stageOf(lv.L), startedAt: Date.now(), seen: new Set() };
   root.onclick = null;
   root.innerHTML = `<div class="fc-session">${sessionHeader()}<div class="fc-stage-area"></div><div class="fc-controls"></div></div>`;
   sess.spec = mountSpec($('.fc-mini-spec canvas', root), { stage: stageOf(lv.L) });
@@ -476,6 +730,7 @@ function grade(id, g, fresh) {
   const ok = g >= 2;
   S.cards[id] = schedule(S.cards[id], g);
   const d = dayRec(); d.n++; if (ok) d.ok++; if (fresh && !sess.seen.has(id)) d.fresh++;
+  if (sess.plan) { const r = plog(sess.plan); r.n++; if (fresh && !sess.seen.has(id)) r.fresh++; }
   sess.seen.add(id);
   sess.done++; if (ok) sess.right++;
   if (g === 0) sess.combo = 0; else if (g >= 2) sess.combo++;
@@ -505,12 +760,12 @@ function finishSession() {
     <div class="fc-sum-grid"><div><b>${s.done}</b><span>reviews</span></div><div><b>${acc}%</b><span>correct</span></div><div><b>+${s.xp}</b><span>XP</span></div><div><b>${Math.round((Date.now() - s.startedAt) / 60000)}m</b><span>time</span></div></div>
     <div class="fc-level"><span class="fc-lv">Level ${lv.L}</span><div class="fc-xpbar"><div style="width:${(lv.into / lv.need * 100).toFixed(1)}%"></div></div><span class="fc-xpnum">${lv.into} / ${lv.need}</span></div>
     ${badges.length ? `<div class="fc-sum-badges">${badges.map(b => `<span>${icon('trophy')} ${esc(b.name)}</span>`).join('')}</div>` : ''}
-    <div class="fc-sum-actions"><button class="mod-cta" data-again>Keep going</button><button data-home>Back to decks</button></div>
+    <div class="fc-sum-actions"><button class="mod-cta" data-again>Keep going</button><button data-home>${s.plan ? 'Back to plan' : 'Back to decks'}</button></div>
   </div>`;
   const spec = mountSpec($('.fc-sum-spec canvas', root), { stage: evolved ? s.startStage : st });
   if (evolved) setTimeout(() => { spec.stage(st); spec.react('level'); }, 900);
   else if (s.levels.length) spec.react('level');
-  root.onclick = e => { if (e.target.closest('[data-again]')) startSession(s.scope); else if (e.target.closest('[data-home]')) dashboard(); };
+  root.onclick = e => { if (e.target.closest('[data-again]')) startSession(s.scope); else if (e.target.closest('[data-home]')) { if (s.plan && S.plans.includes(s.plan)) planView(s.plan); else dashboard(); } };
 }
 
 /* ---------------------------------------------------------------- sprint */

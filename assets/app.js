@@ -131,6 +131,7 @@ function shell() {
     <button class="clickable-icon" data-act="switcher" title="Quick switcher (Ctrl+O)">${icon('arrow-right')}</button>
     <button class="clickable-icon" data-act="graph" title="Graph view (Ctrl+G)">${icon('graph')}</button>
     <button class="clickable-icon" data-act="open" data-id="flashcards" title="Flashcards">${icon('cards')}</button>
+    <button class="clickable-icon" data-act="open" data-id="exam" title="Exam practice">${icon('clipboard-list')}</button>
     <button class="clickable-icon" data-act="open" data-id="books" title="Book library">${icon('library')}</button>
     <button class="clickable-icon" data-act="home" title="Home">${icon('home')}</button>
     <button class="clickable-icon" data-act="random" title="Random note">${icon('shuffle')}</button>
@@ -159,6 +160,7 @@ function shell() {
         <div class="title" id="mobile-title"></div>
         <button class="clickable-icon" data-act="switcher">${icon('search')}</button>
         <button class="clickable-icon" data-act="open" data-id="flashcards">${icon('cards')}</button>
+        <button class="clickable-icon" data-act="open" data-id="exam">${icon('clipboard-list')}</button>
         <button class="clickable-icon" data-act="graph">${icon('graph')}</button>
         <button class="clickable-icon" data-act="toggle-right">${icon('link')}</button>
       </div>
@@ -338,7 +340,7 @@ function renderBookmarks() {
   }).join('');
   $('#bookmarks').innerHTML = `<div class="pane-header">Bookmarks</div>` + (items || '<div class="pane-empty">No bookmarks</div>') +
     `<div class="pane-header">Views</div>` +
-    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['books', 'library', 'Book library']].filter(([id]) => exists(id))
+    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['books', 'library', 'Book library'], ['exam', 'clipboard-list', 'Exam practice']].filter(([id]) => exists(id))
       .map(([id, ic, t]) => `<div class="tree-item" data-id="${id}">${icon(ic)} ${t}</div>`).join('') +
     `<a class="tree-item" href="legacy/index.html">${icon('layers')} Old study app</a>`;
   $('#bookmarks').onclick = e => { const t = e.target.closest('.tree-item[data-id]'); if (!t) return; go(t.dataset.id); if (isMobile()) setSide('left', false); };

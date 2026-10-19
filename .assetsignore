@@ -5,3 +5,6 @@ wrangler.toml
 .wrangler
 src
 .work
+content
+tools
+__pycache__

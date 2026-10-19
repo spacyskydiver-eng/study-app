@@ -1,0 +1,2319 @@
+{
+ "subject": "Molecular Biology and Genetics",
+ "note": "Curation of the genetics flashcards built from the vault. Cards are matched by their front text.",
+ "drop": [
+  "What does 'heredity' mean?",
+  "Which chromosome carries the pea height gene (Le/le)?",
+  "What ratio did Mendel observe for tall:dwarf pea plants in the F2 generation?",
+  "What did Griffith's 1928 experiment demonstrate?",
+  "In the Hershey-Chase experiment, which isotope was used to label bacteriophage protein?",
+  "Which enzyme treatment abolished the transforming activity in Avery, MacLeod and McCarty's experiment?",
+  "What does CaCl2 do in making E. coli cells competent?",
+  "What is the function of T-DNA in Agrobacterium-mediated transformation?",
+  "What is a tsRNA?",
+  "What is a tsRNA, as discussed in the lecture on inheritance beyond DNA sequence?",
+  "What distinguishes ribose from deoxyribose?",
+  "What type of bond links adjacent nucleotides in a DNA strand?",
+  "Which experimental technique did Rosalind Franklin use that was central to solving DNA's structure?",
+  "How many hydrogen bonds hold a G-C base pair together?",
+  "What is the approximate diameter of the DNA double helix?",
+  "Why do most sequence-reading proteins bind in the major groove rather than the minor groove?",
+  "Which RNA type carries amino acids to the ribosome during translation?",
+  "What is semiconservative replication?",
+  "Why is the lagging strand synthesised in fragments (Okazaki fragments)?",
+  "What are the three enzyme roles in DNA replication?",
+  "How do the conservative and dispersive models differ?",
+  "Which model of DNA replication was confirmed by the Meselson-Stahl experiment?",
+  "In the Meselson-Stahl experiment, what banding pattern appeared after one round of replication in light medium?",
+  "What role do the parental strands play in DNA replication?",
+  "In which direction is new DNA always synthesised, and where else have you met this rule?",
+  "What is the role of primase in DNA replication?",
+  "Why is the lagging strand synthesised as Okazaki fragments?",
+  "What does the Tus protein do at Ter sites during replication termination?",
+  "What is a replicon, and how big are eukaryotic ones?",
+  "What problem does telomerase solve in eukaryotic cells?",
+  "What is the central dogma of molecular biology?",
+  "Who shared the 1968 Nobel Prize for deciphering the genetic code?",
+  "How big is the E. coli genome?",
+  "What are the three learning outcomes of this lecture in one line each?",
+  "Why can a single nucleotide not code for one amino acid?",
+  "What is meant by amplification in PCR?",
+  "Why is PCR called an in vitro method?",
+  "What does fidelity mean for a polymerase?",
+  "How do you prepare the unknown sample for measurement?",
+  "What are samples A and B used for?",
+  "How many tubes are made for the standard curve, and why?",
+  "Why press the pipette tip gently against the side of the tube when emptying it?",
+  "What does a pipette that drips after drawing up liquid tell you?",
+  "How long, and at what temperature, is the digest incubated?",
+  "What happens to the cells after the recovery step?",
+  "Why is a separate 10⁻² tube set aside before the heat shock?",
+  "What binds the A site?",
+  "Where does an aminoacyl-tRNA enter the ribosome?",
+  "How many aminoacyl-tRNA synthetases are there?",
+  "At what temperature do PCR primers anneal?",
+  "Which anticodon pairs with the start codon AUG?",
+  "What substance in the plate turns blue?",
+  "Name an enzyme that leaves blunt ends.",
+  "What must a cloning vector be able to do in the host cell?",
+  "What occupies the E site?",
+  "Genetics",
+  "What is a polylinker?",
+  "How long is a typical PCR primer oligonucleotide?",
+  "Which tRNA starts in the P site?",
+  "What forms the peptide bond during translation?",
+  "What are the three steps of each PCR cycle?",
+  "What is a polysome?",
+  "What is real-time PCR used to compare?",
+  "What is the first step of RT-PCR?",
+  "Why is the ribosome called a ribozyme?",
+  "Give an example of a selectable marker.",
+  "What does the Shine-Dalgarno sequence pair with?",
+  "Why is Taq polymerase used in PCR?",
+  "What does a thermocycler do?",
+  "Name the four dNTPs.",
+  "What colour are colonies whose plasmid has an insert in lacZ?",
+  "Name the three key features of pUC18.",
+  "Describe the experimental evidence that established DNA, rather than protein, as the hereditary material. Refer to at least two separate experiments.",
+  "Explain how the structure of DNA relates to its function as the molecule of heredity. Refer to base pairing, strand directionality, and the semiconservative model of replication."
+ ],
+ "edit": {
+  "Primer": {
+   "back": "<p>A short nucleic acid strand that gives DNA polymerase a free 3′ end to extend. In replication it is RNA (10 to 12 nucleotides in <em>E. coli</em>), made by primase. In PCR it is a synthetic DNA oligonucleotide of about 20 nucleotides.</p>"
+  },
+  "DNA ligase": {
+   "back": "<p>Seals nicks in the DNA backbone by forming phosphodiester bonds. It joins Okazaki fragments in replication, and joins an insert to a vector in cloning.</p>"
+  },
+  "What's the formula for calculating cells per mL from a dilution plate count?": {
+   "back": "<p>Cells per mL = colonies counted × 10^|dilution| × 10. The final × 10 is because 100 µL (0.1 mL) was spread on the plate.</p>"
+  },
+  "What isotopes did Hershey and Chase use, and why?": {
+   "back": "<p>³²P labels DNA (phosphorus is in the DNA backbone, not protein). ³⁵S labels protein (sulfur is in cysteine and methionine, not DNA). After infection and blending, ³²P was inside the bacteria in the pellet and passed to progeny phage; ³⁵S stayed outside with the empty phage coats. So DNA is what enters the cell and carries the genetic information.</p>"
+  }
+ },
+ "add": [
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l1_s08.jpg",
+   "size": [
+    1700,
+    1254
+   ],
+   "prompt": "Fill in the genotypes and phenotypes of Mendel's Le × le cross.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/01 Heredity and DNA/01 Genetics, from Mendel to chromosomes",
+   "labels": [
+    {
+     "answer": "Lele (F1 genotype)",
+     "box": [
+      69.52,
+      32.85,
+      6.84,
+      4.88
+     ]
+    },
+    {
+     "answer": "½ Le, ½ le (F1 gametes)",
+     "box": [
+      64.12,
+      40.04,
+      17.05,
+      5.96
+     ]
+    },
+    {
+     "answer": "LeLe, Tall",
+     "box": [
+      55.48,
+      61.73,
+      9.58,
+      11.39
+     ]
+    },
+    {
+     "answer": "Lele, Tall",
+     "box": [
+      80.36,
+      61.73,
+      8.99,
+      11.39
+     ]
+    },
+    {
+     "answer": "Lele, Tall",
+     "box": [
+      56.06,
+      73.93,
+      8.99,
+      11.39
+     ]
+    },
+    {
+     "answer": "lele, dwarf",
+     "box": [
+      79.59,
+      73.93,
+      10.16,
+      11.39
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/pbr322.jpg",
+   "size": [
+    698,
+    753
+   ],
+   "prompt": "Name the labelled features of pBR322.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/01 Heredity and DNA/03 Transformation in the lab",
+   "labels": [
+    {
+     "answer": "AmpR (ampicillin resistance gene)",
+     "box": [
+      14.54,
+      26.76,
+      17.48,
+      13.55
+     ]
+    },
+    {
+     "answer": "TcR (tetracycline resistance gene)",
+     "box": [
+      77.71,
+      25.55,
+      15.07,
+      12.64
+     ]
+    },
+    {
+     "answer": "ori (origin of replication)",
+     "box": [
+      10.37,
+      74.02,
+      15.07,
+      12.64
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/tiplasmid.jpg",
+   "size": [
+    432,
+    158
+   ],
+   "prompt": "Name the parts of an Agrobacterium cell.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/01 Heredity and DNA/04 Natural transformation",
+   "labels": [
+    {
+     "answer": "Ti-plasmid",
+     "box": [
+      82.35,
+      28.32,
+      16.67,
+      12.82
+     ]
+    },
+    {
+     "answer": "T-DNA",
+     "box": [
+      82.64,
+      43.67,
+      11.57,
+      10.92
+     ]
+    },
+    {
+     "answer": "vir genes",
+     "box": [
+      53.94,
+      86.87,
+      14.81,
+      12.82
+     ]
+    },
+    {
+     "answer": "bacterial chromosome",
+     "box": [
+      0.19,
+      37.23,
+      21.72,
+      24.75
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/alberts7e_fig23-4.jpg",
+   "size": [
+    968,
+    675
+   ],
+   "prompt": "Name the three ways bacteria can acquire new genes.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/01 Heredity and DNA/04 Natural transformation",
+   "labels": [
+    {
+     "answer": "Transformation (free DNA taken up)",
+     "box": [
+      80.34,
+      43.51,
+      17.01,
+      4.84
+     ]
+    },
+    {
+     "answer": "Transduction (DNA carried by a bacteriophage)",
+     "box": [
+      81.15,
+      65.4,
+      15.66,
+      3.1
+     ]
+    },
+    {
+     "answer": "Conjugation (plasmid passed from a donor cell)",
+     "box": [
+      80.34,
+      86.17,
+      17.01,
+      4.84
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/alberts7e_fig8-31.jpg",
+   "size": [
+    916,
+    303
+   ],
+   "prompt": "Name the two processes shown.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/01 Heredity and DNA/05 Physical and chemical properties of DNA and RNA",
+   "labels": [
+    {
+     "answer": "Denaturation to single strands (hydrogen bonds broken)",
+     "box": [
+      33.05,
+      62.77,
+      29.31,
+      37.23
+     ]
+    },
+    {
+     "answer": "Renaturation (hydrogen bonds re-formed)",
+     "box": [
+      68.62,
+      64.98,
+      30.01,
+      27.75
+     ]
+    },
+    {
+     "answer": "heat",
+     "box": [
+      30.08,
+      24.92,
+      7.53,
+      11.22
+     ]
+    },
+    {
+     "answer": "slowly cool",
+     "box": [
+      60.87,
+      20.26,
+      6.81,
+      8.74
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/amm.jpg",
+   "size": [
+    760,
+    714
+   ],
+   "prompt": "What did each treated filtrate show in Avery, MacLeod and McCarty's experiment?",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/01 Heredity and DNA/02 Proving DNA is the hereditary material",
+   "labels": [
+    {
+     "answer": "DNase: no transformation, active factor is DNA",
+     "box": [
+      2.76,
+      59.18,
+      16.85,
+      4.58
+     ]
+    },
+    {
+     "answer": "RNase: transformation, active factor is not RNA",
+     "box": [
+      29.22,
+      59.18,
+      14.26,
+      4.58
+     ]
+    },
+    {
+     "answer": "Protease: transformation, active factor is not protein",
+     "box": [
+      54.43,
+      59.18,
+      14.26,
+      4.58
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/nucleotide.jpg",
+   "size": [
+    632,
+    376
+   ],
+   "prompt": "Name the parts of a nucleotide.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/01 The nucleotide, DNA and RNA's shared building block",
+   "labels": [
+    {
+     "answer": "Phosphate",
+     "box": [
+      0.63,
+      41.75,
+      21.12,
+      8.95
+     ]
+    },
+    {
+     "answer": "Pentose sugar",
+     "box": [
+      83.7,
+      57.84,
+      15.59,
+      6.95
+     ]
+    },
+    {
+     "answer": "Purine or pyrimidine base",
+     "box": [
+      64.15,
+      0.0,
+      25.81,
+      32.86
+     ]
+    },
+    {
+     "answer": "2′ OH (ribose: RNA)",
+     "box": [
+      67.87,
+      79.4,
+      7.85,
+      7.52
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/bases.jpg",
+   "size": [
+    760,
+    435
+   ],
+   "prompt": "Name each base and ring type.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/01 The nucleotide, DNA and RNA's shared building block",
+   "labels": [
+    {
+     "answer": "Pyrimidine ring",
+     "box": [
+      7.98,
+      35.27,
+      14.25,
+      5.02
+     ]
+    },
+    {
+     "answer": "Cytosine",
+     "box": [
+      41.02,
+      44.37,
+      7.96,
+      4.95
+     ]
+    },
+    {
+     "answer": "Thymine",
+     "box": [
+      63.11,
+      44.37,
+      8.08,
+      5.02
+     ]
+    },
+    {
+     "answer": "Uracil",
+     "box": [
+      86.98,
+      44.37,
+      5.33,
+      4.0
+     ]
+    },
+    {
+     "answer": "Purine ring",
+     "box": [
+      9.9,
+      94.75,
+      10.46,
+      4.95
+     ]
+    },
+    {
+     "answer": "Guanine",
+     "box": [
+      46.48,
+      94.75,
+      7.75,
+      3.93
+     ]
+    },
+    {
+     "answer": "Adenine",
+     "box": [
+      80.98,
+      94.67,
+      7.62,
+      4.0
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/phosphodiester.jpg",
+   "size": [
+    760,
+    636
+   ],
+   "prompt": "Name the labelled parts of this dinucleotide.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/02 Linking nucleotides, the phosphodiester bond",
+   "labels": [
+    {
+     "answer": "5′ end",
+     "box": [
+      40.36,
+      0.09,
+      10.48,
+      3.86
+     ]
+    },
+    {
+     "answer": "3′ to 5′ phosphodiester bond",
+     "box": [
+      0.0,
+      45.79,
+      29.05,
+      17.53
+     ]
+    },
+    {
+     "answer": "3′ end",
+     "box": [
+      70.91,
+      96.23,
+      10.36,
+      3.77
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/basepairing.jpg",
+   "size": [
+    632,
+    408
+   ],
+   "prompt": "Name the paired bases.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/04 The double helix, full structure",
+   "labels": [
+    {
+     "answer": "Adenine",
+     "box": [
+      40.44,
+      23.21,
+      8.16,
+      3.79
+     ]
+    },
+    {
+     "answer": "Thymine",
+     "box": [
+      89.98,
+      13.14,
+      8.74,
+      4.31
+     ]
+    },
+    {
+     "answer": "Guanine",
+     "box": [
+      39.73,
+      58.77,
+      8.49,
+      3.79
+     ]
+    },
+    {
+     "answer": "Cytosine",
+     "box": [
+      89.94,
+      51.22,
+      8.62,
+      4.37
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/helix.jpg",
+   "size": [
+    760,
+    969
+   ],
+   "prompt": "Fill in the dimensions and features of B-DNA.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/04 The double helix, full structure",
+   "labels": [
+    {
+     "answer": "20 Å (2 nm) diameter",
+     "box": [
+      29.77,
+      2.27,
+      6.54,
+      2.32
+     ]
+    },
+    {
+     "answer": "34 Å (3.4 nm) per complete turn",
+     "box": [
+      5.65,
+      30.7,
+      6.41,
+      2.29
+     ]
+    },
+    {
+     "answer": "Minor groove (12 Å)",
+     "box": [
+      49.03,
+      20.19,
+      11.94,
+      9.69
+     ]
+    },
+    {
+     "answer": "Major groove (22 Å)",
+     "box": [
+      7.45,
+      52.97,
+      11.89,
+      9.69
+     ]
+    },
+    {
+     "answer": "Sugar–phosphate backbone",
+     "box": [
+      46.11,
+      43.16,
+      23.7,
+      5.78
+     ]
+    },
+    {
+     "answer": "Nitrogenous base pair",
+     "box": [
+      46.13,
+      57.06,
+      17.62,
+      6.4
+     ]
+    },
+    {
+     "answer": "3.4 Å between base pairs",
+     "box": [
+      44.12,
+      80.29,
+      7.48,
+      3.02
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l2_s24.jpg",
+   "size": [
+    1700,
+    1127
+   ],
+   "prompt": "Name the parts of the tRNA cloverleaf.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/05 RNA, structure and the three main types",
+   "labels": [
+    {
+     "answer": "Amino acid (alanine) attachment",
+     "box": [
+      87.04,
+      11.95,
+      10.49,
+      2.82
+     ]
+    },
+    {
+     "answer": "Acceptor stem",
+     "box": [
+      79.87,
+      20.48,
+      13.27,
+      3.42
+     ]
+    },
+    {
+     "answer": "D loop",
+     "box": [
+      53.15,
+      37.62,
+      6.32,
+      3.5
+     ]
+    },
+    {
+     "answer": "TΨC loop",
+     "box": [
+      84.82,
+      37.88,
+      11.84,
+      5.43
+     ]
+    },
+    {
+     "answer": "Variable loop",
+     "box": [
+      82.11,
+      60.06,
+      12.41,
+      3.5
+     ]
+    },
+    {
+     "answer": "Anticodon loop",
+     "box": [
+      53.35,
+      70.27,
+      15.36,
+      5.43
+     ]
+    },
+    {
+     "answer": "Anticodon",
+     "box": [
+      80.5,
+      76.92,
+      9.51,
+      2.91
+     ]
+    },
+    {
+     "answer": "Codon (on the mRNA)",
+     "box": [
+      79.89,
+      84.4,
+      7.57,
+      4.59
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l2_s25.jpg",
+   "size": [
+    1700,
+    1000
+   ],
+   "prompt": "Fill in the ribosome subunits and their rRNAs.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/05 RNA, structure and the three main types",
+   "labels": [
+    {
+     "answer": "50S",
+     "box": [
+      4.27,
+      43.16,
+      3.81,
+      4.08
+     ]
+    },
+    {
+     "answer": "30S",
+     "box": [
+      29.07,
+      43.82,
+      3.16,
+      2.89
+     ]
+    },
+    {
+     "answer": "60S",
+     "box": [
+      53.77,
+      43.82,
+      3.16,
+      2.89
+     ]
+    },
+    {
+     "answer": "40S",
+     "box": [
+      78.44,
+      43.82,
+      3.24,
+      2.89
+     ]
+    },
+    {
+     "answer": "23S rRNA",
+     "box": [
+      9.09,
+      68.26,
+      3.81,
+      4.08
+     ]
+    },
+    {
+     "answer": "16S rRNA",
+     "box": [
+      33.93,
+      68.88,
+      7.55,
+      2.99
+     ]
+    },
+    {
+     "answer": "28S rRNA",
+     "box": [
+      58.51,
+      68.26,
+      3.81,
+      4.08
+     ]
+    },
+    {
+     "answer": "18S rRNA",
+     "box": [
+      83.43,
+      68.88,
+      7.55,
+      2.99
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/alberts7e_fig6-5.jpg",
+   "size": [
+    606,
+    568
+   ],
+   "prompt": "Name each molecule and say which nucleic acid it is used in.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/02 Structure of DNA and RNA/05 RNA, structure and the three main types",
+   "labels": [
+    {
+     "answer": "ribose (RNA)",
+     "box": [
+      17.41,
+      39.7,
+      23.59,
+      8.62
+     ]
+    },
+    {
+     "answer": "deoxyribose (DNA)",
+     "box": [
+      64.94,
+      39.7,
+      23.92,
+      8.62
+     ]
+    },
+    {
+     "answer": "used in RNA",
+     "box": [
+      0.0,
+      0.0,
+      46.89,
+      14.29
+     ]
+    },
+    {
+     "answer": "used in DNA",
+     "box": [
+      53.27,
+      0.0,
+      46.73,
+      14.29
+     ]
+    },
+    {
+     "answer": "uracil (RNA)",
+     "box": [
+      24.71,
+      92.87,
+      8.78,
+      3.9
+     ]
+    },
+    {
+     "answer": "thymine (DNA)",
+     "box": [
+      70.19,
+      92.76,
+      13.49,
+      4.84
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l3_theories.jpg",
+   "size": [
+    650,
+    825
+   ],
+   "prompt": "Name the three proposed models of DNA replication.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/03 DNA Replication/01 Three theoretical ways DNA could replicate",
+   "labels": [
+    {
+     "answer": "Conservative",
+     "box": [
+      3.82,
+      0.48,
+      23.58,
+      3.08
+     ]
+    },
+    {
+     "answer": "Semiconservative",
+     "box": [
+      34.32,
+      0.48,
+      31.41,
+      3.08
+     ]
+    },
+    {
+     "answer": "Dispersive",
+     "box": [
+      74.94,
+      0.35,
+      18.99,
+      4.06
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l3_ms_setup.jpg",
+   "size": [
+    750,
+    540
+   ],
+   "prompt": "Fill in the DNA bands seen in each generation.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/03 DNA Replication/02 The Meselson-Stahl experiment",
+   "labels": [
+    {
+     "answer": "¹⁵N/¹⁵N (heavy)",
+     "box": [
+      11.06,
+      91.29,
+      12.54,
+      7.05
+     ]
+    },
+    {
+     "answer": "¹⁵N/¹⁴N (intermediate)",
+     "box": [
+      47.59,
+      91.29,
+      13.34,
+      7.05
+     ]
+    },
+    {
+     "answer": "¹⁴N/¹⁴N and ¹⁵N/¹⁴N",
+     "box": [
+      67.59,
+      91.29,
+      18.01,
+      7.05
+     ]
+    },
+    {
+     "answer": "¹⁴N/¹⁴N and ¹⁵N/¹⁴N (more light)",
+     "box": [
+      85.99,
+      91.29,
+      14.01,
+      7.05
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l3_leadlag.jpg",
+   "size": [
+    700,
+    335
+   ],
+   "prompt": "Name the strands and fragments at the replication fork.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/03 DNA Replication/07 Replication forks, leading and lagging strands",
+   "labels": [
+    {
+     "answer": "Leading strand",
+     "box": [
+      17.53,
+      2.59,
+      11.39,
+      13.97
+     ]
+    },
+    {
+     "answer": "Lagging strand",
+     "box": [
+      17.54,
+      84.01,
+      11.38,
+      13.85
+     ]
+    },
+    {
+     "answer": "Okazaki fragments",
+     "box": [
+      2.89,
+      62.98,
+      13.96,
+      15.51
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l3_fork_detail.jpg",
+   "size": [
+    750,
+    275
+   ],
+   "prompt": "Name the proteins at the E. coli replication fork.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/03 DNA Replication/08 The enzymes of replication",
+   "labels": [
+    {
+     "answer": "β-subunit sliding clamp",
+     "box": [
+      31.77,
+      0.73,
+      12.34,
+      7.75
+     ]
+    },
+    {
+     "answer": "Single-stranded binding proteins",
+     "box": [
+      50.52,
+      17.55,
+      29.22,
+      7.75
+     ]
+    },
+    {
+     "answer": "Polymerase III dimer",
+     "box": [
+      7.16,
+      36.97,
+      21.15,
+      11.87
+     ]
+    },
+    {
+     "answer": "Okazaki fragments",
+     "box": [
+      1.18,
+      48.68,
+      16.88,
+      7.75
+     ]
+    },
+    {
+     "answer": "RNA primer",
+     "box": [
+      20.5,
+      57.84,
+      7.21,
+      15.45
+     ]
+    },
+    {
+     "answer": "Helicase (DnaB/DnaC)",
+     "box": [
+      48.64,
+      74.93,
+      20.05,
+      7.41
+     ]
+    },
+    {
+     "answer": "DNA gyrase",
+     "box": [
+      72.06,
+      80.61,
+      11.01,
+      7.52
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/gim_fig1-8.jpg",
+   "size": [
+    415,
+    367
+   ],
+   "prompt": "Name the parts of the chromosome.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/03 DNA Replication/12 Replication of chromosome ends, telomeres",
+   "labels": [
+    {
+     "answer": "p arm",
+     "box": [
+      55.74,
+      7.72,
+      28.28,
+      9.63
+     ]
+    },
+    {
+     "answer": "q arm",
+     "box": [
+      50.13,
+      88.37,
+      17.32,
+      7.6
+     ]
+    },
+    {
+     "answer": "Centromere",
+     "box": [
+      65.45,
+      37.57,
+      32.41,
+      6.95
+     ]
+    },
+    {
+     "answer": "Telomeres",
+     "box": [
+      2.23,
+      40.26,
+      29.51,
+      7.69
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l5_central_dogma.jpg",
+   "size": [
+    1096,
+    1049
+   ],
+   "prompt": "Fill in the flow of genetic information.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/05 The Genetic Code/01 Information flow, DNA to mRNA to protein",
+   "labels": [
+    {
+     "answer": "Transcription",
+     "box": [
+      33.69,
+      18.99,
+      32.08,
+      7.78
+     ]
+    },
+    {
+     "answer": "mRNA",
+     "box": [
+      2.8,
+      37.24,
+      15.39,
+      6.74
+     ]
+    },
+    {
+     "answer": "rRNA",
+     "box": [
+      42.03,
+      37.24,
+      14.94,
+      6.74
+     ]
+    },
+    {
+     "answer": "tRNA",
+     "box": [
+      81.26,
+      37.24,
+      15.39,
+      6.74
+     ]
+    },
+    {
+     "answer": "Ribosome",
+     "box": [
+      39.29,
+      55.16,
+      20.41,
+      6.74
+     ]
+    },
+    {
+     "answer": "Translation",
+     "box": [
+      33.72,
+      72.88,
+      32.01,
+      7.52
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l5_gene_to_protein.jpg",
+   "size": [
+    577,
+    1051
+   ],
+   "prompt": "Read the mRNA AUG GUG UUG AGC and fill in the amino acids.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/05 The Genetic Code/01 Information flow, DNA to mRNA to protein",
+   "labels": [
+    {
+     "answer": "Met (AUG)",
+     "box": [
+      27.53,
+      89.21,
+      9.68,
+      2.81
+     ]
+    },
+    {
+     "answer": "Val (GUG)",
+     "box": [
+      44.9,
+      89.21,
+      8.16,
+      2.81
+     ]
+    },
+    {
+     "answer": "Leu (UUG)",
+     "box": [
+      61.19,
+      89.21,
+      9.68,
+      2.81
+     ]
+    },
+    {
+     "answer": "Ser (AGC)",
+     "box": [
+      77.98,
+      89.15,
+      9.42,
+      2.91
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l5_frameshift.jpg",
+   "size": [
+    900,
+    1270
+   ],
+   "prompt": "What happens to the reading frame after each insertion?",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/05 The Genetic Code/03 Proving the triplet code, frameshift mutations",
+   "labels": [
+    {
+     "answer": "C inserted: out of frame",
+     "box": [
+      44.74,
+      44.88,
+      28.51,
+      3.37
+     ]
+    },
+    {
+     "answer": "CAG inserted: out of frame for one codon",
+     "box": [
+      26.74,
+      95.13,
+      28.57,
+      3.41
+     ]
+    },
+    {
+     "answer": "then back in frame",
+     "box": [
+      61.17,
+      95.17,
+      31.12,
+      3.33
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_s08.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Label the gene and mRNA.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/02 Gene and mRNA structure",
+   "labels": [
+    {
+     "answer": "Promoter",
+     "box": [
+      18.75,
+      41.83,
+      9.05,
+      2.57
+     ]
+    },
+    {
+     "answer": "Start of translation (AUG)",
+     "box": [
+      25.11,
+      59.14,
+      18.7,
+      8.16
+     ]
+    },
+    {
+     "answer": "End of translation (UAA/UAG/UGA)",
+     "box": [
+      69.9,
+      59.14,
+      17.66,
+      8.16
+     ]
+    },
+    {
+     "answer": "Coding sequence",
+     "box": [
+      48.53,
+      70.82,
+      16.11,
+      3.48
+     ]
+    },
+    {
+     "answer": "5′ untranslated region (UTR)",
+     "box": [
+      23.39,
+      76.37,
+      16.68,
+      14.4
+     ]
+    },
+    {
+     "answer": "3′ untranslated region (UTR)",
+     "box": [
+      74.57,
+      76.37,
+      16.68,
+      14.4
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_promoter.jpg",
+   "size": [
+    1414,
+    444
+   ],
+   "prompt": "Fill in the E. coli promoter.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/03 Prokaryotic promoters and RNA polymerase",
+   "labels": [
+    {
+     "answer": "−35 box: TTGACA",
+     "box": [
+      16.45,
+      44.03,
+      7.6,
+      5.23
+     ]
+    },
+    {
+     "answer": "−10 box: TATAAT",
+     "box": [
+      49.7,
+      44.03,
+      6.94,
+      5.23
+     ]
+    },
+    {
+     "answer": "15 to 20 bp",
+     "box": [
+      32.45,
+      65.14,
+      8.76,
+      6.14
+     ]
+    },
+    {
+     "answer": "5 to 9 bp",
+     "box": [
+      64.16,
+      65.14,
+      6.93,
+      6.14
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_s18.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Name the parts of the lac operon.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/06 The lac operon",
+   "labels": [
+    {
+     "answer": "Repressor gene (I)",
+     "box": [
+      12.21,
+      59.62,
+      10.54,
+      7.1
+     ]
+    },
+    {
+     "answer": "Promoter (P)",
+     "box": [
+      24.64,
+      59.63,
+      9.56,
+      7.03
+     ]
+    },
+    {
+     "answer": "Operator (O)",
+     "box": [
+      35.09,
+      59.62,
+      9.24,
+      7.1
+     ]
+    },
+    {
+     "answer": "Structural genes Z, Y, A",
+     "box": [
+      64.09,
+      60.13,
+      15.4,
+      3.25
+     ]
+    },
+    {
+     "answer": "Repressor protein",
+     "box": [
+      19.15,
+      79.65,
+      12.16,
+      8.53
+     ]
+    },
+    {
+     "answer": "Lactose",
+     "box": [
+      33.62,
+      91.1,
+      7.43,
+      2.57
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/alberts7e_fig7-18.jpg",
+   "size": [
+    832,
+    791
+   ],
+   "prompt": "Is the lac operon ON or OFF in each condition?",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/06 The lac operon",
+   "labels": [
+    {
+     "answer": "+glucose +lactose: OFF (low, no CAP)",
+     "box": [
+      83.39,
+      41.65,
+      14.8,
+      2.69
+     ]
+    },
+    {
+     "answer": "+glucose −lactose: OFF (repressor bound)",
+     "box": [
+      83.39,
+      57.34,
+      14.8,
+      2.64
+     ]
+    },
+    {
+     "answer": "−glucose −lactose: OFF (repressor bound)",
+     "box": [
+      83.39,
+      72.5,
+      14.8,
+      2.64
+     ]
+    },
+    {
+     "answer": "−glucose +lactose: ON",
+     "box": [
+      83.64,
+      86.44,
+      13.97,
+      2.6
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_s27.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "What does each eukaryotic RNA polymerase make?",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/10 Eukaryotic transcription, an overview",
+   "labels": [
+    {
+     "answer": "Pol I: rRNA (nucleolus)",
+     "box": [
+      31.1,
+      35.69,
+      7.55,
+      3.63
+     ]
+    },
+    {
+     "answer": "Pol II: mRNA, snRNA",
+     "box": [
+      31.04,
+      42.05,
+      19.72,
+      4.68
+     ]
+    },
+    {
+     "answer": "Pol III: 5S rRNA, tRNA",
+     "box": [
+      30.99,
+      48.6,
+      20.43,
+      4.68
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_s28.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Name the parts of the basal transcription complex.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/11 Starting eukaryotic transcription",
+   "labels": [
+    {
+     "answer": "Pol II",
+     "box": [
+      63.35,
+      40.54,
+      7.42,
+      4.8
+     ]
+    },
+    {
+     "answer": "TAF",
+     "box": [
+      56.29,
+      62.74,
+      6.25,
+      4.8
+     ]
+    },
+    {
+     "answer": "TAF",
+     "box": [
+      78.94,
+      58.35,
+      5.95,
+      4.8
+     ]
+    },
+    {
+     "answer": "TBP (TATA-binding protein)",
+     "box": [
+      69.09,
+      74.12,
+      3.9,
+      2.42
+     ]
+    },
+    {
+     "answer": "TATA box",
+     "box": [
+      67.28,
+      68.53,
+      7.51,
+      3.73
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_s32.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Name the steps and features of mRNA 3′ processing.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/12 Capping and tailing",
+   "labels": [
+    {
+     "answer": "AAUAAA signal",
+     "box": [
+      80.04,
+      26.83,
+      18.71,
+      3.78
+     ]
+    },
+    {
+     "answer": "Cleavage by ribonuclease",
+     "box": [
+      71.89,
+      61.68,
+      12.77,
+      7.03
+     ]
+    },
+    {
+     "answer": "poly-A polymerase adds A's onto 3′ end",
+     "box": [
+      67.69,
+      78.41,
+      19.5,
+      6.95
+     ]
+    },
+    {
+     "answer": "poly-A tail",
+     "box": [
+      76.62,
+      96.55,
+      9.34,
+      3.4
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_s33.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Fill in the steps from DNA to spliced mRNA.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/13 Splicing",
+   "labels": [
+    {
+     "answer": "Transcription",
+     "box": [
+      61.54,
+      29.33,
+      16.47,
+      4.23
+     ]
+    },
+    {
+     "answer": "Cap and tail added",
+     "box": [
+      61.62,
+      48.94,
+      22.88,
+      4.23
+     ]
+    },
+    {
+     "answer": "Splicing",
+     "box": [
+      61.49,
+      65.82,
+      10.56,
+      5.14
+     ]
+    },
+    {
+     "answer": "7-mG (cap)",
+     "box": [
+      25.48,
+      56.31,
+      7.86,
+      3.93
+     ]
+    },
+    {
+     "answer": "Poly-A",
+     "box": [
+      81.85,
+      56.25,
+      9.59,
+      4.84
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l6_s34.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Name the three intron sequence motifs.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/13 Splicing",
+   "labels": [
+    {
+     "answer": "Splice donor (GU at the 5′ end)",
+     "box": [
+      16.08,
+      36.33,
+      12.38,
+      3.4
+     ]
+    },
+    {
+     "answer": "Branch site",
+     "box": [
+      35.97,
+      35.81,
+      10.47,
+      3.84
+     ]
+    },
+    {
+     "answer": "Splice acceptor (AG at the 3′ end)",
+     "box": [
+      49.79,
+      36.33,
+      15.17,
+      3.4
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/alberts7e_fig7-59.jpg",
+   "size": [
+    475,
+    1008
+   ],
+   "prompt": "Name each pattern of alternative splicing.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/06 Transcription/14 Alternative splicing",
+   "labels": [
+    {
+     "answer": "normal splicing",
+     "box": [
+      8.24,
+      1.21,
+      30.25,
+      2.7
+     ]
+    },
+    {
+     "answer": "exon skipping",
+     "box": [
+      8.14,
+      15.29,
+      27.83,
+      2.7
+     ]
+    },
+    {
+     "answer": "intron retention",
+     "box": [
+      8.37,
+      29.41,
+      31.79,
+      2.08
+     ]
+    },
+    {
+     "answer": "alternative 5′ splice site",
+     "box": [
+      8.15,
+      42.95,
+      45.76,
+      2.66
+     ]
+    },
+    {
+     "answer": "alternative 3′ splice site",
+     "box": [
+      8.14,
+      57.03,
+      45.73,
+      2.7
+     ]
+    },
+    {
+     "answer": "mutually exclusive exons",
+     "box": [
+      8.24,
+      70.95,
+      48.15,
+      2.7
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/alberts7e_fig6-66.jpg",
+   "size": [
+    424,
+    371
+   ],
+   "prompt": "Name the sites of the ribosome.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/07 Translation/02 The ribosome and its three tRNA sites",
+   "labels": [
+    {
+     "answer": "E site",
+     "box": [
+      34.75,
+      13.56,
+      16.83,
+      9.53
+     ]
+    },
+    {
+     "answer": "P site",
+     "box": [
+      57.86,
+      13.56,
+      18.25,
+      9.53
+     ]
+    },
+    {
+     "answer": "A site",
+     "box": [
+      80.74,
+      13.56,
+      18.25,
+      9.53
+     ]
+    },
+    {
+     "answer": "large ribosomal subunit",
+     "box": [
+      0.0,
+      33.41,
+      31.26,
+      21.99
+     ]
+    },
+    {
+     "answer": "small ribosomal subunit",
+     "box": [
+      0.0,
+      58.76,
+      31.19,
+      21.9
+     ]
+    },
+    {
+     "answer": "mRNA-binding site",
+     "box": [
+      42.97,
+      84.29,
+      28.2,
+      14.85
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l7_s11.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Fill in the numbers behind tRNA charging.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/07 Translation/04 Charging tRNAs",
+   "labels": [
+    {
+     "answer": "20 amino acids",
+     "box": [
+      17.89,
+      50.2,
+      4.81,
+      4.69
+     ]
+    },
+    {
+     "answer": "61 sense codons",
+     "box": [
+      32.59,
+      50.2,
+      4.81,
+      4.69
+     ]
+    },
+    {
+     "answer": "31 tRNAs minimum (wobble)",
+     "box": [
+      47.3,
+      50.2,
+      4.81,
+      4.69
+     ]
+    },
+    {
+     "answer": "20 synthetases",
+     "box": [
+      76.71,
+      50.2,
+      4.81,
+      4.69
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l7_s12.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "What pairs with what at initiation?",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/07 Translation/05 Initiation of translation",
+   "labels": [
+    {
+     "answer": "Shine-Dalgarno sequence; pairs with 16S rRNA",
+     "box": [
+      34.24,
+      57.02,
+      23.58,
+      7.68
+     ]
+    },
+    {
+     "answer": "Initiation codon; pairs with fMet-tRNA",
+     "box": [
+      67.87,
+      57.77,
+      21.1,
+      6.8
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l7_s17.jpg",
+   "size": [
+    1700,
+    1275
+   ],
+   "prompt": "Name the structures in this polysome micrograph.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/07 Translation/07 Polyribosomes",
+   "labels": [
+    {
+     "answer": "Ribosome",
+     "box": [
+      43.27,
+      30.42,
+      16.12,
+      4.38
+     ]
+    },
+    {
+     "answer": "mRNA",
+     "box": [
+      26.91,
+      80.58,
+      12.36,
+      7.47
+     ]
+    },
+    {
+     "answer": "Polypeptide chain",
+     "box": [
+      47.59,
+      81.74,
+      20.02,
+      10.8
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l8_s08.jpg",
+   "size": [
+    1300,
+    810
+   ],
+   "prompt": "Name each enzyme and the bacterium it comes from.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/08 Plasmids and Recombinant DNA/03 Common restriction enzymes and their ends",
+   "labels": [
+    {
+     "answer": "EcoRI",
+     "box": [
+      0.98,
+      25.58,
+      4.87,
+      3.27
+     ]
+    },
+    {
+     "answer": "HindIII",
+     "box": [
+      0.43,
+      48.71,
+      6.01,
+      3.37
+     ]
+    },
+    {
+     "answer": "BamHI",
+     "box": [
+      0.4,
+      71.99,
+      6.08,
+      3.27
+     ]
+    },
+    {
+     "answer": "E. coli",
+     "box": [
+      89.34,
+      25.42,
+      5.28,
+      3.46
+     ]
+    },
+    {
+     "answer": "Haemophilus influenzae",
+     "box": [
+      77.31,
+      45.5,
+      20.88,
+      12.91
+     ]
+    },
+    {
+     "answer": "Bacillus amyloliquefaciens",
+     "box": [
+      83.74,
+      69.2,
+      16.26,
+      9.73
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l8_s09.jpg",
+   "size": [
+    1300,
+    810
+   ],
+   "prompt": "Name the enzymes, and the kind of ends they leave.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/08 Plasmids and Recombinant DNA/03 Common restriction enzymes and their ends",
+   "labels": [
+    {
+     "answer": "TaqI (sticky ends)",
+     "box": [
+      1.22,
+      24.03,
+      4.18,
+      4.37
+     ]
+    },
+    {
+     "answer": "AluI (blunt ends)",
+     "box": [
+      1.26,
+      47.77,
+      3.85,
+      3.37
+     ]
+    },
+    {
+     "answer": "Thermus aquaticus",
+     "box": [
+      88.59,
+      21.35,
+      9.77,
+      9.46
+     ]
+    },
+    {
+     "answer": "Arthrobacter luteus",
+     "box": [
+      87.06,
+      45.17,
+      12.34,
+      8.37
+     ]
+    },
+    {
+     "answer": "cohesive",
+     "box": [
+      41.87,
+      76.23,
+      42.46,
+      6.09
+     ]
+    },
+    {
+     "answer": "blunt",
+     "box": [
+      63.79,
+      76.23,
+      20.55,
+      6.09
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l8_s10.jpg",
+   "size": [
+    1300,
+    829
+   ],
+   "prompt": "Fill in how two EcoRI fragments are joined.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/08 Plasmids and Recombinant DNA/04 Joining DNA with DNA ligase",
+   "labels": [
+    {
+     "answer": "Fragments with complementary tails (sticky ends)",
+     "box": [
+      29.85,
+      33.75,
+      19.63,
+      9.15
+     ]
+    },
+    {
+     "answer": "Gap (nick)",
+     "box": [
+      44.02,
+      66.21,
+      4.26,
+      4.27
+     ]
+    },
+    {
+     "answer": "DNA ligase",
+     "box": [
+      35.97,
+      70.97,
+      10.49,
+      4.35
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l8_s12.jpg",
+   "size": [
+    1301,
+    661
+   ],
+   "prompt": "Name the features of pUC18.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/08 Plasmids and Recombinant DNA/06 pUC18, a bacterial plasmid vector",
+   "labels": [
+    {
+     "answer": "Ampicillin resistance gene",
+     "box": [
+      13.96,
+      36.1,
+      17.05,
+      26.75
+     ]
+    },
+    {
+     "answer": "lacZ gene",
+     "box": [
+      34.29,
+      33.87,
+      5.67,
+      5.58
+     ]
+    },
+    {
+     "answer": "Polylinker region (multiple cloning site)",
+     "box": [
+      69.84,
+      87.68,
+      22.53,
+      7.36
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/l10_s03.jpg",
+   "size": [
+    1300,
+    790
+   ],
+   "prompt": "Fill in the steps of cloning into a plasmid.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/08 Plasmids and Recombinant DNA/07 Cloning into bacterial plasmids",
+   "labels": [
+    {
+     "answer": "Plasmid vector is removed from the bacterial cell and cut with a restriction enzyme",
+     "box": [
+      7.87,
+      29.2,
+      22.77,
+      13.05
+     ]
+    },
+    {
+     "answer": "DNA to be cloned is cut with the same restriction enzyme",
+     "box": [
+      66.98,
+      22.05,
+      24.07,
+      8.49
+     ]
+    },
+    {
+     "answer": "The two DNAs are ligated to form a recombinant molecule",
+     "box": [
+      19.68,
+      45.62,
+      28.01,
+      7.55
+     ]
+    },
+    {
+     "answer": "Introduction into host cell (transformation)",
+     "box": [
+      66.52,
+      53.99,
+      11.17,
+      7.55
+     ]
+    },
+    {
+     "answer": "Selection for cells carrying recombinant plasmids",
+     "box": [
+      80.09,
+      51.1,
+      18.81,
+      29.93
+     ]
+    }
+   ]
+  },
+  {
+   "type": "diagram",
+   "img": "04 Attachments/klug12e_fig20-7.jpg",
+   "size": [
+    1198,
+    841
+   ],
+   "prompt": "Fill in the three steps of a PCR cycle and their temperatures.",
+   "note": "01 Year 1/Molecular Biology and Genetics/Lectures/10 Polymerase Chain Reaction/04 The PCR cycle",
+   "labels": [
+    {
+     "answer": "1. Denature DNA (92–95 °C)",
+     "box": [
+      26.22,
+      15.81,
+      8.85,
+      5.25
+     ]
+    },
+    {
+     "answer": "2. Anneal primers (45–65 °C)",
+     "box": [
+      26.13,
+      28.44,
+      12.74,
+      5.33
+     ]
+    },
+    {
+     "answer": "3. Extend primers (65–75 °C)",
+     "box": [
+      26.22,
+      41.86,
+      12.6,
+      5.25
+     ]
+    }
+   ]
+  }
+ ]
+}

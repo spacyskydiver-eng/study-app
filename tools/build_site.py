@@ -535,11 +535,18 @@ def main():
         except Exception as e:
             print('site.config.json not read:', e, file=sys.stderr)
     os.makedirs(os.path.join(a.out, 'data'), exist_ok=True)
+    # curated subjects: flashcard edits, diagram cards, exam papers (content/)
+    sys.path.insert(0, HERE)
+    import curate
+    exams = curate.apply(data, deck, ROOT)
+    with open(os.path.join(a.out, 'data', 'exams.json'), 'w', encoding='utf-8') as f:
+        json.dump(exams, f, ensure_ascii=False, separators=(',', ':'))
     with open(os.path.join(a.out, 'data', 'vault.json'), 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
     with open(os.path.join(a.out, 'data', 'cards.json'), 'w', encoding='utf-8') as f:
         json.dump(deck, f, ensure_ascii=False, separators=(',', ':'))
     n_links = sum(len(n['links']) for n in notes.values())
+    notes = data['notes']
     print(f'{len(notes)} notes, {len(canvases)} canvases, {len(v.used_files)} attachments, {n_links} links, {len(deck["cards"])} flashcards in {len(deck["decks"])} decks')
 
 
