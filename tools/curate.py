@@ -98,8 +98,12 @@ def exam_section(papers):
 
 
 def add_exam_section(note, papers):
-    if 'id="exam-practice"' in note['html']:
-        return False
+    if 'id="exam-practice"' in note['html']:   # refresh the section in place
+        sec = exam_section(papers)
+        new = re.sub(r'<div class="el-h2"><h2 data-heading="Exam practice" id="exam-practice">.*?<ul class="exam-links">.*?</ul></div>', lambda m: sec, note['html'], count=1, flags=re.S)
+        changed = new != note['html']
+        note['html'] = new
+        return changed
     sec = exam_section(papers)
     if SLOT in note['html']:
         note['html'] = note['html'].replace(SLOT, sec, 1).replace(SLOT, '')

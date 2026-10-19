@@ -578,7 +578,15 @@ ORDER = ['l1', 'l2', 'l3', 'l5', 'l6', 'l7', 'l8', 'l10', 'pr']
 
 
 def build():
-    papers = []
+    import sys
+    sys.path.insert(0, HERE)
+    from make_datatest import papers as data_papers
+    papers = data_papers()
+    for P in papers:
+        for i, q in enumerate(P['questions']):
+            q['id'] = f"{P['id']}-q{i + 1}"
+            for j, p in enumerate(q['parts']):
+                p['id'] = f"{P['id']}-q{i + 1}{'abcdefgh'[j]}"
     for key in ORDER:
         title, lec, hub, qs = L[key]
         for i, q in enumerate(qs):

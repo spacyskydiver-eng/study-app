@@ -3,6 +3,598 @@
  "module": "BIO-4018A",
  "papers": [
   {
+   "id": "dat-1",
+   "title": "Data analysis practice test 1",
+   "lecture": "In-class test (9 Nov)",
+   "marks": 20,
+   "hub": "01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics",
+   "note": "Calculator allowed. The real test is 40 minutes.",
+   "questions": [
+    {
+     "stem": "<strong>Figure 1.</strong> Restriction digests of plasmid pXY. Lanes 1 and 9: 1 kb ladder. Lane 2 EcoRI; lane 3 BamHI; lane 4 SalI; lane 5 EcoRI + BamHI; lane 6 EcoRI + SalI; lane 7 BamHI + SalI; lane 8 EcoRI + BamHI + SalI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many BamHI sites are there in pXY?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Lane 3 has one band. Cutting a circular plasmid once opens it into one linear fragment, so there is one site.",
+       "marks": 2,
+       "id": "dat-1-q1a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the approximate size of pXY?",
+       "options": [
+        "3400 bp",
+        "4400 bp",
+        "5400 bp",
+        "6400 bp",
+        "7400 bp"
+       ],
+       "answer": 2,
+       "explain": "The single-digest bands (lanes 2 to 4) run between the 5000 and 7000 bp markers, just above 5000. The double digests also add up to about 5400 (900 + 4500).",
+       "marks": 2,
+       "id": "dat-1-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the shortest distance between the EcoRI and SalI sites?",
+       "options": [
+        "About 900 bp",
+        "About 2200 bp",
+        "About 2300 bp",
+        "About 3100 bp",
+        "About 5400 bp"
+       ],
+       "answer": 2,
+       "explain": "With one site each, EcoRI + SalI (lane 6) gives two fragments. The smaller one, about 2300 bp, is the shorter distance round the circle between them.",
+       "marks": 2,
+       "id": "dat-1-q1c"
+      },
+      {
+       "type": "mcq",
+       "stem": "The smallest fragment in lane 8 was produced by digestion with which enzymes?",
+       "options": [
+        "EcoRI alone",
+        "EcoRI and BamHI",
+        "EcoRI and SalI",
+        "BamHI and SalI",
+        "SalI alone"
+       ],
+       "answer": 1,
+       "explain": "The 900 bp fragment is also in lane 5 (EcoRI + BamHI) but not in lanes 6 or 7, so it has an EcoRI end and a BamHI end.",
+       "marks": 2,
+       "id": "dat-1-q1d"
+      }
+     ],
+     "img": "assets/exam-img/dat1_gel.png",
+     "id": "dat-1-q1"
+    },
+    {
+     "stem": "BamHI cuts double-stranded DNA.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "The BamHI recognition site on one strand is 5′-GGATCC-3′. What is the sequence of the site on the other strand?",
+       "options": [
+        "5′-CCTAGG-3′",
+        "5′-GGATCC-3′",
+        "5′-CCATGG-3′",
+        "5′-GATC-3′",
+        "5′-AAGCTT-3′"
+       ],
+       "answer": 1,
+       "explain": "Recognition sites are palindromic: the complementary strand reads 3′-CCTAGG-5′, which is 5′-GGATCC-3′ read in its own 5′→3′ direction.",
+       "marks": 2,
+       "id": "dat-1-q2a"
+      }
+     ],
+     "id": "dat-1-q2"
+    },
+    {
+     "stem": "<strong>Figure 2.</strong> Restriction map of plasmid pDAT1 showing the kanamycin resistance gene (KanR, 450 to 1500), the origin of replication (ori) and lacZα.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "You want to cut out the whole KanR gene on the smallest possible fragment. Which pair of enzymes should you use?",
+       "options": [
+        "EcoRI and BglII",
+        "HindIII and BglII",
+        "HindIII and NcoI",
+        "BglII and NcoI",
+        "EcoRI and KpnI"
+       ],
+       "answer": 1,
+       "explain": "HindIII (320) and BglII (1650) sit either side of KanR (450 to 1500) and are the closest pair that does not cut inside it: a 1330 bp fragment. EcoRI + BglII also works but gives 1650 bp; HindIII + NcoI gives 1890 bp.",
+       "marks": 2,
+       "id": "dat-1-q3a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What size fragments would a HindIII + XbaI double digest give?",
+       "options": [
+        "320 and 4280 bp",
+        "2160 and 2440 bp",
+        "2480 and 2120 bp",
+        "1330 and 3270 bp",
+        "2160 bp only"
+       ],
+       "answer": 1,
+       "explain": "HindIII 320 to XbaI 2480 is 2160 bp; the rest of the 4600 bp circle is 2440 bp.",
+       "marks": 2,
+       "id": "dat-1-q3b"
+      }
+     ],
+     "img": "assets/exam-img/dat1_map.png",
+     "id": "dat-1-q3"
+    },
+    {
+     "stem": "<strong>Figure 3.</strong> Absorbance of DNA solutions of different concentrations (mean ± SD of three readings).",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What absorbance would you expect for a DNA solution of 0.04 mg/mL?",
+       "options": [
+        "0.81",
+        "0.85",
+        "0.88",
+        "0.91",
+        "0.94"
+       ],
+       "answer": 2,
+       "explain": "Use the equation: y = (21.85 × 0.04) + 0.0021 = 0.876, so 0.88.",
+       "marks": 2,
+       "id": "dat-1-q4a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What DNA concentration would give an absorbance of 1.20?",
+       "options": [
+        "0.051 mg/mL",
+        "0.053 mg/mL",
+        "0.055 mg/mL",
+        "0.057 mg/mL",
+        "0.059 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "Rearrange for x: x = (1.20 − 0.0021) ÷ 21.85 = 0.0548, so 0.055 mg/mL.",
+       "marks": 2,
+       "id": "dat-1-q4b"
+      },
+      {
+       "type": "mcq",
+       "stem": "An unknown was diluted by adding 50 µL of it to 950 µL of TE buffer. The diluted sample gave an absorbance of 0.66. What was the concentration of the undiluted unknown?",
+       "options": [
+        "0.030 mg/mL",
+        "0.30 mg/mL",
+        "0.60 mg/mL",
+        "0.66 mg/mL",
+        "6.0 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "Diluted: x = (0.66 − 0.0021) ÷ 21.85 = 0.0301 mg/mL. 50 µL in 1000 µL is a 1 in 20 dilution, so 0.0301 × 20 = 0.60 mg/mL.",
+       "marks": 2,
+       "id": "dat-1-q4c"
+      }
+     ],
+     "img": "assets/exam-img/dat1_curve.png",
+     "id": "dat-1-q4"
+    }
+   ]
+  },
+  {
+   "id": "dat-2",
+   "title": "Data analysis practice test 2",
+   "lecture": "In-class test (9 Nov)",
+   "marks": 20,
+   "hub": "01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics",
+   "note": "Calculator allowed. The real test is 40 minutes.",
+   "questions": [
+    {
+     "stem": "A standard curve was made from DNA sample A (0.5 mg/mL). Each tube was made up to 1000 µL with TE buffer.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "Tube 3 contained 80 µL of sample A and 920 µL of TE buffer. What is its DNA concentration?",
+       "options": [
+        "0.004 mg/mL",
+        "0.02 mg/mL",
+        "0.04 mg/mL",
+        "0.08 mg/mL",
+        "0.4 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "80 µL in 1000 µL is a 0.08 dilution: 0.5 × 0.08 = 0.04 mg/mL.",
+       "marks": 2,
+       "id": "dat-2-q1a"
+      },
+      {
+       "type": "mcq",
+       "stem": "The three readings for one tube were 0.82, 0.86 and 0.87. What is the mean?",
+       "options": [
+        "0.82",
+        "0.84",
+        "0.85",
+        "0.86",
+        "0.87"
+       ],
+       "answer": 2,
+       "explain": "(0.82 + 0.86 + 0.87) ÷ 3 = 2.55 ÷ 3 = 0.85.",
+       "marks": 2,
+       "id": "dat-2-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "Tube 6 (TE buffer only) read −0.03 after zeroing. What does this mean?",
+       "options": [
+        "The spectrophotometer is broken",
+        "The DNA has degraded",
+        "It is within normal instrument error, so the readings can be used",
+        "Tube 6 contained the most DNA",
+        "The wavelength was set wrongly"
+       ],
+       "answer": 2,
+       "explain": "No instrument reads exactly zero. Readings within about ±0.1 of zero for the blank are normal; this is one reason readings are taken in triplicate.",
+       "marks": 2,
+       "id": "dat-2-q1c"
+      }
+     ],
+     "id": "dat-2-q1"
+    },
+    {
+     "stem": "<strong>Figure 4.</strong> Mean absorbance at 260 nm (± SD, n = 3) of DNA solutions of known concentration.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "Which of these is the independent variable plotted on the x-axis?",
+       "options": [
+        "Absorbance",
+        "DNA concentration",
+        "Wavelength",
+        "Time",
+        "R²"
+       ],
+       "answer": 1,
+       "explain": "The concentration is what was set by the dilutions; absorbance is measured in response, so it goes on the y-axis.",
+       "marks": 2,
+       "id": "dat-2-q2a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which concentration's mean lies furthest from the trend line?",
+       "options": [
+        "0.02 mg/mL",
+        "0.03 mg/mL",
+        "0.04 mg/mL",
+        "0.06 mg/mL",
+        "0.08 mg/mL"
+       ],
+       "answer": 1,
+       "explain": "The 0.03 mg/mL point sits well above the line (and has the largest error bar), suggesting a pipetting error in that dilution.",
+       "marks": 2,
+       "id": "dat-2-q2b"
+      },
+      {
+       "type": "mcq",
+       "stem": "The diluted unknown (1 in 20) read 0.50. What was the concentration of the original sample?",
+       "options": [
+        "0.025 mg/mL",
+        "0.25 mg/mL",
+        "0.50 mg/mL",
+        "0.75 mg/mL",
+        "5.0 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "x = (0.50 − 0.012) ÷ 19.6 = 0.0249 mg/mL in the diluted sample; × 20 = 0.50 mg/mL.",
+       "marks": 2,
+       "id": "dat-2-q2c"
+      }
+     ],
+     "img": "assets/exam-img/dat2_curve.png",
+     "id": "dat-2-q2"
+    },
+    {
+     "stem": "<strong>Figure 5.</strong> Distance migrated by the 1 kb ladder fragments plotted against log₁₀(fragment size).",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "A fragment from a digest migrated 33 mm. What is its approximate size?",
+       "options": [
+        "1700 bp",
+        "2200 bp",
+        "2700 bp",
+        "3200 bp",
+        "3700 bp"
+       ],
+       "answer": 1,
+       "explain": "log₁₀(size) = (33 − 160.5) ÷ −38.2 = 3.34; 10³·³⁴ ≈ 2200 bp.",
+       "marks": 2,
+       "id": "dat-2-q3a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Why is log₁₀(size) plotted rather than size itself?",
+       "options": [
+        "To make the numbers smaller",
+        "Distance migrated is roughly proportional to log(size), so the plot is a straight line",
+        "Larger fragments move further",
+        "The ladder is measured in log units",
+        "So that R² is exactly 1"
+       ],
+       "answer": 1,
+       "explain": "Migration distance falls linearly with the log of fragment size, so plotting log(size) gives a straight line you can read sizes from.",
+       "marks": 2,
+       "id": "dat-2-q3b"
+      }
+     ],
+     "img": "assets/exam-img/dat2_ladder.png",
+     "id": "dat-2-q3"
+    },
+    {
+     "stem": "A 4800 bp plasmid was cut with XhoI, NcoI and KpnI. XhoI is placed at position 0.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What is the shortest distance between the NcoI and KpnI sites?",
+       "options": [
+        "800 bp",
+        "1200 bp",
+        "2000 bp",
+        "2800 bp",
+        "4000 bp"
+       ],
+       "answer": 0,
+       "explain": "NcoI + KpnI gives 800 + 4000 bp, so they are 800 bp apart the short way round.",
+       "marks": 2,
+       "id": "dat-2-q4a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which fragments would the triple digest (XhoI + NcoI + KpnI) give?",
+       "options": [
+        "1200 + 3600 bp",
+        "800 + 1200 + 2800 bp",
+        "800 + 2000 + 2000 bp",
+        "400 + 1600 + 2800 bp",
+        "1200 + 1600 + 2000 bp"
+       ],
+       "answer": 1,
+       "explain": "NcoI is 1200 from XhoI and KpnI is 2000 from XhoI (only this places them 800 apart). Round the circle: 0→1200 = 1200, 1200→2000 = 800, 2000→4800 = 2800.",
+       "marks": 2,
+       "id": "dat-2-q4b"
+      }
+     ],
+     "table": {
+      "head": [
+       "Digest",
+       "Fragments (bp)"
+      ],
+      "rows": [
+       [
+        "XhoI",
+        "4800"
+       ],
+       [
+        "NcoI",
+        "4800"
+       ],
+       [
+        "KpnI",
+        "4800"
+       ],
+       [
+        "XhoI + NcoI",
+        "1200 + 3600"
+       ],
+       [
+        "XhoI + KpnI",
+        "2000 + 2800"
+       ],
+       [
+        "NcoI + KpnI",
+        "800 + 4000"
+       ]
+      ]
+     },
+     "id": "dat-2-q4"
+    }
+   ]
+  },
+  {
+   "id": "dat-3",
+   "title": "Data analysis practice test 3",
+   "lecture": "In-class test (9 Nov)",
+   "marks": 20,
+   "hub": "01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics",
+   "note": "Calculator allowed. The real test is 40 minutes.",
+   "questions": [
+    {
+     "stem": "<strong>Figure 6.</strong> Restriction digests of pBR322. Lanes 1 and 9: 1 kb ladder. Lane 2 EcoRI; lane 3 BamHI; lane 4 PstI; lane 5 EcoRI + BamHI; lane 6 EcoRI + PstI; lane 7 BamHI + PstI; lane 8 EcoRI + BamHI + PstI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many PstI sites are there in pBR322?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Lane 4 shows one band the size of the whole plasmid: one cut opens the circle.",
+       "marks": 2,
+       "id": "dat-3-q1a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the shortest distance between the EcoRI and BamHI sites?",
+       "options": [
+        "About 75 bp",
+        "About 380 bp",
+        "About 750 bp",
+        "About 1100 bp",
+        "About 3200 bp"
+       ],
+       "answer": 1,
+       "explain": "Lane 5 (EcoRI + BamHI) gives a small fragment just under the 400 bp marker and a large one of about 4000 bp.",
+       "marks": 2,
+       "id": "dat-3-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which fragment in lane 8 has an EcoRI end and a PstI end?",
+       "options": [
+        "About 380 bp",
+        "About 750 bp",
+        "About 1100 bp",
+        "About 3200 bp",
+        "About 4000 bp"
+       ],
+       "answer": 1,
+       "explain": "The 750 bp fragment is also in lane 6 (EcoRI + PstI) but not in lanes 5 or 7.",
+       "marks": 2,
+       "id": "dat-3-q1c"
+      },
+      {
+       "type": "mcq",
+       "stem": "In which lane is there a fragment of about 1100 bp?",
+       "options": [
+        "Lane 4",
+        "Lane 5",
+        "Lane 6",
+        "Lane 7",
+        "Lane 8"
+       ],
+       "answer": 3,
+       "explain": "BamHI (375) to PstI (3609) is 3234 bp one way and 1127 bp the other, so the BamHI + PstI lane (7). In the triple digest that 1127 bp stretch is cut again by EcoRI into 750 + 377.",
+       "marks": 2,
+       "id": "dat-3-q1d"
+      }
+     ],
+     "img": "assets/exam-img/dat3_gel.png",
+     "id": "dat-3-q1"
+    },
+    {
+     "stem": "<strong>Figure 7.</strong> Restriction map of pBR322 showing the tetracycline (TcR, 86 to 1276) and ampicillin (AmpR, 3293 to 4153) resistance genes.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "You want the whole AmpR gene on the smallest possible fragment. Which pair of enzymes should you use?",
+       "options": [
+        "PstI and EcoRI",
+        "PvuII and SspI",
+        "PvuII and EcoRI",
+        "StyI and EcoRI",
+        "ScaI and SspI"
+       ],
+       "answer": 1,
+       "explain": "PstI and ScaI cut inside AmpR. PvuII (2064) and SspI (4168) flank it: 2104 bp. PvuII + EcoRI also flanks it but is larger (2295 bp).",
+       "marks": 2,
+       "id": "dat-3-q2a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which of these enzymes cuts inside the TcR gene?",
+       "options": [
+        "EcoRI",
+        "BamHI",
+        "PstI",
+        "ScaI",
+        "SspI"
+       ],
+       "answer": 1,
+       "explain": "BamHI at 375 lies inside TcR (86 to 1276). Inserting DNA there inactivates tetracycline resistance.",
+       "marks": 2,
+       "id": "dat-3-q2b"
+      }
+     ],
+     "img": "assets/exam-img/dat3_map.png",
+     "id": "dat-3-q2"
+    },
+    {
+     "stem": "PstI recognises the sequence 5′-CTGCAG-3′.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What is the sequence of the PstI site on the other strand, written 5′ to 3′?",
+       "options": [
+        "5′-GACGTC-3′",
+        "5′-CTGCAG-3′",
+        "5′-GTCGAC-3′",
+        "5′-CAGCTG-3′",
+        "5′-AAGCTT-3′"
+       ],
+       "answer": 1,
+       "explain": "The site is palindromic: the complementary strand is 3′-GACGTC-5′, which reads 5′-CTGCAG-3′.",
+       "marks": 2,
+       "id": "dat-3-q3a"
+      },
+      {
+       "type": "mcq",
+       "stem": "A DNA solution is 0.05 mg/mL. What is this in µg/mL?",
+       "options": [
+        "0.5 µg/mL",
+        "5 µg/mL",
+        "50 µg/mL",
+        "500 µg/mL",
+        "5000 µg/mL"
+       ],
+       "answer": 2,
+       "explain": "1 mg = 1000 µg, so 0.05 mg/mL × 1000 = 50 µg/mL.",
+       "marks": 2,
+       "id": "dat-3-q3b"
+      }
+     ],
+     "id": "dat-3-q3"
+    },
+    {
+     "stem": "<strong>Figure 8.</strong> Standard curve: mean absorbance at 260 nm (± SD, n = 3) of DNA solutions of known concentration.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What DNA concentration would give an absorbance of 0.95?",
+       "options": [
+        "0.037 mg/mL",
+        "0.039 mg/mL",
+        "0.041 mg/mL",
+        "0.043 mg/mL",
+        "0.045 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "x = (0.95 + 0.004) ÷ 23.1 = 0.0413, so 0.041 mg/mL. Use the equation; reading off the graph is not precise enough when the options are this close.",
+       "marks": 2,
+       "id": "dat-3-q4a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the most likely R² value for this line?",
+       "options": [
+        "0.0",
+        "0.1 to 0.5",
+        "0.5 to 0.9",
+        "Greater than 0.9 but less than 1.0",
+        "1.0"
+       ],
+       "answer": 3,
+       "explain": "The points lie very close to the straight trend line but not exactly on it, so R² is close to, but below, 1.0.",
+       "marks": 2,
+       "id": "dat-3-q4b"
+      }
+     ],
+     "img": "assets/exam-img/dat3_curve.png",
+     "id": "dat-3-q4"
+    }
+   ]
+  },
+  {
    "id": "gen-l1",
    "title": "Heredity and DNA",
    "lecture": "Lecture 1",

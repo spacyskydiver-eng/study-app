@@ -91,7 +91,7 @@ function list(view) {
         const draft = store.get(draftKey(p.id), null);
         return `<a class="exam-paper-card" href="${B.hashFor('exam/' + p.id)}" data-id="exam/${esc(p.id)}">
           <div class="exam-paper-lec">${esc(p.lecture)}</div><div class="exam-paper-title">${esc(p.title)}</div>
-          <div class="exam-paper-meta">${p.questions.length} questions · ${p.marks} marks</div>
+          <div class="exam-paper-meta">${p.questions.reduce((n, q) => n + q.parts.length, 0)} questions · ${p.marks} marks</div>
           <div class="exam-paper-score">${best == null ? (draft ? '<span class="exam-pill">In progress</span>' : '<span class="exam-pill dim">Not attempted</span>') : `<span class="exam-pill ok">Best ${best}%</span><span class="exam-pill dim">Last ${pct(last.score, last.max)}%</span>${draft ? '<span class="exam-pill">In progress</span>' : ''}`}</div></a>`;
       }).join('')}</div></section>`).join('')}
   </div>`;
@@ -127,7 +127,7 @@ function paper(view, p) {
   view.innerHTML = `<div class="exam-wrap">
     <div class="exam-bar"><a href="${B.hashFor('exam')}" class="exam-back" data-go="exam">${icon('arrow-left')} All papers</a></div>
     <div class="exam-head"><div class="exam-paper-lec">${esc(p.subject)} · ${esc(p.lecture)}</div><h1>${esc(p.title)}</h1>
-      <p>${p.questions.length} questions · ${p.marks} marks · no time limit. Answer every part, then submit at the bottom.</p></div>
+      <p>${p.questions.reduce((n, q) => n + q.parts.length, 0)} questions · ${p.marks} marks · no time limit. ${p.note ? esc(p.note) + ' ' : ''}Answer every part, then submit at the bottom.</p></div>
     <form class="exam-form" autocomplete="off">
     ${p.questions.map(q => { qn++; return `<section class="exam-q"><div class="exam-qn">${qn}</div><div class="exam-qbody">
       <div class="exam-stem">${q.stem}</div>
