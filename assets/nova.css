@@ -208,3 +208,60 @@ body.ui-nova .nav-folder-title, body.ui-nova .nav-file-title { position: relativ
 body.ui-nova .bm-lines { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
 body.ui-nova .bm-base { fill: none; stroke: var(--background-modifier-border-hover); stroke-width: 1.4; stroke-linecap: round; }
 body.ui-nova .nav-file-title.is-active { box-shadow: inset 2px 0 0 var(--nova-violet), 0 0 16px -6px rgba(139,92,246,.5); background: rgba(139,92,246,.08); border-radius: 0 6px 6px 0; }
+
+/* ---------- Magic Bento (React Bits) — cursor-following border glow, spotlight and
+   click wave on the site's card grids. Layers and --mb-* vars come from nova-components.js */
+body.ui-nova .magic-bento {
+  --mb-glow-rgb: 167, 139, 250;
+  --mb-glow-alpha: .85;
+  --mb-spot-alpha: .09;
+  --mb-edge: rgba(151,125,255,.14);
+  --mb-highlight: rgba(255,255,255,.05);
+}
+body.ui-nova .magic-bento__card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transform: perspective(900px) translate3d(var(--mb-tx, 0px), var(--mb-ty, 0px), 0) rotateX(var(--mb-rx, 0deg)) rotateY(var(--mb-ry, 0deg)) scale(var(--mb-press, 1));
+}
+body.ui-nova .magic-bento__card > :not(.magic-bento__light):not(.magic-bento__rim):not(.magic-bento__border) { position: relative; z-index: 2; }
+body.ui-nova .magic-bento__light,
+body.ui-nova .magic-bento__rim,
+body.ui-nova .magic-bento__border { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+body.ui-nova .magic-bento__light {
+  z-index: 1;
+  background: radial-gradient(var(--mb-spot-size, 300px) circle at var(--mb-x, -999px) var(--mb-y, -999px),
+    rgba(var(--mb-glow-rgb), calc(var(--mb-spot-alpha) * var(--mb-hot, 0))) 0%,
+    rgba(var(--mb-glow-rgb), calc(var(--mb-spot-alpha) * var(--mb-hot, 0) * .837)) 30%,
+    rgba(var(--mb-glow-rgb), calc(var(--mb-spot-alpha) * var(--mb-hot, 0) * .317)) 60%,
+    rgba(var(--mb-glow-rgb), calc(var(--mb-spot-alpha) * var(--mb-hot, 0) * .009)) 90%,
+    rgba(var(--mb-glow-rgb), 0) 100%);
+}
+body.ui-nova .magic-bento__rim { z-index: 3; box-shadow: inset 0 0 0 1px var(--mb-edge), inset 0 1px 0 var(--mb-highlight); }
+body.ui-nova .magic-bento__border {
+  z-index: 4; box-sizing: border-box; padding: 1px;
+  background:
+    radial-gradient(var(--mb-border-size, 225px) circle at var(--mb-x, -999px) var(--mb-y, -999px),
+      rgba(var(--mb-glow-rgb), calc(var(--mb-glow-alpha) * var(--mb-near, 0))) 0%,
+      rgba(var(--mb-glow-rgb), calc(var(--mb-glow-alpha) * var(--mb-near, 0) * .837)) 30%,
+      rgba(var(--mb-glow-rgb), calc(var(--mb-glow-alpha) * var(--mb-near, 0) * .317)) 60%,
+      rgba(var(--mb-glow-rgb), calc(var(--mb-glow-alpha) * var(--mb-near, 0) * .009)) 90%,
+      rgba(var(--mb-glow-rgb), 0) 100%),
+    radial-gradient(circle at var(--mb-wx, -999px) var(--mb-wy, -999px),
+      rgba(34,211,238, 0) calc(var(--mb-wr, 0px) - 110px),
+      rgba(34,211,238, calc(.1 * var(--mb-wa, 0))) calc(var(--mb-wr, 0px) - 80px),
+      rgba(34,211,238, calc(.32 * var(--mb-wa, 0))) calc(var(--mb-wr, 0px) - 52px),
+      rgba(34,211,238, calc(.68 * var(--mb-wa, 0))) calc(var(--mb-wr, 0px) - 28px),
+      rgba(34,211,238, calc(.94 * var(--mb-wa, 0))) calc(var(--mb-wr, 0px) - 10px),
+      rgba(34,211,238, var(--mb-wa, 0)) calc(var(--mb-wr, 0px) - 3px),
+      rgba(34,211,238, 0) var(--mb-wr, 0px));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+body.ui-nova .exam-paper-card.magic-bento__card:hover { transform: perspective(900px) scale(var(--mb-press, 1)); }
+
+/* ---------- Electric Logo (React Bits) on the new-tab screen ----------- */
+body.ui-nova .nova-elogo { width: 150px; height: 150px; margin: -10px auto 4px; cursor: pointer; }
+body.ui-nova .nova-elogo canvas { display: block; width: 100%; height: 100%; }
+@media (max-width: 600px) { body.ui-nova .nova-elogo { width: 110px; height: 110px; } }

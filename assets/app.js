@@ -298,7 +298,7 @@ function loadNovaComponents() {
   if (novaLoading) return novaLoading;
   novaLoading = new Promise((resolve) => {
     const s = document.createElement('script');
-    s.src = 'assets/nova-components.js?v=20261020';
+    s.src = 'assets/nova-components.js?v=20261021';
     s.onload = resolve; s.onerror = resolve;
     document.head.appendChild(s);
   });
