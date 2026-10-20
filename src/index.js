@@ -173,11 +173,126 @@ async function handlePinPost(request, env) {
   return res;
 }
 
+
+/* ------------------------------------------------------------------ Microsoft (Outlook mail + calendar)
+   Delegated OAuth against Microsoft Graph, read-only: Mail.Read, Calendars.Read, User.Read,
+   offline_access. The refresh token lives only in D1 on this worker; the page only ever sees the
+   mail and calendar items it asks for, and only behind a valid PIN session.
+   Needs secrets MS_CLIENT_ID and MS_CLIENT_SECRET (and optional MS_TENANT, default "organizations").
+   Redirect URI to register: https://<site>/ms/callback */
+const MS_SCOPES = "offline_access User.Read Mail.Read Calendars.Read";
+const msTenant = env => env.MS_TENANT || "organizations";
+const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "private, no-store" } });
+
+async function msTable(env) {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS ms_tokens (id INTEGER PRIMARY KEY, refresh TEXT, access TEXT, expires INTEGER, account TEXT)").run();
+}
+async function msSave(env, t, account) {
+  await msTable(env);
+  const prev = await env.DB.prepare("SELECT account FROM ms_tokens WHERE id = 1").first();
+  await env.DB.prepare("INSERT INTO ms_tokens (id, refresh, access, expires, account) VALUES (1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET refresh = excluded.refresh, access = excluded.access, expires = excluded.expires, account = excluded.account")
+    .bind(t.refresh_token, t.access_token, Date.now() + (t.expires_in - 120) * 1000, account || (prev && prev.account) || "").run();
+}
+async function msTokenRequest(env, params) {
+  const body = new URLSearchParams({ client_id: env.MS_CLIENT_ID, client_secret: env.MS_CLIENT_SECRET, scope: MS_SCOPES, ...params });
+  const res = await fetch(`https://login.microsoftonline.com/${msTenant(env)}/oauth2/v2.0/token`, { method: "POST", body });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error_description || data.error || `token ${res.status}`);
+  return data;
+}
+async function msAccess(env) {
+  await msTable(env);
+  const row = await env.DB.prepare("SELECT refresh, access, expires FROM ms_tokens WHERE id = 1").first();
+  if (!row || !row.refresh) return null;
+  if (row.access && row.expires > Date.now()) return row.access;
+  const t = await msTokenRequest(env, { grant_type: "refresh_token", refresh_token: row.refresh });
+  if (!t.refresh_token) t.refresh_token = row.refresh;
+  await msSave(env, t);
+  return t.access_token;
+}
+async function graph(env, path, extraHeaders = {}) {
+  const token = await msAccess(env);
+  if (!token) return { notConnected: true };
+  const res = await fetch("https://graph.microsoft.com/v1.0" + path, { headers: { Authorization: `Bearer ${token}`, ...extraHeaders } });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data.error && data.error.message) || `graph ${res.status}`);
+  return data;
+}
+async function msState(env) { const t = String(Date.now()); return `${t}.${(await hmac(env.SESSION_SECRET, "ms" + t)).slice(0, 32)}`; }
+async function msStateOk(env, state) {
+  const [t, sig] = String(state || "").split(".");
+  if (!t || !sig || Date.now() - Number(t) > 600000) return false;
+  return (await hmac(env.SESSION_SECRET, "ms" + t)).slice(0, 32) === sig;
+}
+function msPage(title, text) {
+  return htmlResponse(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
+<body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#05060d;color:#e6e8ff;font:15px system-ui,sans-serif">
+<div style="max-width:460px;padding:28px;border:1px solid rgba(151,125,255,.3);border-radius:18px;background:#0b0c17">
+<h2 style="margin:0 0 10px">${title}</h2><p style="color:#a6acd6;line-height:1.5">${text}</p><p><a style="color:#c4b5fd" href="/">Back to the site</a></p></div></body>`, 200);
+}
+async function handleMs(request, env, url) {
+  const p = url.pathname;
+  if (!env.MS_CLIENT_ID || !env.MS_CLIENT_SECRET) {
+    if (p.startsWith("/api/")) return json({ notConfigured: true });
+    return msPage("Outlook is not set up yet", "The Microsoft app details (MS_CLIENT_ID and MS_CLIENT_SECRET) have not been added to this site.");
+  }
+  const redirect = `${url.origin}/ms/callback`;
+  if (p === "/ms/connect") {
+    const q = new URLSearchParams({ client_id: env.MS_CLIENT_ID, response_type: "code", redirect_uri: redirect, response_mode: "query", scope: MS_SCOPES, state: await msState(env), prompt: "select_account" });
+    return Response.redirect(`https://login.microsoftonline.com/${msTenant(env)}/oauth2/v2.0/authorize?${q}`, 302);
+  }
+  if (p === "/ms/callback") {
+    if (url.searchParams.get("error")) {
+      const d = url.searchParams.get("error_description") || url.searchParams.get("error");
+      const admin = /admin|AADSTS65001|AADSTS90094|consent/i.test(d);
+      return msPage(admin ? "UEA needs to approve this" : "Microsoft sign-in failed", admin
+        ? "Your university account only lets IT-approved apps read mail and calendar. The site itself is fine; UEA's settings block the connection. A personal Outlook account, or a calendar subscription link, would work instead."
+        : String(d).replace(/[<>&]/g, ""));
+    }
+    if (!(await msStateOk(env, url.searchParams.get("state")))) return msPage("Sign-in expired", "Start the connection again from the site.");
+    try {
+      const t = await msTokenRequest(env, { grant_type: "authorization_code", code: url.searchParams.get("code") || "", redirect_uri: redirect });
+      let account = "";
+      try { const me = await fetch("https://graph.microsoft.com/v1.0/me?$select=mail,userPrincipalName", { headers: { Authorization: `Bearer ${t.access_token}` } }).then(r => r.json()); account = me.mail || me.userPrincipalName || ""; } catch (e) { /* name is optional */ }
+      await msSave(env, t, account);
+      return Response.redirect(`${url.origin}/`, 303);
+    } catch (e) { return msPage("Microsoft sign-in failed", String(e.message).replace(/[<>&]/g, "")); }
+  }
+  if (p === "/ms/disconnect" && request.method === "POST") {
+    await msTable(env); await env.DB.prepare("DELETE FROM ms_tokens WHERE id = 1").run();
+    return json({ ok: true });
+  }
+  try {
+    if (p === "/api/ms/status") {
+      await msTable(env);
+      const row = await env.DB.prepare("SELECT account FROM ms_tokens WHERE id = 1").first();
+      return json({ connected: !!row, account: row ? row.account : "" });
+    }
+    if (p === "/api/ms/calendar") {
+      const days = Math.min(14, Math.max(1, Number(url.searchParams.get("days")) || 2));
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const end = new Date(start.getTime() + days * 86400000);
+      const d = await graph(env, `/me/calendarView?startDateTime=${start.toISOString()}&endDateTime=${end.toISOString()}&$select=subject,start,end,location,isAllDay,webLink,showAs&$orderby=start/dateTime&$top=40`, { Prefer: 'outlook.timezone="Europe/London"' });
+      if (d.notConnected) return json({ notConnected: true });
+      return json({ events: (d.value || []).map(e => ({ subject: e.subject, start: e.start.dateTime, end: e.end.dateTime, allDay: e.isAllDay, location: (e.location && e.location.displayName) || "", link: e.webLink })) });
+    }
+    if (p === "/api/ms/mail") {
+      const d = await graph(env, "/me/mailFolders/inbox/messages?$top=15&$select=subject,from,receivedDateTime,bodyPreview,isRead,webLink&$orderby=receivedDateTime desc");
+      if (d.notConnected) return json({ notConnected: true });
+      return json({ messages: (d.value || []).map(m => ({ subject: m.subject, from: (m.from && m.from.emailAddress && (m.from.emailAddress.name || m.from.emailAddress.address)) || "", received: m.receivedDateTime, preview: m.bodyPreview, unread: !m.isRead, link: m.webLink })) });
+    }
+  } catch (e) { return json({ error: String(e.message) }, 502); }
+  return json({ error: "not found" }, 404);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/pin" && request.method === "POST") return handlePinPost(request, env);
-    if (await validSession(request, env)) return env.ASSETS.fetch(request);
+    if (await validSession(request, env)) {
+      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/")) return handleMs(request, env, url);
+      return env.ASSETS.fetch(request);
+    }
     return htmlResponse(loginPage(), 401);
   },
 };

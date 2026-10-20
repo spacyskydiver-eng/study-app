@@ -168,6 +168,35 @@ function accordion(items, opts = {}) {
   return root;
 }
 
+
+/* ---------------------------------------------------------------- Outlook (calendar + inbox) on the home page */
+const fmtTime = iso => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const dayKey = d => d.toISOString().slice(0, 10);
+async function msGet(path) {
+  try { const r = await fetch(path, { credentials: 'same-origin', cache: 'no-store' }); if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return null; return await r.json(); } catch (e) { return null; }
+}
+N.ms = { get: msGet, fmtTime };
+async function outlookSection(el) {
+  const st = await msGet('/api/ms/status');
+  if (!st || st.notConfigured || !el.isConnected) return;     // not set up on this site: stay hidden
+  el.hidden = false;
+  if (!st.connected) {
+    el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Connect your Outlook</b><small>Show your calendar and latest emails here, and let the assistant answer “what’s on tonight?”</small></div><a class="nv-mapbtn" href="/ms/connect">${icon('link')}<span>Connect</span></a></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span>${esc(st.account || '')}</span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-kicker">Calendar</div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-kicker">Inbox</div><div class="nv-ms-list">Loading…</div></div></div>`;
+  const [cal, mail] = await Promise.all([msGet('/api/ms/calendar?days=2'), msGet('/api/ms/mail')]);
+  if (!el.isConnected) return;
+  const today = dayKey(new Date()), tomorrow = dayKey(new Date(Date.now() + 864e5));
+  const evs = (cal && cal.events) || [];
+  $('.nv-ms-cal .nv-ms-list', el).innerHTML = cal && cal.error ? `<div class="nv-empty">${esc(cal.error)}</div>` : evs.length ? evs.slice(0, 7).map(e => {
+    const d = e.start.slice(0, 10);
+    return `<a class="nv-ms-item" href="${esc(e.link || '#')}" target="_blank" rel="noopener"><span class="nv-ms-when">${d === today ? '' : d === tomorrow ? 'Tmrw ' : ''}${e.allDay ? 'All day' : fmtTime(e.start)}</span><b>${esc(e.subject || '(no title)')}</b>${e.location ? `<small>${esc(e.location)}</small>` : ''}</a>`;
+  }).join('') : '<div class="nv-empty">Nothing on today or tomorrow.</div>';
+  const msgs = (mail && mail.messages) || [];
+  $('.nv-ms-mail .nv-ms-list', el).innerHTML = mail && mail.error ? `<div class="nv-empty">${esc(mail.error)}</div>` : msgs.length ? msgs.slice(0, 6).map(m => `<a class="nv-ms-item${m.unread ? ' is-unread' : ''}" href="${esc(m.link || '#')}" target="_blank" rel="noopener"><span class="nv-ms-when">${new Date(m.received).toDateString() === new Date().toDateString() ? fmtTime(m.received) : new Date(m.received).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span><b>${esc(m.subject || '(no subject)')}</b><small>${esc(m.from)} · ${esc((m.preview || '').slice(0, 90))}</small></a>`).join('') : '<div class="nv-empty">Inbox is empty.</div>';
+}
+
 /* ---------------------------------------------------------------- home */
 function fcSummary() {
   const s = store.get('fc2', null) || {};
@@ -211,8 +240,10 @@ function showHome(view) {
         <button class="nv-today-cell" data-go="flashcards"><span class="nv-today-k">Cards due</span><b>${fc.due}</b><small>${fc.plan ? esc(fc.plan.name) + ' in ' + (days === 0 ? 'under a day' : days + 'd') : fc.streak ? fc.streak + ' day streak' : 'Flashcards'}</small></button>
       </div>
     </section>
+    <section class="nv-sec nv-ms" hidden></section>
     <section class="nv-sec"><div class="nv-sec-head"><h2>Modules</h2></div><div class="nv-acc"></div></section>
   </div>`;
+  outlookSection($('.nv-ms', view));
   $('.nv-acc', view).appendChild(accordion(modules.map(m => {
     const lec = (m.groups.lecture || []).length;
     return { id: m.id, label: m.title, color: m.color, tagline: summaryOf(m.id), meta: [m.semester, lec ? lec + ' lectures' : 'No lectures yet'].filter(Boolean).join(' · ') };

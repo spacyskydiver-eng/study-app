@@ -290,6 +290,32 @@ async function ask(q) {
   const a = $('.na-a', turn);
   const intent = navIntent(q);
   try {
+    // calendar and email questions are answered straight from Outlook
+    const lq = clean(q);
+    const wantsMail = /\b(email|emails|e-mails|mail|inbox|outlook|messages)\b/.test(lq) && !/\b(book|lecture)\b/.test(lq);
+    const wantsCal = !wantsMail && (/\b(calendar|schedule|timetable|diary|events?|plans?|busy|free)\b/.test(lq) || /what('?s| is) on\b|\bon (today|tonight|tomorrow)\b|\bdo i have\b/.test(lq));
+    if ((wantsMail || wantsCal) && N.ms) {
+      const d = await N.ms.get(wantsMail ? '/api/ms/mail' : '/api/ms/calendar?days=' + (/\b(week|weekend)\b/.test(lq) ? 7 : 2));
+      if (!d || d.notConfigured) a.innerHTML = '<p>Outlook isn’t set up on this site yet.</p>';
+      else if (d.notConnected) a.innerHTML = '<p>Outlook isn’t connected. <a href="/ms/connect">Connect it</a> and I can read your calendar and inbox.</p>';
+      else if (d.error) a.innerHTML = `<p>Outlook returned an error: ${esc(d.error)}</p>`;
+      else if (wantsMail) {
+        const unread = d.messages.filter(m => m.unread);
+        const list = (unread.length ? unread : d.messages).slice(0, 6);
+        a.innerHTML = `<p>${unread.length ? `You have <strong>${unread.length}</strong> unread in the latest ${d.messages.length}.` : 'Nothing unread in your latest emails.'}</p><ul>${list.map(m => `<li><a href="${esc(m.link)}" target="_blank" rel="noopener"><strong>${esc(m.subject || '(no subject)')}</strong></a> · ${esc(m.from)}<br><small>${esc((m.preview || '').slice(0, 110))}</small></li>`).join('')}</ul>`;
+      } else {
+        const now = new Date(), today = now.toISOString().slice(0, 10), tmr = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+        let evs = d.events, label = 'today';
+        if (/\btomorrow\b/.test(lq)) { evs = evs.filter(e => e.start.slice(0, 10) === tmr); label = 'tomorrow'; }
+        else if (/\b(tonight|this evening|later)\b/.test(lq)) { evs = evs.filter(e => e.start.slice(0, 10) === today && new Date(e.end) > now && new Date(e.start).getHours() >= 16); label = 'tonight'; }
+        else if (!/\b(week|weekend)\b/.test(lq)) evs = evs.filter(e => e.start.slice(0, 10) === today && new Date(e.end) > now);
+        else label = 'this week';
+        a.innerHTML = evs.length ? `<p>Here’s what’s on ${label}:</p><ul>${evs.slice(0, 10).map(e => `<li><strong>${e.allDay ? 'All day' : N.ms.fmtTime(e.start) + '–' + N.ms.fmtTime(e.end)}</strong> ${esc(e.subject || '(no title)')}${e.location ? ` · ${esc(e.location)}` : ''}</li>`).join('')}</ul>` : `<p>Nothing in your calendar ${label}.</p>`;
+      }
+      st.history.push({ q, a: a.textContent.slice(0, 400) });
+      setMood('idle'); st.busy = false; thread.scrollTop = thread.scrollHeight;
+      return;
+    }
     if (intent && (intent.kind === 'number' || intent.kind === 'module')) {
       const L = N.model ? N.model() : null;
       const plan = intent.kind === 'number' ? planNumber(intent)

@@ -303,7 +303,7 @@ let novaLoading = null;
 function loadNovaComponents() {
   if (novaLoading) return novaLoading;
   const add = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261026')).then(() => add('assets/nova-map.js?v=20261027')).then(() => add('assets/nova-assistant.js?v=20261028')).then(relayout);
+  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261030')).then(() => add('assets/nova-map.js?v=20261027')).then(() => add('assets/nova-assistant.js?v=20261030')).then(relayout);
   return novaLoading;
 }
 function openUiModeMenu(anchorEl) {
