@@ -93,6 +93,7 @@ function md(s) {
     const l = raw.trim();
     let m;
     if (!l) { flush(); close(); continue; }
+    if ((m = l.match(/^#{1,4}\s+(.*)/))) { flush(); close(); out += `<h3>${inline(m[1])}</h3>`; continue; }
     if ((m = l.match(/^[-•*]\s+(.*)/))) { flush(); if (list !== 'ul') { close(); out += '<ul>'; list = 'ul'; } out += `<li>${inline(m[1])}</li>`; continue; }
     if ((m = l.match(/^\d+[.)]\s+(.*)/))) { flush(); if (list !== 'ol') { close(); out += '<ol>'; list = 'ol'; } out += `<li>${inline(m[1])}</li>`; continue; }
     close(); para.push(l);

@@ -288,19 +288,19 @@ function setHighlight(ids) {
 }
 
 
-/* ---------------------------------------------------------------- galaxy map (map mode)
-   Styled on the Elite Dangerous galaxy map: a ringed plane under the notes, a drop line from every
+/* ---------------------------------------------------------------- map mode: plane, drop lines, route
+   Movement and layout borrowed from the Elite Dangerous galaxy map, colours from the site: a ringed plane under the notes, a drop line from every
    note near the focus down to that plane, a target you select with a click, and a plotted route
    (the shortest chain of links) from where you are to the target. Fly with W A S D, turn with Q E,
    zoom with R F, tilt with Z X; drag to turn, right-drag to pan, scroll to zoom. */
-const AMBER = [1.0, 0.6, 0.16];
+const GRID = [0.55, 0.42, 1.0], ROUTE = [0.4, 0.92, 1.0];
 function buildGalaxy() {
   const gl = M.gl; if (!gl || M.gx) return;
   const { c, r } = bounds();
   const R = r * 1.25, y = c[1] - r * 0.7;
   M.plane = { c, R, y };
   const pos = [], col = [];
-  const seg = (x0, z0, x1, z1, k) => { pos.push(x0, y, z0, x1, y, z1); const f = AMBER.map(v => v * k); col.push(...f, ...f); };
+  const seg = (x0, z0, x1, z1, k) => { pos.push(x0, y, z0, x1, y, z1); const f = GRID.map(v => v * k); col.push(...f, ...f); };
   const rings = 8, segs = 120;
   for (let i = 1; i <= rings; i++) {
     const rr = R * i / rings, k = i === rings ? 0.9 : 0.35 + 0.25 * (i % 2);
@@ -348,7 +348,7 @@ function setRouteGeometry() {
   let n = 0;
   for (let i = 0; i + 1 < ids.length; i++) {
     const a = M.data.nodes[M.data.index.get(ids[i])], b = M.data.nodes[M.data.index.get(ids[i + 1])];
-    g.pos.set([a.x, a.y, a.z, b.x, b.y, b.z], n * 6); g.col.set([...AMBER, ...AMBER], n * 6); n++;
+    g.pos.set([a.x, a.y, a.z, b.x, b.y, b.z], n * 6); g.col.set([...ROUTE, ...ROUTE], n * 6); n++;
   }
   g.n = n;
   gl.bindBuffer(gl.ARRAY_BUFFER, g.bp); gl.bufferSubData(gl.ARRAY_BUFFER, 0, g.pos.subarray(0, Math.max(6, n * 6)));
@@ -426,24 +426,15 @@ function searchHits(q) {
 
 /* ---------------------------------------------------------------- map mode + HUD */
 function hudShell() {
-  M.hud.innerHTML = `<div class="nmap-top"><div class="nmap-brand"><i></i>Galaxy map</div><div class="nmap-status"></div></div>
-    <div class="gx-search"><input type="text" placeholder="Search notes" autocomplete="off" spellcheck="false"><div class="gx-results"></div></div>
-    <div class="gx-target" hidden></div>
-    <div class="nmap-legend">${Object.entries(MOD_COLORS).map(([t, c]) => `<span style="--c:${c}"><i></i>${esc(t)}</span>`).join('')}<span style="--c:#E9D58A"><i></i>Key terms</span></div>
-    <div class="nmap-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly · <kbd>Q</kbd><kbd>E</kbd> turn · <kbd>R</kbd><kbd>F</kbd> zoom · <kbd>Z</kbd><kbd>X</kbd> tilt · drag turn · right-drag pan · click target · double-click open · <kbd>Esc</kbd> exit</div>
-    <button class="nmap-exit">${icon('arrow-left')}<span>Back to notes</span></button>
+  M.hud.innerHTML = `<div class="nmap-top"><div class="nmap-status"></div></div>
+    <label class="gx-search">${icon('search')}<input type="text" placeholder="Find a note" autocomplete="off" spellcheck="false"><div class="gx-results"></div></label>
+    <button class="nmap-exit" title="Back (Esc)">${icon('x')}</button>
     <div class="nmap-marks"></div><div class="nmap-tip" hidden></div>`;
   M.hud.querySelector('.nmap-exit').addEventListener('click', () => exitMap());
   const inp = M.hud.querySelector('.gx-search input'), res = M.hud.querySelector('.gx-results');
   inp.addEventListener('input', () => { res.innerHTML = searchHits(inp.value).map(n => `<button data-id="${esc(n.id)}" style="--c:${n.color}"><i></i>${esc(n.title)}</button>`).join(''); });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const b = res.querySelector('button'); if (b) b.click(); } if (e.key === 'Escape') { inp.value = ''; res.innerHTML = ''; inp.blur(); e.stopPropagation(); } });
   res.addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (!b) return; setTarget(b.dataset.id); M.goal.dist = Math.min(M.goal.dist, 340); inp.value = ''; res.innerHTML = ''; inp.blur(); status('Target · ' + b.textContent); });
-  M.hud.querySelector('.gx-target').addEventListener('click', e => {
-    const a = e.target.closest('[data-gx]'), li = e.target.closest('.gx-route li');
-    if (li) { const n = M.data.nodes[M.data.index.get(li.dataset.id)]; Object.assign(M.goal, { tx: n.x, ty: n.y, tz: n.z }); kick(); return; }
-    if (!a) return;
-    if (a.dataset.gx === 'open') openTarget(); else if (a.dataset.gx === 'route') plotRoute(); else setTarget(null, false);
-  });
 }
 function status(text) {
   const el = M && M.hud.querySelector('.nmap-status'); if (!el) return;
