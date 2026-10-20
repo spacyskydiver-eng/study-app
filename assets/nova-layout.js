@@ -21,6 +21,8 @@ const COLORS = {
   'Professional Skills for Biosciences': '#FB7185',
 };
 const colorOf = s => COLORS[s] || '#8B5CF6';
+// page changes from a click open out of the clicked element (nova-bits.js N.go)
+const goFrom = el => { const r = el.getBoundingClientRect(); N.go ? N.go(el.dataset.go, { x: r.left + Math.min(r.width / 2, 120), y: r.top + r.height / 2 }) : B.go(el.dataset.go); };
 const KIND = { lecture: 'Lectures', practical: 'Practicals', seminar: 'Seminars', extra: 'Extras' };
 const KIND_ONE = { lecture: 'Lecture', practical: 'Practical', seminar: 'Seminar', extra: 'Extra' };
 
@@ -133,7 +135,7 @@ function navPane(root) {
     if (e.target.closest('[data-navmap]')) { N.map && N.map.open(B.currentId()); return; }
     if (e.target.closest('[data-act-switch]')) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', ctrlKey: true, bubbles: true })); return; }
     const g = e.target.closest('[data-go]');
-    if (g) B.go(g.dataset.go);
+    if (g) goFrom(g);
   };
 }
 window.addEventListener('hashchange', () => { if (B.isNova()) setTimeout(() => { const el = $('#explorer'); if (el) navPane(el); }, 0); });
@@ -260,7 +262,7 @@ function showHome(view) {
     if (e.target.closest('[data-ask-open]')) { N.assistant && N.assistant.open(); return; }
     const ml = e.target.closest('[data-mail]'); if (ml && N.outlook) { N.outlook.openEmail(ml.dataset.mail); return; }
     const ev = e.target.closest('[data-ev]'); if (ev && N.outlook) { N.outlook.openEvent(ev.dataset.ev, ev.dataset.start); return; }
-    const g = e.target.closest('[data-go]'); if (g) B.go(g.dataset.go);
+    const g = e.target.closest('[data-go]'); if (g) goFrom(g);
   };
   mountGL($('.nv-laser', view), 'laserFlow', { surfaceRef: { current: $('#nv-today', view) }, beamPosition: 0.72, color: '#8B5CF6', intensity: 1.3, fog: 0, dust: 0.8, speed: 0.9, spread: 1, spill: 0.6 }, bag);
   return destroyAll(bag);
@@ -301,7 +303,7 @@ function showModule(view, id) {
   view.onclick = e => {
     if (e.target.closest('[data-map]')) { N.map && N.map.open(id); return; }
     const g = e.target.closest('[data-go]');
-    if (g && !e.target.closest('.nv-raw')) { e.preventDefault(); e.stopPropagation(); B.go(g.dataset.go); }
+    if (g && !e.target.closest('.nv-raw')) { e.preventDefault(); e.stopPropagation(); goFrom(g); }
   };
   return destroyAll(bag);
 }

@@ -992,36 +992,38 @@ body.ui-nova .nv-ms-stats em { font-style: normal; color: var(--ink3); font-size
 .nb-dock[data-hidden] { translate: 0 calc(100% + 4px); opacity: .0; }
 .nb-dock[data-hidden] .nb-dock-handle { opacity: 1; }
 .nb-dock-handle { position: fixed; left: 50%; bottom: 4px; width: 90px; height: 4px; margin-left: -45px; border-radius: 3px; background: rgba(167,139,250,.35); opacity: 0; transition: opacity .3s; pointer-events: none; translate: 0 calc(-100% - 2px); }
-.nb-dock-bar { display: flex; align-items: flex-end; gap: 9px; height: 58px; padding: 8px 10px; box-sizing: border-box; border-radius: 20px; background: rgba(20,18,36,.62); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.07), 0 22px 44px -20px rgba(0,0,0,.85), 0 0 40px -12px rgba(139,92,246,.4); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
+.nb-dock-bar { position: relative; display: flex; align-items: flex-end; gap: 9px; height: 58px; padding: 8px 10px; box-sizing: border-box; }
+.nb-dock-bg { position: absolute; inset: 0; z-index: -1; border-radius: 20px; background: rgba(16,14,30,.82); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.07), 0 22px 44px -20px rgba(0,0,0,.85), 0 0 40px -12px rgba(139,92,246,.4); will-change: transform; }
 .nb-dock-sep { align-self: center; width: 1px; height: 30px; background: rgba(255,255,255,.12); }
-.nb-dock-item { position: relative; flex: none; width: 42px; height: 42px; margin: 0; padding: 0; border: 0; background: none; color: #EEF0FF; cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
-.nb-dock-tile { position: absolute; left: 0; bottom: 0; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(180deg, #2E2A45 0%, #1B1930 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), inset 0 1px 0 rgba(255,255,255,.12), 0 4px 10px -4px rgba(0,0,0,.7); transform-origin: 50% 100%; pointer-events: none; }
+.nb-dock-item { position: relative; flex: none; width: 42px; height: 42px; will-change: transform; margin: 0; padding: 0; border: 0; background: none; color: #EEF0FF; cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
+.nb-dock-tile { position: absolute; left: 0; bottom: 0; width: 42px; height: 42px; will-change: transform; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(180deg, #2E2A45 0%, #1B1930 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), inset 0 1px 0 rgba(255,255,255,.12), 0 4px 10px -4px rgba(0,0,0,.7); transform-origin: 50% 100%; pointer-events: none; }
 .nb-dock-tile .svg-icon { width: 20px; height: 20px; }
 .nb-dock-item.is-active .nb-dock-tile { background: linear-gradient(180deg, #4C3A8F 0%, #2A2160 100%); box-shadow: inset 0 0 0 1px rgba(196,181,253,.35), 0 0 18px -4px rgba(139,92,246,.7); }
 .nb-dock-item:focus-visible .nb-dock-tile { outline: 2px solid #8B5CF6; outline-offset: 3px; }
 .nb-dock-dot { position: absolute; left: 50%; bottom: -6px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: rgba(255,255,255,.75); opacity: 0; }
 .nb-dock-item.is-active .nb-dock-dot { opacity: 1; }
 .nb-dock-badge { position: absolute; top: -5px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: #ff453a; color: #fff; font: 600 10.5px/17px "Inter", system-ui, sans-serif; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
-.nb-dock-label { position: absolute; left: 50%; bottom: calc(100% + 14px); transform: translate(-50%, 4px); padding: 6px 10px; border-radius: 8px; background: #221F35; color: #F4F4F5; font: 500 12px/1 "Inter", system-ui, sans-serif; white-space: nowrap; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 20px -8px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .16s, transform .16s; }
+.nb-dock-label { position: absolute; left: 50%; bottom: calc(100% + 12px + (var(--s, 1) - 1) * 42px); transform: translate(-50%, 4px); padding: 6px 10px; border-radius: 8px; background: #221F35; color: #F4F4F5; font: 500 12px/1 "Inter", system-ui, sans-serif; white-space: nowrap; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 20px -8px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .16s, transform .16s; }
 @media (hover: hover) { .nb-dock-item:hover .nb-dock-label { opacity: 1; transform: translate(-50%, 0); } }
 .nb-dock-item:focus-visible .nb-dock-label { opacity: 1; transform: translate(-50%, 0); }
 @media (max-width: 900px) { .nb-dock { display: none; } }
 
-/* the orb's portal into Mail / Calendar */
-.nb-portal { position: fixed; inset: 0; z-index: 85; pointer-events: none; display: grid; place-items: center; background: radial-gradient(60% 60% at 70% 30%, rgba(30,20,70,.0), rgba(3,3,10,.0)); transition: background .6s ease; }
-.nb-portal.is-in { background: radial-gradient(70% 70% at 60% 40%, rgba(24,16,60,.55), rgba(3,3,10,.92)); }
-.nb-portal.is-out { background: transparent; transition: background .8s ease, opacity .8s ease; opacity: 0; }
-.nb-portal-rays { position: absolute; inset: 0; opacity: 0; transition: opacity .5s ease; }
-.nb-portal.is-in .nb-portal-rays { opacity: 1; }
-.nb-portal-core { position: absolute; width: 22vmin; height: 22vmin; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.9), rgba(167,139,250,.55) 30%, rgba(34,211,238,.18) 55%, transparent 70%); filter: blur(6px); transform: scale(.2); opacity: 0; transition: transform 1s cubic-bezier(.7,0,.2,1), opacity .4s; }
-.nb-portal.is-in .nb-portal-core { transform: scale(1.2); opacity: .9; }
-.nb-portal.is-out .nb-portal-core { transform: scale(9); opacity: 0; transition: transform .8s cubic-bezier(.4,0,.2,1), opacity .7s; }
-.nb-portal-cap { position: relative; display: grid; justify-items: center; gap: 8px; text-align: center; color: #fff; opacity: 0; transform: translateY(10px); transition: opacity .4s .15s, transform .5s .15s cubic-bezier(.22,1,.36,1); font-family: "Inter", system-ui, sans-serif; }
-.nb-portal.is-in .nb-portal-cap { opacity: 1; transform: none; }
-.nb-portal.is-out .nb-portal-cap { opacity: 0; transform: translateY(-8px); transition: opacity .25s, transform .4s; }
-.nb-portal-k { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase; color: #A5F3FC; }
-.nb-portal-k .svg-icon { width: 15px; height: 15px; }
-.nb-portal-cap b { font-size: clamp(18px, 2.4vw, 28px); font-weight: 650; letter-spacing: -.01em; max-width: 70vw; text-shadow: 0 0 30px rgba(139,92,246,.8); }
 #view.nb-leaving { transition: transform .9s cubic-bezier(.7,0,.2,1), filter .9s, opacity .9s; transform: scale(.94); filter: blur(10px); opacity: .25; }
 #view.nb-arriving > * { animation: nb-arrive .9s cubic-bezier(.22,1,.36,1) both; }
 @keyframes nb-arrive { from { transform: scale(1.06); filter: blur(12px); opacity: 0; } to { transform: none; filter: none; opacity: 1; } }
+
+/* page transitions (N.go): the page sinks away, the map surges, the new page opens from where you clicked */
+html.vt-nova { view-transition-name: none; }
+html.vt-nova body.ui-nova #view { view-transition-name: nv-view; }
+::view-transition-group(nv-view) { animation-duration: .72s; }
+::view-transition-old(nv-view) { animation: nb-vt-out .4s cubic-bezier(.4,0,.2,1) both; }
+::view-transition-new(nv-view) { animation: nb-vt-in .68s cubic-bezier(.22,1,.36,1) .08s both; }
+html.vt-from-point::view-transition-new(nv-view) { animation: nb-vt-reveal .8s cubic-bezier(.62,0,.18,1) both; }
+@keyframes nb-vt-out { to { opacity: 0; transform: scale(.94); filter: blur(16px) brightness(1.5); } }
+@keyframes nb-vt-in { from { opacity: 0; transform: scale(1.045); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes nb-vt-reveal { 0% { clip-path: circle(0px at var(--vt-x) var(--vt-y)); filter: brightness(2.2) saturate(1.5) blur(6px); } 55% { filter: brightness(1.2) blur(0); } 100% { clip-path: circle(160% at var(--vt-x) var(--vt-y)); filter: none; } }
+.nb-vt-cap { position: fixed; left: 50%; top: 22%; z-index: 90; transform: translateX(-50%); pointer-events: none; padding: 9px 18px; border-radius: 999px; border: 1px solid rgba(167,139,250,.35); background: rgba(12,10,28,.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fff; font: 600 14px "Inter", system-ui, sans-serif; letter-spacing: .02em; box-shadow: 0 0 40px -6px rgba(139,92,246,.6); animation: nb-cap 1s cubic-bezier(.22,1,.36,1) both; }
+@keyframes nb-cap { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.96); } 25% { opacity: 1; transform: translate(-50%, 0) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -8px); } }
+.nb-vt-ring { position: fixed; z-index: 89; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; pointer-events: none; border: 2px solid rgba(196,181,253,.9); box-shadow: 0 0 30px 6px rgba(139,92,246,.55), inset 0 0 20px rgba(103,232,249,.5); animation: nb-ring .8s cubic-bezier(.62,0,.18,1) both; }
+@keyframes nb-ring { from { transform: scale(.3); opacity: 1; } to { transform: scale(60); opacity: 0; border-width: .5px; } }
+@media (prefers-reduced-motion: reduce) { ::view-transition-old(nv-view), ::view-transition-new(nv-view) { animation: none; } }

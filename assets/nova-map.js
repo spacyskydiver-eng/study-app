@@ -418,9 +418,20 @@ function warp(opts = {}) {
   }, reduced ? 50 : 1300));
 }
 
+/** Page change: the map behind the page surges forward and turns, then settles (stays in background mode). */
+function swoop() {
+  if (!M || !M.ready || M.mode === 'map' || reduced) return;
+  const d = M.goal.dist;
+  M.flying = true; M.flyTau = 0.42;
+  M.goal.yaw += 0.55; M.goal.dist = d * 0.72; M.dimGoal = 1;
+  kick();
+  M.timers.push(setTimeout(() => { if (!M || M.mode === 'map') return; M.goal.dist = d; M.dimGoal = 0.55; M.flyTau = 0.7; }, 420));
+  M.timers.push(setTimeout(() => { if (M && M.mode !== 'map') M.flying = false; }, 1500));
+}
+
 /* ---------------------------------------------------------------- lifecycle */
 document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') setTimeout(mount, 0); else unmount(); });
 B.onBoot && B.onBoot(() => setTimeout(mount, 0));
 if (B.V) setTimeout(mount, 0);
-N.map = { open, flyTo, warp, close: () => exitMap(), isOpen: () => !!(M && M.mode === 'map') };
+N.map = { open, flyTo, warp, swoop, close: () => exitMap(), isOpen: () => !!(M && M.mode === 'map') };
 })();
