@@ -296,8 +296,13 @@ async function handleMs(request, env, url) {
 function qpDecode(s) { return s.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/gi, (m, h) => String.fromCharCode(parseInt(h, 16))); }
 function b64Text(s) { try { const bin = atob(s.replace(/[^A-Za-z0-9+/=]/g, "")); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); } catch (e) { return ""; } }
 function mimeTexts(raw) {
-  const out = [raw];
   const bounds = [...raw.matchAll(/boundary="?([^";\r\n]+)"?/gi)].map(m => m[1]);
+  const out = [];
+  if (!bounds.length) {   // single-part message: decode the body by the top-level encoding
+    const cut = raw.search(/\r?\n\r?\n/), head = raw.slice(0, cut), body = raw.slice(cut);
+    const cte = (head.match(/content-transfer-encoding:\s*([\w-]+)/i) || [])[1] || "";
+    out.push(/base64/i.test(cte) ? b64Text(body) : /quoted-printable/i.test(cte) ? qpDecode(body) : body);
+  }
   for (const b of bounds) {
     for (const part of raw.split("--" + b)) {
       const cut = part.search(/\r?\n\r?\n/); if (cut < 0) continue;
@@ -310,12 +315,36 @@ function mimeTexts(raw) {
   }
   return out;
 }
+/* Payloads (Power Automate has no createObject, so plain base64 pieces are used):
+     [[SYNC:M|subject|from|received|preview|id:SYNC]]   one new email, each field base64
+     [[SYNC:E|<base64 JSON array of emails>:SYNC]]      latest emails from "Get emails (V3)"
+     [[SYNC:C|<base64 JSON array of events>:SYNC]]      events from "Get calendar view of events (V3)"
+   An older single base64 JSON object form is still accepted. */
 function syncPayload(raw) {
+  const out = { mail: [], batchMail: null, events: null };
+  const seen = new Set();
   for (const t of mimeTexts(raw)) {
-    const m = t.replace(/<[^>]*>/g, "").match(/\[\[SYNC:([\s\S]*?):SYNC\]\]/);
-    if (m) { try { return JSON.parse(b64Text(m[1].replace(/&#61;|&#x3d;/gi, "="))); } catch (e) { /* try the next part */ } }
+    const text = t.replace(/<[^>]*>/g, "").replace(/&#61;|&#x3d;/gi, "=");
+    for (const m of text.matchAll(/\[\[SYNC:([\s\S]*?):SYNC\]\]/g)) {
+      const body = m[1].replace(/\s+/g, "");
+      if (seen.has(body)) continue; seen.add(body);
+      const parts = body.split("|");
+      try {
+        if (parts[0] === "M") {
+          const [, subject, from, received, preview, id] = parts.map(b64Text);
+          out.mail.push({ subject, from, received, preview, id });
+        } else if (parts[0] === "E") out.batchMail = JSON.parse(b64Text(parts[1]));
+        else if (parts[0] === "C") out.events = JSON.parse(b64Text(parts[1]));
+        else {
+          const d = JSON.parse(b64Text(body));
+          if (d.type === "mail") out.mail.push(d);
+          if (d.type === "calendar") out.events = d.events || [];
+          if (d.type === "batch") { out.batchMail = d.mail || []; out.events = d.events || []; }
+        }
+      } catch (e) { /* skip a damaged piece */ }
+    }
   }
-  return null;
+  return out.mail.length || out.batchMail || out.events ? out : null;
 }
 async function syncTables(env) {
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS sync_mail (id TEXT PRIMARY KEY, subject TEXT, sender TEXT, received TEXT, preview TEXT, link TEXT, added INTEGER)").run();
@@ -341,20 +370,14 @@ async function handleSyncEmail(message, env) {
     return env.DB.prepare("INSERT OR REPLACE INTO sync_mail (id, subject, sender, received, preview, link, added) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .bind(id, String(m.subject || ""), String(m.from || ""), String(m.received || m.receivedDateTime || ""), String(m.preview || m.bodyPreview || "").slice(0, 400), unread == null ? "" : unread ? "unread" : "read", now);
   };
-  if (data.type === "batch") {
-    const mails = Array.isArray(data.mail) ? data.mail : [];
-    if (mails.length) await env.DB.batch(mails.map(m => putMail(m, m.isRead == null ? null : !m.isRead)));
-    await env.DB.prepare("DELETE FROM sync_mail WHERE id NOT IN (SELECT id FROM sync_mail ORDER BY received DESC LIMIT 80)").run();
-    if (Array.isArray(data.events)) await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('calendar', ?, ?)").bind(JSON.stringify(data.events), now).run();
-  } else if (data.type === "mail") {
-    const id = String(data.id || data.received + data.subject).slice(0, 300);
-    await env.DB.prepare("INSERT OR REPLACE INTO sync_mail (id, subject, sender, received, preview, link, added) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .bind(id, String(data.subject || ""), String(data.from || ""), String(data.received || ""), String(data.preview || "").slice(0, 400), String(data.link || ""), now).run();
-    await env.DB.prepare("DELETE FROM sync_mail WHERE id NOT IN (SELECT id FROM sync_mail ORDER BY received DESC LIMIT 60)").run();
-  } else if (data.type === "calendar") {
-    await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('calendar', ?, ?)").bind(JSON.stringify(data.events || []), now).run();
-  }
-  await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('last', ?, ?)").bind(String(data.type || ""), now).run();
+  const writes = [
+    ...data.mail.map(m => putMail(m, null)),
+    ...(data.batchMail || []).map(m => putMail(m, m.isRead == null ? null : !m.isRead)),
+  ];
+  if (writes.length) await env.DB.batch(writes);
+  await env.DB.prepare("DELETE FROM sync_mail WHERE id NOT IN (SELECT id FROM sync_mail ORDER BY received DESC LIMIT 80)").run();
+  if (data.events) await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('calendar', ?, ?)").bind(JSON.stringify(data.events), now).run();
+  await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('last', ?, ?)").bind(data.events ? "calendar" : "mail", now).run();
 }
 // what the site's /api/ms/* endpoints return when the data comes from the flows
 // Outlook connector times are UTC without a zone marker; add Z so browsers don't read them as local
