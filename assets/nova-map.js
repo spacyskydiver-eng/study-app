@@ -148,6 +148,9 @@ function mount() {
   M.goal = { ...M.cam };
   if (!gl) { host.classList.add('no-gl'); console.warn('Nova map: WebGL2 is not available in this browser'); return; }
   M.data = buildData();
+  M.adj = new Map(M.data.nodes.map(n => [n.id, []]));
+  M.data.links.forEach(l => { M.adj.get(l.source.id).push(l.target.id); M.adj.get(l.target.id).push(l.source.id); });
+  M.keys = new Set(); M.gal = 0; M.target = null; M.here = null; M.route = [];
   M.pProg = program(gl, PV, PF); M.lProg = program(gl, LV, LF);
   const nodes = M.data.nodes, links = M.data.links;
   M.pos = new Float32Array(nodes.length * 3); M.col = new Float32Array(nodes.length * 3); M.size = new Float32Array(nodes.length); M.hiArr = new Float32Array(nodes.length);
@@ -171,7 +174,7 @@ function mount() {
   host.classList.add('is-loading');
   layout(M.data, () => { if (Number.isFinite(nodes[0].x)) { sync(); fitGoal(true); kick(); } }).then(() => {
     if (!M) return;
-    sync(); M.ready = true; fitGoal(true); host.classList.remove('is-loading'); kick();
+    sync(); M.ready = true; fitGoal(true); host.classList.remove('is-loading'); buildGalaxy(); kick();
   });
   addRays();
   resize();
@@ -238,7 +241,9 @@ function frame(now) {
   if (!M.alive || document.hidden) return;
   const dt = Math.min(0.05, (now - M.last) / 1000); M.last = now;
   M.t += dt;
-  const active = M.mode !== 'bg' || M.flying;
+  const active = M.mode !== 'bg' || M.flying || M.gal > 0.01;
+  if (M.mode === 'map' && M.keys.size) flight(dt);
+  M.gal += ((M.mode === 'map' ? 1 : 0) - M.gal) * (1 - Math.exp(-dt / 0.35));
   // ease camera
   const k = 1 - Math.exp(-dt / (M.flying ? M.flyTau || 0.45 : 0.6));
   let moving = false;
@@ -262,8 +267,9 @@ function draw() {
   gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ONE, gl.ONE);
   const m = mvp(); M.m = m;
   const any = M.hi.size ? 1 : 0;
+  if (M.gal > 0.01 && M.gx) drawGalaxy(gl, m);
   gl.useProgram(M.lProg); gl.bindVertexArray(M.vaoL);
-  gl.uniformMatrix4fv(M.u.l.uMVP, false, m); gl.uniform1f(M.u.l.uAlpha, (M.mode === 'map' ? 0.16 : 0.05) * M.dim / 0.55); gl.uniform1f(M.u.l.uAny, any);
+  gl.uniformMatrix4fv(M.u.l.uMVP, false, m); gl.uniform1f(M.u.l.uAlpha, (M.mode === 'map' ? 0.085 : 0.05) * M.dim / 0.55); gl.uniform1f(M.u.l.uAny, any);
   gl.drawArrays(gl.LINES, 0, M.data.links.length * 2);
   gl.useProgram(M.pProg); gl.bindVertexArray(M.vaoP);
   gl.uniformMatrix4fv(M.u.p.uMVP, false, m); gl.uniform1f(M.u.p.uScale, M.h * M.dpr * 1.6); gl.uniform1f(M.u.p.uTime, M.t); gl.uniform1f(M.u.p.uDim, M.dim); gl.uniform1f(M.u.p.uAny, any);
@@ -281,14 +287,163 @@ function setHighlight(ids) {
   kick();
 }
 
+
+/* ---------------------------------------------------------------- galaxy map (map mode)
+   Styled on the Elite Dangerous galaxy map: a ringed plane under the notes, a drop line from every
+   note near the focus down to that plane, a target you select with a click, and a plotted route
+   (the shortest chain of links) from where you are to the target. Fly with W A S D, turn with Q E,
+   zoom with R F, tilt with Z X; drag to turn, right-drag to pan, scroll to zoom. */
+const AMBER = [1.0, 0.6, 0.16];
+function buildGalaxy() {
+  const gl = M.gl; if (!gl || M.gx) return;
+  const { c, r } = bounds();
+  const R = r * 1.25, y = c[1] - r * 0.7;
+  M.plane = { c, R, y };
+  const pos = [], col = [];
+  const seg = (x0, z0, x1, z1, k) => { pos.push(x0, y, z0, x1, y, z1); const f = AMBER.map(v => v * k); col.push(...f, ...f); };
+  const rings = 8, segs = 120;
+  for (let i = 1; i <= rings; i++) {
+    const rr = R * i / rings, k = i === rings ? 0.9 : 0.35 + 0.25 * (i % 2);
+    for (let j = 0; j < segs; j++) { const a0 = j / segs * Math.PI * 2, a1 = (j + 1) / segs * Math.PI * 2; seg(c[0] + Math.cos(a0) * rr, c[2] + Math.sin(a0) * rr, c[0] + Math.cos(a1) * rr, c[2] + Math.sin(a1) * rr, k); }
+  }
+  for (let j = 0; j < 24; j++) { const a = j / 24 * Math.PI * 2; seg(c[0] + Math.cos(a) * R * 0.06, c[2] + Math.sin(a) * R * 0.06, c[0] + Math.cos(a) * R, c[2] + Math.sin(a) * R, j % 6 === 0 ? 0.7 : 0.3); }
+  const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage); return b; };
+  const vao = (bp, bc, bh) => { const v = gl.createVertexArray(); gl.bindVertexArray(v);
+    for (const [name, b, size] of [['aPos', bp, 3], ['aCol', bc, 3], ['aHi', bh, 1]]) { const loc = gl.getAttribLocation(M.lProg, name); if (loc < 0) continue; gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0); }
+    gl.bindVertexArray(null); return v; };
+  const gN = pos.length / 3;
+  const grid = { n: gN, vao: vao(buf(new Float32Array(pos), gl.STATIC_DRAW), buf(new Float32Array(col), gl.STATIC_DRAW), buf(new Float32Array(gN), gl.STATIC_DRAW)) };
+  // drop lines (rebuilt as you move) and the route (rebuilt when plotted)
+  const MAXD = 700, MAXR = 80;
+  const dPos = new Float32Array(MAXD * 6), dCol = new Float32Array(MAXD * 6);
+  const bdp = buf(dPos, gl.DYNAMIC_DRAW), bdc = buf(dCol, gl.DYNAMIC_DRAW);
+  const rPos = new Float32Array(MAXR * 6), rCol = new Float32Array(MAXR * 6), rHi = new Float32Array(MAXR * 2).fill(1);
+  const brp = buf(rPos, gl.DYNAMIC_DRAW), brc = buf(rCol, gl.DYNAMIC_DRAW);
+  M.gx = { grid, drop: { pos: dPos, col: dCol, bp: bdp, bc: bdc, n: 0, vao: vao(bdp, bdc, buf(new Float32Array(MAXD * 2), gl.STATIC_DRAW)), max: MAXD, key: '' },
+    route: { pos: rPos, col: rCol, bp: brp, bc: brc, n: 0, vao: vao(brp, brc, buf(rHi, gl.STATIC_DRAW)), max: MAXR } };
+}
+function updateDrops(gl) {
+  const d = M.gx.drop, P = M.plane;
+  const key = [M.cam.tx, M.cam.tz, M.cam.dist].map(v => Math.round(v / 6)).join(',') + (M.target || '');
+  if (key === d.key) return; d.key = key;
+  const reach = Math.max(120, M.cam.dist * 0.38), r2 = reach * reach;
+  let n = 0;
+  for (const nd of M.data.nodes) {
+    if (n >= d.max) break;
+    const dx = nd.x - M.cam.tx, dz = nd.z - M.cam.tz, q = dx * dx + dz * dz;
+    if (q > r2 && nd.id !== M.target) continue;
+    const fade = nd.id === M.target ? 1.4 : 0.55 * (1 - q / r2);
+    const cc = hex(nd.color);
+    d.pos.set([nd.x, nd.y, nd.z, nd.x, P.y, nd.z], n * 6);
+    d.col.set([cc[0] * fade, cc[1] * fade, cc[2] * fade, cc[0] * fade * 0.25, cc[1] * fade * 0.25, cc[2] * fade * 0.25], n * 6);
+    n++;
+  }
+  d.n = n;
+  gl.bindBuffer(gl.ARRAY_BUFFER, d.bp); gl.bufferSubData(gl.ARRAY_BUFFER, 0, d.pos.subarray(0, n * 6));
+  gl.bindBuffer(gl.ARRAY_BUFFER, d.bc); gl.bufferSubData(gl.ARRAY_BUFFER, 0, d.col.subarray(0, n * 6));
+}
+function setRouteGeometry() {
+  if (!M.gx) return;
+  const g = M.gx.route, gl = M.gl, ids = M.route.slice(0, g.max + 1);
+  let n = 0;
+  for (let i = 0; i + 1 < ids.length; i++) {
+    const a = M.data.nodes[M.data.index.get(ids[i])], b = M.data.nodes[M.data.index.get(ids[i + 1])];
+    g.pos.set([a.x, a.y, a.z, b.x, b.y, b.z], n * 6); g.col.set([...AMBER, ...AMBER], n * 6); n++;
+  }
+  g.n = n;
+  gl.bindBuffer(gl.ARRAY_BUFFER, g.bp); gl.bufferSubData(gl.ARRAY_BUFFER, 0, g.pos.subarray(0, Math.max(6, n * 6)));
+  gl.bindBuffer(gl.ARRAY_BUFFER, g.bc); gl.bufferSubData(gl.ARRAY_BUFFER, 0, g.col.subarray(0, Math.max(6, n * 6)));
+  kick();
+}
+function drawGalaxy(gl, m) {
+  const a = M.gal;
+  if (M.mode === 'map') updateDrops(gl);
+  gl.useProgram(M.lProg);
+  gl.uniformMatrix4fv(M.u.l.uMVP, false, m); gl.uniform1f(M.u.l.uAny, 0);
+  gl.uniform1f(M.u.l.uAlpha, 0.32 * a); gl.bindVertexArray(M.gx.grid.vao); gl.drawArrays(gl.LINES, 0, M.gx.grid.n);
+  if (M.gx.drop.n) { gl.uniform1f(M.u.l.uAlpha, 0.38 * a); gl.bindVertexArray(M.gx.drop.vao); gl.drawArrays(gl.LINES, 0, M.gx.drop.n * 2); }
+  if (M.gx.route.n) { gl.uniform1f(M.u.l.uAlpha, 1.0 * a); gl.bindVertexArray(M.gx.route.vao); for (let k = 0; k < 3; k++) gl.drawArrays(gl.LINES, 0, M.gx.route.n * 2); }
+}
+function flight(dt) {
+  const s = Math.sin(M.cam.yaw), c = Math.cos(M.cam.yaw), sp = M.cam.dist * 0.8 * dt;
+  const f = [-s, -c], rt = [c, -s];
+  const K = k => M.keys.has(k);
+  let mx = 0, mz = 0;
+  if (K('w')) { mx += f[0]; mz += f[1]; } if (K('s')) { mx -= f[0]; mz -= f[1]; }
+  if (K('d')) { mx += rt[0]; mz += rt[1]; } if (K('a')) { mx -= rt[0]; mz -= rt[1]; }
+  M.goal.tx += mx * sp; M.goal.tz += mz * sp;
+  if (K('q')) M.goal.yaw += 1.3 * dt; if (K('e')) M.goal.yaw -= 1.3 * dt;
+  if (K('r')) M.goal.dist = Math.max(40, M.goal.dist * Math.exp(-1.4 * dt)); if (K('f')) M.goal.dist = Math.min(6000, M.goal.dist * Math.exp(1.4 * dt));
+  if (K('z')) M.goal.pitch = Math.min(1.35, M.goal.pitch + 0.9 * dt); if (K('x')) M.goal.pitch = Math.max(-0.2, M.goal.pitch - 0.9 * dt);
+}
+function onFlightKey(e) {
+  if (!M || M.mode !== 'map' || e.target.closest && e.target.closest('input, textarea')) return;
+  const k = e.key.toLowerCase();
+  if (e.type === 'keydown' && k === 'enter' && M.target) { e.preventDefault(); openTarget(); return; }
+  if (!'wasdqerfzx'.includes(k) || k.length !== 1 || e.metaKey || e.ctrlKey) return;
+  e.preventDefault();
+  if (e.type === 'keydown') M.keys.add(k); else M.keys.delete(k);
+  kick();
+}
+function routeBetween(from, to) {
+  if (!from || !to || from === to) return [];
+  const prev = new Map([[from, null]]), q = [from];
+  while (q.length) { const x = q.shift(); if (x === to) break; for (const y of M.adj.get(x) || []) if (!prev.has(y)) { prev.set(y, x); q.push(y); } }
+  if (!prev.has(to)) return [];
+  const path = []; for (let x = to; x; x = prev.get(x)) path.unshift(x);
+  return path;
+}
+function setTarget(id, glide = true) {
+  M.target = id; M.route = [];
+  const n = id && M.data.nodes[M.data.index.get(id)];
+  if (n && glide) Object.assign(M.goal, { tx: n.x, ty: n.y, tz: n.z });
+  setHighlight(id ? [id] : []); setRouteGeometry(); targetPanel(); kick();
+}
+function plotRoute() {
+  if (!M.target) return;
+  const from = M.here && M.here !== M.target ? M.here : null;
+  M.route = from ? routeBetween(from, M.target) : [];
+  setHighlight(M.route.length ? M.route : [M.target]); setRouteGeometry(); targetPanel();
+  if (M.route.length) { focusGoal(M.route); M.goal.dist = Math.max(M.goal.dist, 260); }
+}
+function openTarget() { if (M.target) { const n = M.data.nodes[M.data.index.get(M.target)]; flyTo([n.id], { open: n.id, caption: n.title, dwell: 200 }); } }
+function targetPanel() {
+  const el = M.hud.querySelector('.gx-target'); if (!el) return;
+  const n = M.target && M.data.nodes[M.data.index.get(M.target)];
+  if (!n) { el.hidden = true; return; }
+  const mod = n.isTerm ? 'Key term' : Object.keys(MOD_COLORS).find(k => MOD_COLORS[k] === n.color) || 'Note';
+  const jumps = M.route.length ? M.route.length - 1 : 0;
+  el.hidden = false;
+  el.innerHTML = `<div class="gx-k">Target locked</div><b style="--c:${n.color}">${esc(n.title)}</b>
+    <dl><dt>Region</dt><dd>${esc(mod)}</dd><dt>Type</dt><dd>${esc(n.type || (n.isTerm ? 'key term' : 'note'))}</dd><dt>Links</dt><dd>${(M.adj.get(n.id) || []).length}</dd>${jumps ? `<dt>Route</dt><dd>${jumps} jump${jumps > 1 ? 's' : ''}</dd>` : ''}</dl>
+    ${jumps ? `<ol class="gx-route">${M.route.map(id => `<li data-id="${esc(id)}">${esc(M.data.nodes[M.data.index.get(id)].title)}</li>`).join('')}</ol>` : ''}
+    <div class="gx-acts"><button data-gx="open">Open <kbd>Enter</kbd></button>${M.here && M.here !== n.id ? '<button data-gx="route">Plot route</button>' : ''}<button data-gx="clear">Clear</button></div>`;
+}
+function searchHits(q) {
+  q = q.trim().toLowerCase(); if (q.length < 2) return [];
+  return M.data.nodes.map(n => { const t = n.title.toLowerCase(); const i = t.indexOf(q); return i < 0 ? null : { n, s: (i === 0 ? 0 : 1) + (n.isTerm ? 0.5 : 0) + t.length / 200 }; }).filter(Boolean).sort((a, b) => a.s - b.s).slice(0, 8).map(x => x.n);
+}
+
 /* ---------------------------------------------------------------- map mode + HUD */
 function hudShell() {
-  M.hud.innerHTML = `<div class="nmap-top"><div class="nmap-brand"><i></i>Neural map</div><div class="nmap-status"></div></div>
+  M.hud.innerHTML = `<div class="nmap-top"><div class="nmap-brand"><i></i>Galaxy map</div><div class="nmap-status"></div></div>
+    <div class="gx-search"><input type="text" placeholder="Search notes" autocomplete="off" spellcheck="false"><div class="gx-results"></div></div>
+    <div class="gx-target" hidden></div>
     <div class="nmap-legend">${Object.entries(MOD_COLORS).map(([t, c]) => `<span style="--c:${c}"><i></i>${esc(t)}</span>`).join('')}<span style="--c:#E9D58A"><i></i>Key terms</span></div>
-    <div class="nmap-hint">Drag to turn · scroll to zoom · click a note to open it · Esc to go back</div>
+    <div class="nmap-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly · <kbd>Q</kbd><kbd>E</kbd> turn · <kbd>R</kbd><kbd>F</kbd> zoom · <kbd>Z</kbd><kbd>X</kbd> tilt · drag turn · right-drag pan · click target · double-click open · <kbd>Esc</kbd> exit</div>
     <button class="nmap-exit">${icon('arrow-left')}<span>Back to notes</span></button>
     <div class="nmap-marks"></div><div class="nmap-tip" hidden></div>`;
   M.hud.querySelector('.nmap-exit').addEventListener('click', () => exitMap());
+  const inp = M.hud.querySelector('.gx-search input'), res = M.hud.querySelector('.gx-results');
+  inp.addEventListener('input', () => { res.innerHTML = searchHits(inp.value).map(n => `<button data-id="${esc(n.id)}" style="--c:${n.color}"><i></i>${esc(n.title)}</button>`).join(''); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const b = res.querySelector('button'); if (b) b.click(); } if (e.key === 'Escape') { inp.value = ''; res.innerHTML = ''; inp.blur(); e.stopPropagation(); } });
+  res.addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (!b) return; setTarget(b.dataset.id); M.goal.dist = Math.min(M.goal.dist, 340); inp.value = ''; res.innerHTML = ''; inp.blur(); status('Target · ' + b.textContent); });
+  M.hud.querySelector('.gx-target').addEventListener('click', e => {
+    const a = e.target.closest('[data-gx]'), li = e.target.closest('.gx-route li');
+    if (li) { const n = M.data.nodes[M.data.index.get(li.dataset.id)]; Object.assign(M.goal, { tx: n.x, ty: n.y, tz: n.z }); kick(); return; }
+    if (!a) return;
+    if (a.dataset.gx === 'open') openTarget(); else if (a.dataset.gx === 'route') plotRoute(); else setTarget(null, false);
+  });
 }
 function status(text) {
   const el = M && M.hud.querySelector('.nmap-status'); if (!el) return;
@@ -299,10 +454,11 @@ function status(text) {
 function enterMap() {
   if (!M || !M.gl) return false;
   if (M.mode === 'map') return true;
-  M.mode = 'map'; hudShell(); resize();
+  M.mode = 'map'; hudShell(); resize(); if (M.ready) buildGalaxy();
   document.body.classList.add('nova-map-on');
-  M.dimGoal = 1; M.spin = 0.02;
+  M.dimGoal = 1; M.spin = 0; M.keys.clear(); M.target = null; M.route = []; setRouteGeometry();
   document.addEventListener('keydown', onMapKey, true);
+  document.addEventListener('keydown', onFlightKey, true); document.addEventListener('keyup', onFlightKey, true);
   kick(); return true;
 }
 function exitMap(silent) {
@@ -313,15 +469,17 @@ function exitMap(silent) {
   M.dimGoal = 0.55; M.spin = 0.035; M.goal.fov = 0.95;
   setHighlight([]); fitGoal(false);
   document.removeEventListener('keydown', onMapKey, true);
+  document.removeEventListener('keydown', onFlightKey, true); document.removeEventListener('keyup', onFlightKey, true);
+  M.keys.clear(); M.target = null; M.route = []; setRouteGeometry();
   if (!silent) kick();
 }
 function onMapKey(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); exitMap(); } }
 function hudFrame() {
   const marks = M.hud.querySelector('.nmap-marks'); if (!marks || !M.m) return;
-  const want = [...M.hi].slice(0, 8);
-  if (marks.childElementCount !== want.length || marks.dataset.k !== want.join('|')) {
-    marks.dataset.k = want.join('|');
-    marks.innerHTML = want.map((id, i) => `<div class="nmap-mark${i === 0 ? ' is-main' : ''}"><i></i><b>${esc(M.data.nodes[M.data.index.get(id)].title)}</b></div>`).join('');
+  const want = [...new Set([M.target, M.here, ...M.hi].filter(Boolean))].slice(0, 9);
+  if (marks.childElementCount !== want.length || marks.dataset.k !== want.join('|') + '#' + M.target) {
+    marks.dataset.k = want.join('|') + '#' + M.target;
+    marks.innerHTML = want.map((id, i) => `<div class="nmap-mark${id === M.target ? ' is-target' : id === M.here ? ' is-here' : i === 0 ? ' is-main' : ''}"><i></i><b>${id === M.here && id !== M.target ? '<em>You are here</em>' : ''}${esc(M.data.nodes[M.data.index.get(id)].title)}</b></div>`).join('');
   }
   want.forEach((id, i) => {
     const p = project(M.m, M.data.nodes[M.data.index.get(id)]); const el = marks.children[i];
@@ -337,12 +495,17 @@ function pick(x, y) {
 }
 function wireInput() {
   const c = M.canvas;
-  c.addEventListener('pointerdown', e => { if (!M || M.mode !== 'map' || M.flying) return; M.dragging = true; M.pointer = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: 0 }; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointerdown', e => { if (!M || M.mode !== 'map' || M.flying) return; M.dragging = true; M.pan = e.button === 2 || e.shiftKey; M.pointer = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: 0 }; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('contextmenu', e => { if (M && M.mode === 'map') e.preventDefault(); });
+  c.addEventListener('dblclick', e => { if (!M || M.mode !== 'map') return; const n = pick(e.clientX, e.clientY); if (n) { setTarget(n.id, false); openTarget(); } });
   c.addEventListener('pointermove', e => {
     if (!M || M.mode !== 'map') return;
     if (M.dragging) {
       const dx = e.clientX - M.pointer.x, dy = e.clientY - M.pointer.y; M.pointer.moved += Math.abs(dx) + Math.abs(dy);
-      M.goal.yaw -= dx * 0.005; M.goal.pitch = Math.max(-1.3, Math.min(1.3, M.goal.pitch + dy * 0.005));
+      if (M.pan) {
+        const s = Math.sin(M.cam.yaw), cc = Math.cos(M.cam.yaw), k = M.cam.dist * 0.0016;
+        M.goal.tx -= (cc * dx + s * dy) * k; M.goal.tz -= (-s * dx + cc * dy) * k;
+      } else { M.goal.yaw -= dx * 0.005; M.goal.pitch = Math.max(-0.2, Math.min(1.35, M.goal.pitch + dy * 0.005)); }
       M.pointer.x = e.clientX; M.pointer.y = e.clientY; kick(); return;
     }
     const n = pick(e.clientX, e.clientY), tip = M.hud.querySelector('.nmap-tip');
@@ -352,7 +515,7 @@ function wireInput() {
   });
   const up = e => {
     if (!M || !M.dragging) return; M.dragging = false;
-    if (M.pointer.moved < 6) { const n = pick(e.clientX, e.clientY); if (n) flyTo([n.id], { open: n.id, caption: n.title, dwell: 200 }); }
+    if (M.pointer.moved < 6) { const n = pick(e.clientX, e.clientY); if (n) { setTarget(n.id); status('Target · ' + n.title); } }
   };
   c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
   c.addEventListener('wheel', e => { if (!M || M.mode !== 'map') return; e.preventDefault(); M.goal.dist = Math.max(40, Math.min(6000, M.goal.dist * Math.exp(e.deltaY * 0.0012))); kick(); }, { passive: false });
@@ -370,8 +533,9 @@ function open(focusId) {
   if (!enterMap()) return;
   const ids = focusId && M.data.index.has(focusId) ? [focusId] : [];
   setHighlight(ids);
+  M.here = ids[0] || null;
   // pull right out so the whole map is in view first, then glide to where you are
-  fitGoal(false); M.goal.yaw = M.cam.yaw - 0.5;
+  fitGoal(false); M.goal.yaw = M.cam.yaw - 0.5; M.goal.pitch = 0.42;     // look down on the plane, like the galaxy map
   status('Everything in your notes · ' + M.data.nodes.length + ' notes');
   if (ids.length) {
     M.timers.forEach(clearTimeout); M.timers = [];
@@ -431,5 +595,5 @@ function warp(opts = {}) {
 document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') setTimeout(mount, 0); else unmount(); });
 B.onBoot && B.onBoot(() => setTimeout(mount, 0));
 if (B.V) setTimeout(mount, 0);
-N.map = { open, flyTo, warp, close: () => exitMap(), isOpen: () => !!(M && M.mode === 'map') };
+N.map = { open, flyTo, warp, close: () => exitMap(), isOpen: () => !!(M && M.mode === 'map'), _dbg: () => M && ({ gx: !!M.gx, gal: M.gal, drops: M.gx && M.gx.drop.n, grid: M.gx && M.gx.grid.n, plane: M.plane, cam: M.cam, ready: M.ready }) };
 })();

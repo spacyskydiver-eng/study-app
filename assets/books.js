@@ -94,6 +94,14 @@ function authPanel(err, retry) {
   return p;
 }
 
+/* ---------- for other views (the orb's research mode): search, cite, open */
+B.books = {
+  search: async (q, opts = {}) => { const d = await call(`/search?q=${encodeURIComponent(q)}&type=${opts.type || 'text'}&limit=${opts.limit || 14}`); return (Array.isArray(d) ? d : (d.results || d.hits || d.items || [])).map(normResult); },
+  cite: r => r.page ? citeOf(r.book, r.page, r.section) : r.book,
+  open: r => { store.set('bookHighlight', { book: r.book, page: String(r.page), text: r.plain }); B.go(`book/${r.book}/${r.page}`); },
+  hl: safeHl,
+};
+
 /* ---------- search view */
 B.registerView('books', {
   title: () => C.label, icon: 'library', cls: 'books-host',

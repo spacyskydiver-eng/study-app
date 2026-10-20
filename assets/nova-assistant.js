@@ -107,6 +107,7 @@ function build() {
     <div class="na-chips">${SUGGEST.map(s => `<button class="na-chip">${esc(s)}</button>`).join('')}</div>
     <form class="na-form">
       <button type="button" class="na-mic" title="Speak your question">${icon('mic')}</button>
+      <button type="button" class="na-snip" title="Snip part of the screen and ask about it (Ctrl Shift X)">${icon('scan')}</button>
       <input class="na-input" type="text" maxlength="400" autocomplete="off" placeholder="Ask, or say “show me…”">
       <button class="na-send" type="submit" title="Ask">${icon('arrow-up')}</button>
     </form>
@@ -121,6 +122,7 @@ function build() {
   $('.na-chips', sheet).addEventListener('click', e => { const b = e.target.closest('.na-chip'); if (b) ask(b.textContent); });
   $('.na-form', sheet).addEventListener('submit', e => { e.preventDefault(); ask(input.value); });
   $('.na-mic', sheet).addEventListener('click', toggleMic);
+  $('.na-snip', sheet).addEventListener('click', () => snip());
   if (!SR()) $('.na-mic', sheet).hidden = true;
 }
 function open() {
@@ -282,9 +284,92 @@ function takeControl(fn) {
   setTimeout(() => { close(); fn(); }, 650);
 }
 
+/* ---------------------------------------------------------------- snip: grab part of the screen for a question
+   The browser's own capture prompt grabs this tab (works for book pages, figures, the map, anything),
+   then a frozen copy appears to drag a box on. The crop rides along with the next question. */
+async function snip() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { B.toast('This browser can’t capture the screen'); return; }
+  const wasOpen = sheet && sheet.classList.contains('is-open');
+  if (wasOpen) close();
+  await wait(320);
+  let stream;
+  try { stream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'browser', frameRate: 5 }, audio: false, preferCurrentTab: true, selfBrowserSurface: 'include' }); }
+  catch (e) { if (wasOpen) open(); return; }
+  const video = document.createElement('video'); video.srcObject = stream; video.muted = true; await video.play();
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const shot = document.createElement('canvas'); shot.width = video.videoWidth; shot.height = video.videoHeight;
+  shot.getContext('2d').drawImage(video, 0, 0); stream.getTracks().forEach(t => t.stop());
+  const url = shot.toDataURL('image/png');
+  const ov = h(`<div class="na-snipper"><img src="${url}" alt=""><div class="na-snip-box" hidden></div><div class="na-snip-hint">Drag a box around the part you want to ask about · Esc to cancel</div></div>`);
+  document.body.appendChild(ov);
+  const box = $('.na-snip-box', ov), pic = $('img', ov);
+  let sx = 0, sy = 0, rect = null;
+  const done = crop => { ov.remove(); document.removeEventListener('keydown', esc_, true); if (crop) attach(crop); else if (wasOpen) open(); };
+  const esc_ = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(null); } };
+  document.addEventListener('keydown', esc_, true);
+  ov.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; box.hidden = false; ov.setPointerCapture(e.pointerId); rect = { x: sx, y: sy, w: 0, h: 0 }; Object.assign(box.style, { left: sx + 'px', top: sy + 'px', width: 0, height: 0 }); });
+  ov.addEventListener('pointermove', e => { if (!rect) return; rect = { x: Math.min(sx, e.clientX), y: Math.min(sy, e.clientY), w: Math.abs(e.clientX - sx), h: Math.abs(e.clientY - sy) }; Object.assign(box.style, { left: rect.x + 'px', top: rect.y + 'px', width: rect.w + 'px', height: rect.h + 'px' }); });
+  ov.addEventListener('pointerup', () => {
+    if (!rect || rect.w < 12 || rect.h < 12) { rect = null; box.hidden = true; return; }
+    const pr = pic.getBoundingClientRect(), kx = shot.width / pr.width, ky = shot.height / pr.height;
+    const c = document.createElement('canvas'), sw = rect.w * kx, sh = rect.h * ky, scale = Math.min(1, 1400 / Math.max(sw, sh));
+    c.width = Math.round(sw * scale); c.height = Math.round(sh * scale);
+    c.getContext('2d').drawImage(shot, (rect.x - pr.left) * kx, (rect.y - pr.top) * ky, sw, sh, 0, 0, c.width, c.height);
+    done(c.toDataURL('image/jpeg', 0.88));
+  });
+}
+function attach(img) {
+  open();
+  setTimeout(() => {
+    if (!state) return;
+    state.attach = img;
+    const old = $('.na-attach', sheet); if (old) old.remove();
+    const chip = h(`<div class="na-attach"><img src="${img}" alt=""><span>Snip attached · ask about it</span><button title="Remove">${icon('x')}</button></div>`);
+    $('button', chip).onclick = () => { state.attach = null; chip.remove(); };
+    $('.na-form', sheet).before(chip);
+    const input = $('.na-input', sheet); input.placeholder = 'What is this? (Enter for “Explain this”)'; input.focus();
+  }, 120);
+}
+
+/* ---------------------------------------------------------------- actions (to-do, flags), performed visibly */
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function onPage(id) {
+  if (B.currentId() === id) return;
+  N.go ? N.go(id) : B.go(id);
+  for (let i = 0; i < 40 && B.currentId() !== id; i++) await wait(50);
+  await wait(450);
+}
+async function runActions(actions, a, st) {
+  const log = h('<ul class="na-steps"></ul>'); a.appendChild(log);
+  for (const act of actions) {
+    if (state !== st) return;
+    const label = act.do === 'add_todo' ? `Adding “${act.title}” to your to-do list` : act.do === 'done_todo' ? `Ticking off “${act.title}”` : act.do === 'dismiss_todo' ? `Removing “${act.title}”` : act.color === 'none' ? `Clearing the flag on “${act.title}”` : `Flagging “${act.title}” ${act.color}`;
+    const li = h(`<li class="is-doing"><i></i><span>${esc(label)}</span></li>`); log.appendChild(li);
+    try {
+      if (act.do === 'add_todo') {
+        await onPage(B.V.home);
+        const res = await (N.todo ? N.todo.post({ action: 'add', title: act.title, due: act.due, ref: act.ref, detail: act.detail }) : null);
+        if (res && res.todo && N.home) await N.home.insert(res.todo);
+      } else if (act.do === 'done_todo' || act.do === 'dismiss_todo') {
+        await onPage(B.V.home);
+        if (N.home) await N.home.mark(act.id, act.do === 'done_todo' ? 'done' : 'dismiss');
+        if (N.todo) await N.todo.post({ action: act.do === 'done_todo' ? 'done' : 'dismiss', id: act.id });
+      } else if (act.do === 'flag' && N.outlook) {
+        await onPage('mail');
+        await N.outlook.setFlag(act.id, act.color === 'none' ? 'cleared' : act.color);
+        N.outlook.flagLive && N.outlook.flagLive(act.id, act.color);
+      }
+      li.className = 'is-done';
+    } catch (e) { li.className = 'is-failed'; }
+    await wait(250);
+  }
+  if (B.currentId() === B.V.home && N.home) setTimeout(() => N.home.refresh(), 600);
+}
+
 /* ---------------------------------------------------------------- asking */
 async function ask(q, ctx = {}) {
   q = String(q || '').trim();
+  if (!q && state && state.attach) q = 'Explain this. What is it showing and what are the key parts?';
   if (!q || !state || state.busy) return;
   const st = state;
   st.busy = true;
@@ -298,8 +383,29 @@ async function ask(q, ctx = {}) {
   const a = $('.na-a', turn);
   const intent = navIntent(q);
   try {
+    // a snipped picture is attached: the question is about it
+    if (st.attach) {
+      const img = st.attach; st.attach = null; const chip = $('.na-attach', sheet); if (chip) chip.remove();
+      turn.querySelector('.na-q').insertAdjacentHTML('afterbegin', `<img class="na-q-img" src="${img}" alt="">`);
+      let r = null;
+      try { const res = await fetch('/api/vision', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: img, q }) }); r = await res.json(); } catch (e) { r = { error: 'Network error.' }; }
+      if (state !== st) return;
+      if (!r || r.error) { a.innerHTML = `<div class="na-error">${icon('alert-triangle')}<span>${esc((r && r.error) || 'No answer.')}</span></div>`; setMood('error'); st.busy = false; return; }
+      st.history.push({ q: q + ' (about a snipped image)', a: r.answer });
+      a.innerHTML = B.ask.md(r.answer); await typeOut(a, st);
+      setMood('idle'); st.busy = false; thread.scrollTop = thread.scrollHeight; return;
+    }
     // mail and calendar questions (and anything asked from the Mail / Calendar pages) go to Jarvis
     const lq = clean(q);
+    // "find information on X", "research X", "what do the textbooks say about X": research mode
+    const rq = q.match(/^\s*(?:please\s+)?(?:can you\s+)?(?:research|look up|find (?:me )?(?:some |all )?(?:info(?:rmation)?|stuff|everything|the best (?:info(?:rmation)?|stuff)|sections?)(?: in the (?:text)?books)? (?:on|about|for)|search (?:the |my )?(?:text)?books (?:for|on|about)|what do (?:the|my) (?:text)?books say (?:on|about))\s+(.{2,120}?)\s*[?.!]*$/i);
+    if (rq && N.research && B.books) {
+      a.innerHTML = `<p>Pulling the best sections on <strong>${esc(rq[1])}</strong> out of your textbooks.</p>`;
+      st.history.push({ q, a: 'Researched ' + rq[1] + ' in the textbooks.' });
+      setMood('idle'); st.busy = false;
+      takeControl(() => N.research(rq[1]));
+      return;
+    }
     const goPage = lq.match(/^(?:please )?(?:open|show|go to|take me to|bring up|pull up|launch)(?: up)?(?: my| the)? (mail|inbox|emails?|outlook|calendar|timetable|diary)$/);
     if (goPage && N.portal) {
       const to = /calendar|timetable|diary/.test(goPage[1]) ? 'calendar' : 'mail';
@@ -310,7 +416,7 @@ async function ask(q, ctx = {}) {
       return;
     }
     const onOutlook = ['mail', 'calendar'].includes(B.currentId()) || !!ctx.emailId || !!st.draft;
-    const outlookish = /\b(e-?mails?|mail|inbox|outlook|messages?|repl(y|ied|ies)|draft|send|sent|wrote|cc|calendar|schedule|timetable|diary|events?|meetings?|appointments?|busy|free time|deadlines?|announcements?|blackboard|seminars?|tutorials?|reading week|lectures? (today|tomorrow|this week|next week|on (mon|tues|wednes|thurs|fri)day))\b/.test(lq)
+    const outlookish = /\b(e-?mails?|mail|inbox|outlook|messages?|repl(y|ied|ies)|draft|send|sent|wrote|cc|calendar|schedule|timetable|diary|events?|meetings?|appointments?|busy|free time|deadlines?|announcements?|blackboard|seminars?|tutorials?|reading week|to-?do|todo|task|flag|flagged|deadlines?|due|lectures? (today|tomorrow|this week|next week|on (mon|tues|wednes|thurs|fri)day))\b/.test(lq)
       || /what('?s| is) on\b|\bon (today|tonight|tomorrow)\b|\bdo i have\b|\bwhen is\b|\bwhere (is|do i have) my\b/.test(lq);
     if (outlookish || (onOutlook && (!intent || intent.kind === 'note'))) {
       const body = { q, history: st.history.slice(-6), emailId: ctx.emailId || (N.outlook && N.outlook.current.emailId) || null, draft: st.draft ? st.draft.value() : null };
@@ -346,8 +452,10 @@ async function ask(q, ctx = {}) {
         }
       }
       setMood('idle'); st.busy = false; thread.scrollTop = thread.scrollHeight;
+      // things it was asked to change happen in front of you, one at a time
+      if ((r.actions || []).length) { await runActions(r.actions, a, st); if (state !== st) return; }
       // anything it found comes up on the page behind the chat, marked
-      if (!r.open && !r.draft && N.outlook && ((r.emails || []).length || (r.events || []).length)) N.outlook.show(r);
+      if (!r.open && !r.draft && !(r.actions || []).length && N.outlook && ((r.emails || []).length || (r.events || []).length)) N.outlook.show(r);
       // "take me to / show me / open …": the orb hands over and goes there
       if (r.open && N.outlook && !r.draft) {
         const o = r.open, cap = o.title || (o.page === 'mail' ? 'Your inbox' : o.start ? new Date(o.start).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Your calendar');
@@ -511,6 +619,7 @@ document.addEventListener('keydown', e => {
   if (!B.isNova() || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'j') return;
   e.preventDefault(); if (sheet && sheet.classList.contains('is-open')) close(); else open();
 });
+document.addEventListener('keydown', e => { if (B.isNova() && (e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'x') { e.preventDefault(); snip(); } });
 mountDock();
 // ask with context from another page (Mail's "Summarise", Calendar's "Ask about this")
 function askAbout(q, ctx) { open(); setTimeout(() => ask(q, ctx || {}), 80); }

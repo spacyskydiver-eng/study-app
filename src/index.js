@@ -230,10 +230,10 @@ function msPage(title, text) {
 <div style="max-width:460px;padding:28px;border:1px solid rgba(151,125,255,.3);border-radius:18px;background:#0b0c17">
 <h2 style="margin:0 0 10px">${title}</h2><p style="color:#a6acd6;line-height:1.5">${text}</p><p><a style="color:#c4b5fd" href="/">Back to the site</a></p></div></body>`, 200);
 }
-async function handleMs(request, env, url) {
+async function handleMs(request, env, url, ctx) {
   const p = url.pathname;
   if (!env.MS_CLIENT_ID || !env.MS_CLIENT_SECRET) {
-    if (p.startsWith("/api/") && env.SYNC_TOKEN) return syncedApi(env, url, request);
+    if (p.startsWith("/api/") && env.SYNC_TOKEN) return syncedApi(env, url, request, ctx);
     if (p.startsWith("/api/")) return json({ notConfigured: true });
     return msPage("Outlook is not set up yet", "The Microsoft app details (MS_CLIENT_ID and MS_CLIENT_SECRET) have not been added to this site.");
   }
@@ -352,6 +352,9 @@ async function syncTables(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS mail2 (id TEXT PRIMARY KEY, subject TEXT, sender TEXT, recips TEXT, cc TEXT, received TEXT, preview TEXT, unread INTEGER, att INTEGER, html TEXT, body TEXT, added INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS ev2 (id TEXT PRIMARY KEY, subject TEXT, start TEXT, finish TEXT, allday INTEGER, location TEXT, organizer TEXT, body TEXT, link TEXT)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS outbox (id TEXT PRIMARY KEY, recips TEXT, cc TEXT, subject TEXT, html TEXT, created INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS todos (id TEXT PRIMARY KEY, kind TEXT, title TEXT, detail TEXT, due TEXT, ref TEXT, course TEXT, state TEXT, created INTEGER, updated INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS mail_flags (id TEXT PRIMARY KEY, state TEXT, at INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS mail_scan (id TEXT PRIMARY KEY, at INTEGER)"),
   ]);
 }
 // email / event HTML to readable text (for the assistant, search and previews)
@@ -416,14 +419,30 @@ async function handleSyncEmail(message, env) {
 const utc = v => { v = String(v || ""); return /T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(v) ? v.replace(/\.\d+$/, "") + "Z" : v; };
 const pick = (o, ...keys) => { for (const k of keys) { const v = k.split(".").reduce((x, y) => (x == null ? x : x[y]), o); if (v != null && v !== "") return v; } return ""; };
 const OUTLOOK = "https://outlook.office.com/mail/";
-const mailOut = (r, full) => ({ id: r.id, subject: r.subject, from: r.sender, to: r.recips, cc: r.cc, received: r.received, preview: r.preview, unread: !!r.unread, attachments: !!r.att, link: OUTLOOK, ...(full ? { html: r.html, text: r.body } : {}) });
+/* Flags: an email written to Alex personally, or to a small group with him in it, is red (up to 5
+   people) or orange (6 to 10). Automated senders and mailing lists never flag (a list address has no
+   "first.last" shape, so it may hide hundreds of people), and BCC'd mail (Alex not named) doesn't
+   either. A flag Alex cleared or set himself overrides this. */
+const ME = /^a\.taylor12@uea\.ac\.uk$/i;
+const AUTOMATED = /(no-?reply|do-?not-?reply|notification|mailer|bounce|newsletter|communications|admissions|marketing|news@|info@|support@|service@|@.*(microsoft|blackboard|elsevier|linkedin|amazon|facebook|google)\.)/i;
+const personal = a => /^[a-z]{1,3}\.[a-z][a-z'-]*\d*@/i.test(a);
+function autoFlag(r) {
+  if (!r || AUTOMATED.test(r.sender || "") || !personal(r.sender || "")) return null;
+  const rc = [...new Set(String((r.recips || "") + ";" + (r.cc || "")).split(/[;,]/).map(x => x.trim().toLowerCase()).filter(Boolean))];
+  if (!rc.some(a => ME.test(a)) || rc.some(a => !personal(a))) return null;
+  const n = rc.length + 1;      // the sender counts as one of the people on it
+  return n <= 5 ? "red" : n <= 10 ? "orange" : null;
+}
+const flagOf = (r, over) => !over ? autoFlag(r) : over === "cleared" ? null : over;
+const mailOut = (r, full, over) => ({ id: r.id, subject: r.subject, from: r.sender, to: r.recips, cc: r.cc, received: r.received, preview: r.preview, unread: !!r.unread, attachments: !!r.att, flag: flagOf(r, over), link: OUTLOOK, ...(full ? { html: r.html, text: r.body } : {}) });
+async function flagMap(env) { const rows = await env.DB.prepare("SELECT id, state FROM mail_flags").all(); return new Map((rows.results || []).map(x => [x.id, x.state])); }
 const evOut = r => ({ id: r.id, subject: r.subject, start: r.start, end: r.finish, allDay: !!r.allday, location: r.location, organizer: r.organizer, ...(r.body != null ? { description: r.body } : {}), link: r.link || "https://outlook.office.com/calendar/" });
 async function eventsBetween(env, from, to, withBody) {
   const rows = await env.DB.prepare(`SELECT id, subject, start, finish, allday, location, organizer, ${withBody ? "body," : ""} link FROM ev2 WHERE finish >= ? AND start < ? ORDER BY start`).bind(from, to).all();
   return (rows.results || []).map(evOut);
 }
 const isoDay = t => new Date(t).toISOString().slice(0, 19) + "Z";
-async function syncedApi(env, url, request) {
+async function syncedApi(env, url, request, ctx) {
   await syncTables(env);
   const last = await env.DB.prepare("SELECT at FROM sync_state WHERE k = 'last'").first();
   const p = url.pathname, q = url.searchParams;
@@ -436,15 +455,18 @@ async function syncedApi(env, url, request) {
     const rows = await env.DB.prepare("SELECT id, recips, subject, created FROM outbox ORDER BY created DESC LIMIT 20").all();
     return json({ items: rows.results || [] });
   }
+  if (p === "/api/todos") return todosApi(env, request, ctx);
+  if (p === "/api/vision" && request.method === "POST") return vision(env, request);
   if (!last) return json({ notConnected: true });
   if (p === "/api/ms/mail") {
     if (q.get("id")) {
       const r = await env.DB.prepare("SELECT * FROM mail2 WHERE id = ?").bind(q.get("id")).first();
-      return r ? json({ message: mailOut(r, true) }) : json({ error: "not found" }, 404);
+      return r ? json({ message: mailOut(r, true, (await flagMap(env)).get(r.id)) }) : json({ error: "not found" }, 404);
     }
     const limit = Math.min(400, Math.max(1, Number(q.get("limit")) || 15));
     const rows = await env.DB.prepare("SELECT id, subject, sender, recips, cc, received, preview, unread, att FROM mail2 ORDER BY received DESC LIMIT ?").bind(limit).all();
-    return json({ messages: (rows.results || []).map(r => mailOut(r)) });
+    const fm = await flagMap(env);
+    return json({ messages: (rows.results || []).map(r => mailOut(r, false, fm.get(r.id))) });
   }
   if (p === "/api/ms/calendar") {
     if (q.get("id")) {
@@ -461,7 +483,126 @@ async function syncedApi(env, url, request) {
     return json({ events: await eventsBetween(env, from, to, q.get("full") === "1") });
   }
   if (p === "/api/jarvis" && request.method === "POST") return jarvis(env, request);
+  if (p === "/api/ms/flag" && request.method === "POST") {
+    const d = await request.json().catch(() => ({}));
+    if (!d.id) return json({ error: "no id" }, 400);
+    if (d.state === "auto") await env.DB.prepare("DELETE FROM mail_flags WHERE id = ?").bind(d.id).run();
+    else if (/^(cleared|red|orange)$/.test(d.state)) await env.DB.prepare("INSERT OR REPLACE INTO mail_flags (id, state, at) VALUES (?, ?, ?)").bind(d.id, d.state, Date.now()).run();
+    else return json({ error: "bad state" }, 400);
+    return json({ ok: true });
+  }
+
   return json({ error: "not found" }, 404);
+}
+
+/* ------------------------------------------------------------------ to-do list
+   One list on the home page, fed from three places:
+     - lecture: after every lecture in the calendar (from the evening of 20 Oct 2026), "write up the notes"
+     - deadline: dates pulled out of Blackboard / UEA emails by the model (see scanDeadlines)
+     - email / manual: added by Alex or the orb
+   Dismissed or done items stay in the table so they are never re-created. */
+const LECTURES_FROM = "2026-10-20T17:50:00Z";     // "from now on": lectures that end after this
+async function ensureLectureTodos(env) {
+  const now = new Date().toISOString().slice(0, 19) + "Z";
+  const rows = (await env.DB.prepare("SELECT id, subject, start, finish, location FROM ev2 WHERE finish >= ? AND finish <= ? AND subject LIKE '%Lecture%' ORDER BY finish").bind(LECTURES_FROM, now).all()).results || [];
+  if (!rows.length) return;
+  const t = Date.now();
+  await env.DB.batch(rows.map(e => env.DB.prepare("INSERT OR IGNORE INTO todos (id, kind, title, detail, due, ref, course, state, created, updated) VALUES (?, 'lecture', ?, ?, '', ?, ?, 'open', ?, ?)")
+    .bind("lec:" + e.start + ":" + e.subject, "Write up notes: " + e.subject, londonDate(e.start) + (e.location ? " · " + String(e.location).split(" - ").pop() : ""), e.id, (String(e.subject).match(/BIO-?\d{4}\w?/i) || [""])[0].toUpperCase(), t, t)));
+}
+const todoOut = r => ({ id: r.id, kind: r.kind, title: r.title, detail: r.detail, due: r.due, ref: r.ref, course: r.course, state: r.state, created: r.created });
+async function todosApi(env, request, ctx) {
+  await syncTables(env);
+  if (request.method === "POST") {
+    const d = await request.json().catch(() => ({}));
+    const t = Date.now();
+    if (d.action === "add") {
+      const title = String(d.title || "").trim().slice(0, 200);
+      if (!title) return json({ error: "no title" }, 400);
+      const id = "m:" + crypto.randomUUID();
+      await env.DB.prepare("INSERT INTO todos (id, kind, title, detail, due, ref, course, state, created, updated) VALUES (?, ?, ?, ?, ?, ?, '', 'open', ?, ?)")
+        .bind(id, d.ref ? "email" : "manual", title, String(d.detail || "").slice(0, 300), String(d.due || ""), String(d.ref || ""), t, t).run();
+      return json({ todo: todoOut(await env.DB.prepare("SELECT * FROM todos WHERE id = ?").bind(id).first()) });
+    }
+    if (/^(done|dismiss|reopen)$/.test(d.action) && d.id) {
+      await env.DB.prepare("UPDATE todos SET state = ?, updated = ? WHERE id = ?").bind(d.action === "reopen" ? "open" : d.action === "done" ? "done" : "dismissed", t, d.id).run();
+      return json({ ok: true });
+    }
+    return json({ error: "bad request" }, 400);
+  }
+  await ensureLectureTodos(env);
+  if (ctx) ctx.waitUntil(scanDeadlines(env, 6));      // keep working through older emails in the background
+  const rows = (await env.DB.prepare("SELECT * FROM todos WHERE state = 'open' ORDER BY (due = ''), due, created DESC LIMIT 60").all()).results || [];
+  const left = await env.DB.prepare("SELECT COUNT(*) AS n FROM mail2 WHERE id NOT IN (SELECT id FROM mail_scan)").first();
+  return json({ todos: rows.map(todoOut), scanning: left ? left.n : 0 });
+}
+/* Deadlines: emails from Blackboard and UEA staff are read once each. Ones that mention a due date go
+   to the model, which returns the tasks with absolute dates (it is given the email's own date, so
+   "this Friday" resolves). Past deadlines are skipped. A few emails per run keeps each run short. */
+const DUE_HINT = /\b(due|deadline|submit|submission|hand[- ]?in|closing|closes|close at|by (mon|tues|wednes|thurs|fri|satur|sun)day|by \d|before \d|no later than|complete (it|this|the)|quiz|assignment|formative|summative|practical report|lab report|essay|exam)\b/i;
+async function scanDeadlines(env, max) {
+  if (!env.AI) return;
+  try {
+    await syncTables(env);
+    const rows = (await env.DB.prepare("SELECT id, subject, sender, received, body, preview FROM mail2 WHERE id NOT IN (SELECT id FROM mail_scan) ORDER BY received DESC LIMIT ?").bind(max).all()).results || [];
+    for (const m of rows) {
+      await env.DB.prepare("INSERT OR IGNORE INTO mail_scan (id, at) VALUES (?, ?)").bind(m.id, Date.now()).run();
+      const text = (m.body || m.preview || "").slice(0, 5000);
+      const fromUni = /blackboard|uea\.ac\.uk/i.test(m.sender || "");
+      if (!fromUni || !DUE_HINT.test(m.subject + " " + text)) continue;
+      const prompt = `Email received ${londonDate(m.received)} (UK time).\nFrom: ${m.sender}\nSubject: ${m.subject}\n\n${text}`;
+      let out = null;
+      try {
+        const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
+          { role: "system", content: 'You extract deadlines a first-year UEA biomedicine student must act on from a university email. Only real tasks with a stated or clearly implied due date and time (submissions, quizzes, practical reports, forms, sign-ups). Ignore events with no task, newsletters and past dates. Resolve relative dates ("this Friday", "tomorrow") from the email\'s date. If no time is given use 23:59. Reply JSON only: {"items":[{"title":"short task, e.g. Submit practical 2 report","due":"YYYY-MM-DDTHH:MM","course":"module code like BIO-4018A or empty"}]}' },
+          { role: "user", content: prompt }], max_tokens: 400, temperature: 0.1, response_format: { type: "json_object" } });
+        const raw = r && r.response;
+        out = typeof raw === "object" ? raw : JSON.parse(String(raw).replace(/^[^{]*/, "").replace(/[^}]*$/, ""));
+      } catch (e) { continue; }
+      const items = (out && Array.isArray(out.items) ? out.items : []).filter(it => it && it.title && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(it.due || "")));
+      const t = Date.now();
+      for (const it of items) {
+        const dueUtc = new Date(londonToUtc(String(it.due).slice(0, 16))).toISOString();
+        if (Date.parse(dueUtc) < Date.now() - 864e5) continue;
+        const id = "dl:" + String(it.title).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().slice(0, 60) + ":" + dueUtc.slice(0, 10);
+        await env.DB.prepare("INSERT OR IGNORE INTO todos (id, kind, title, detail, due, ref, course, state, created, updated) VALUES (?, 'deadline', ?, ?, ?, ?, ?, 'open', ?, ?)")
+          .bind(id, String(it.title).slice(0, 160), "From: " + m.subject.slice(0, 140), dueUtc, m.id, String(it.course || "").slice(0, 20), t, t).run();
+      }
+    }
+  } catch (e) { /* try again next run */ }
+}
+// "2026-10-21T14:00" in UK local time -> UTC milliseconds (BST until the last Sunday of October)
+function londonToUtc(local) {
+  const guess = Date.parse(local + ":00Z");
+  const off = new Date(guess).toLocaleString("en-GB", { timeZone: "Europe/London", hour12: false, hour: "2-digit" });
+  const diffH = (Number(off) - new Date(guess).getUTCHours() + 24) % 24;
+  return guess - diffH * 3600000;
+}
+
+/* ------------------------------------------------------------------ "what's in this picture?"
+   A snipped region of the page (a diagram, usually) goes to the vision model with Alex's question. */
+async function vision(env, request) {
+  if (!env.AI) return json({ error: "The AI isn't switched on for this site." }, 503);
+  const d = await request.json().catch(() => ({}));
+  const img = String(d.image || "");
+  if (!/^data:image\/(png|jpeg|webp);base64,/.test(img) || img.length > 6e6) return json({ error: "Send a PNG or JPEG under about 4 MB." }, 400);
+  const q = String(d.q || "Explain this diagram.").slice(0, 1000);
+  const messages = [
+    { role: "system", content: "You are the study assistant for Alex, a first-year BSc Biomedicine student. Explain what is in the image clearly and accurately at undergraduate level: what it shows, the labelled parts, and the key idea. Use short markdown. UK English, no exclamation marks. If you can't read part of it, say so rather than guessing." },
+    { role: "user", content: q },
+  ];
+  const model = "@cf/meta/llama-3.2-11b-vision-instruct";
+  const run = () => env.AI.run(model, { messages, image: img, max_tokens: 900, temperature: 0.3 });
+  try {
+    let r;
+    try { r = await run(); }
+    catch (e) {
+      // first use: Meta's licence has to be accepted once for the account
+      if (!/agree|licen[cs]e/i.test(String(e && e.message))) throw e;
+      await env.AI.run(model, { prompt: "agree" }); r = await run();
+    }
+    return json({ answer: String((r && (r.response || r.description)) || "").trim() || "I couldn't read that image." });
+  } catch (e) { return json({ error: "The vision model failed: " + String(e && e.message || e).slice(0, 200) }, 502); }
 }
 
 /* ------------------------------------------------------------------ sending through Outlook
@@ -513,6 +654,11 @@ async function jarvis(env, request) {
   const words = [...new Set((lq + " " + history.slice(-2).map(h => h.q.toLowerCase()).join(" ")).match(/[a-z0-9@.\-']{3,}/g) || [])].filter(w => !STOP.has(w));
 
   const mails = ((await env.DB.prepare("SELECT id, subject, sender, recips, cc, received, preview, unread, body FROM mail2 ORDER BY received DESC LIMIT 400").all()).results || []);
+  const fm = await flagMap(env);
+  await ensureLectureTodos(env);
+  const todos = (await env.DB.prepare("SELECT * FROM todos WHERE state = 'open' ORDER BY (due = ''), due, created DESC LIMIT 40").all()).results || [];
+  const todoRef = todos.map(t => t.id);
+  const todoLines = todos.map((t, i) => `T${i + 1} | ${t.kind} | ${t.title}${t.due ? " | due " + londonDate(t.due) : ""}`);
   const scoreMail = m => { const hay = (m.subject + " " + m.sender + " " + m.recips).toLowerCase(), body = (m.body || "").toLowerCase(); let s = 0; for (const w of words) { if (hay.includes(w)) s += 3; if (body.includes(w)) s += 1; } return s; };
   const wantToday = /\btoday|this morning|tonight\b/.test(lq), wantYest = /\byesterday\b/.test(lq);
   const focus = new Map();
@@ -523,7 +669,8 @@ async function jarvis(env, request) {
   const mailRef = [], mailIndex = [], mailFull = [];
   mails.slice(0, 120).concat(mails.filter(m => focus.has(m.id) && mails.indexOf(m) >= 120)).forEach(m => {
     const k = "E" + (mailRef.push(m.id));
-    mailIndex.push(`${k} | ${londonDate(m.received)} | from ${m.sender}${m.unread ? " | UNREAD" : ""} | ${m.subject}`);
+    const fl = flagOf(m, fm.get(m.id));
+    mailIndex.push(`${k} | ${londonDate(m.received)} | from ${m.sender}${m.unread ? " | UNREAD" : ""}${fl ? " | FLAG " + fl.toUpperCase() : ""} | ${m.subject}`);
     if (focus.has(m.id)) mailFull.push(`### ${k}\nFrom: ${m.sender}\nTo: ${m.recips}${m.cc ? "\nCc: " + m.cc : ""}\nDate: ${londonDate(m.received)}\nSubject: ${m.subject}\n\n${(m.body || m.preview || "").slice(0, focus.get(m.id))}`);
   });
 
@@ -552,8 +699,9 @@ Rules:
 - When you mention specific emails or events, put their keys (E3, C7) in "refs" so the site can link them; in the reply text use their names, not the keys.
 - When Alex asks you to write, draft, reply to or send an email, put the email in "draft": to (addresses separated by ;), cc, subject, body (plain text, line breaks as \\n, signed "Alex"). Take addresses from the emails below; if you can't find the person's address, leave "to" empty and say so. For a reply, use "Re: " + the original subject. Never say an email has been sent; say the draft is ready to check.
 - When Alex asks you to open, show, go to, pull up or take him to an email, his inbox, his calendar or a day, set "open": {"page": "mail" or "calendar", "ref": the key (E3 / C2) or null, "date": "YYYY-MM-DD" or null}, and keep "reply" to one short line. Otherwise "open" is null.
-- Reply with JSON only: {"reply": "markdown text", "refs": ["E1","C2"], "draft": null or {"to":"","cc":"","subject":"","body":""}, "open": null or {"page":"","ref":null,"date":null}}`;
-  const context = `INBOX (newest first, ${mails.length} stored):\n${mailIndex.join("\n") || "(empty)"}\n\nEMAILS IN FULL:\n${mailFull.join("\n\n") || "(none matched)"}\n\nCALENDAR (${evLines.length} events shown):\n${evLines.join("\n") || "(none)"}`;
+- Alex's to-do list is below (T1, T2…). You can change it and email flags with "actions": {"do":"add_todo","title":"short task","due":"YYYY-MM-DDTHH:MM (UK time) or null","ref":"E3 or null"}, {"do":"done_todo","todo":"T2"}, {"do":"dismiss_todo","todo":"T4"}, {"do":"flag","ref":"E3","color":"red" | "orange" | "none"}. Only do this when he asks you to (e.g. "add that email to my to-do list", "clear the flag", "I've done the quiz"); for "that email" use the email you last talked about. Say in the reply what you did, in one line.
+- Reply with JSON only: {"reply": "markdown text", "refs": ["E1","C2"], "draft": null or {"to":"","cc":"","subject":"","body":""}, "open": null or {"page":"","ref":null,"date":null}, "actions": []}`;
+  const context = `TO-DO LIST (${todos.length} open):\n${todoLines.join("\n") || "(empty)"}\n\nINBOX (newest first, ${mails.length} stored):\n${mailIndex.join("\n") || "(empty)"}\n\nEMAILS IN FULL:\n${mailFull.join("\n\n") || "(none matched)"}\n\nCALENDAR (${evLines.length} events shown):\n${evLines.join("\n") || "(none)"}`;
   const messages = [{ role: "system", content: system }, { role: "user", content: context.slice(0, 60000) }, { role: "assistant", content: '{"reply": "Got it. I have your inbox and calendar.", "refs": [], "draft": null}' }];
   for (const h of history) { messages.push({ role: "user", content: h.q }, { role: "assistant", content: JSON.stringify({ reply: h.a, refs: [], draft: null }) }); }
   messages.push({ role: "user", content: q + (d.draft ? `\n\n(Current draft being edited: ${JSON.stringify(d.draft).slice(0, 4000)})` : "") });
@@ -587,19 +735,33 @@ Rules:
     if (/^C\d+$/.test(ref)) { const e = evMap.get(evRef[+ref.slice(1) - 1]); if (e) Object.assign(open, { page: "calendar", id: e.id, start: e.start, title: e.subject }); }
     if (!open.start && /^\d{4}-\d{2}-\d{2}$/.test(String(out.open.date || ""))) open.start = out.open.date + "T12:00:00Z";
   }
-  return json({ reply, emails, events, draft, open });
+  // actions are returned resolved but not performed: the page performs them, so Alex sees each one happen
+  const actions = (Array.isArray(out.actions) ? out.actions : []).slice(0, 6).map(a => {
+    if (!a || typeof a !== "object") return null;
+    const mail = /^E\d+$/.test(String(a.ref || "")) ? mails.find(x => x.id === mailRef[+String(a.ref).slice(1) - 1]) : null;
+    const todo = /^T\d+$/.test(String(a.todo || "")) ? todos[+String(a.todo).slice(1) - 1] : null;
+    if (a.do === "add_todo" && (a.title || mail)) {
+      const due = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(a.due || "")) ? new Date(londonToUtc(String(a.due).slice(0, 16))).toISOString() : "";
+      return { do: "add_todo", title: String(a.title || ("Reply to: " + mail.subject)).slice(0, 160), due, ref: mail ? mail.id : "", detail: mail ? "From: " + mail.subject.slice(0, 140) : "" };
+    }
+    if ((a.do === "done_todo" || a.do === "dismiss_todo") && todo) return { do: a.do, id: todo.id, title: todo.title };
+    if (a.do === "flag" && mail) return { do: "flag", id: mail.id, title: mail.subject, color: /^(red|orange)$/.test(a.color) ? a.color : "none" };
+    return null;
+  }).filter(Boolean);
+  void todoRef;
+  return json({ reply, emails, events, draft, open, actions });
 }
 
 export default {
-  async email(message, env) { return handleSyncEmail(message, env); },
-  async fetch(request, env) {
+  async email(message, env, ctx) { await handleSyncEmail(message, env); ctx.waitUntil(scanDeadlines(env, 10)); },
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/pin" && request.method === "POST") return handlePinPost(request, env);
     // the send flow reads queued emails from here; the secret token in the path is the key
     const tok = String(env.SYNC_TOKEN || "").trim();
     if (tok && url.pathname === `/outbox/${tok}.rss`) return outboxFeed(env, url);
     if (await validSession(request, env)) {
-      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || url.pathname === "/api/jarvis") return handleMs(request, env, url);
+      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
       // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
       const res = await env.ASSETS.fetch(request);
       if (!(res.headers.get("content-type") || "").includes("text/html")) return res;

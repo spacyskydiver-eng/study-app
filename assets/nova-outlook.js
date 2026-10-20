@@ -110,7 +110,7 @@ B.registerView('mail', {
         const d = dayOf(m.received), today = localDay(new Date()), yest = localDay(new Date(Date.now() - 864e5));
         const head = d !== lastDay ? `<div class="ol-day">${d === today ? 'Today' : d === yest ? 'Yesterday' : new Date(m.received).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div>` : '';
         lastDay = d;
-        return `${head}<button class="ol-item${m.unread ? ' is-unread' : ''}${sel === m.id ? ' is-sel' : ''}${refs.has(m.id) ? ' is-ref' : ''}" data-id="${esc(m.id)}" role="option"><span class="ol-item-top"><b>${esc(nameOf(m.from))}</b><time>${shortDate(m.received)}</time></span><span class="ol-item-sub">${m.attachments ? icon('paperclip') : ''}${esc(m.subject || '(no subject)')}</span><span class="ol-item-pre">${esc((m.preview || '').replace(/\s+/g, ' ').slice(0, 140))}</span></button>`;
+        return `${head}<button class="ol-item${m.unread ? ' is-unread' : ''}${sel === m.id ? ' is-sel' : ''}${refs.has(m.id) ? ' is-ref' : ''}${m.flag ? ' is-flag-' + m.flag : ''}" data-id="${esc(m.id)}" role="option"><span class="ol-item-top"><b>${m.flag ? `<i class="nv-flag nv-flag-${m.flag}"></i>` : ''}${esc(nameOf(m.from))}</b><time>${shortDate(m.received)}</time></span><span class="ol-item-sub">${m.attachments ? icon('paperclip') : ''}${esc(m.subject || '(no subject)')}</span><span class="ol-item-pre">${esc((m.preview || '').replace(/\s+/g, ' ').slice(0, 140))}</span></button>`;
       }).join('') : `<div class="ol-empty">${msgs.length ? 'Nothing matches.' : 'No mail synced yet.'}</div>`;
     };
     async function select(id, arrived) {
@@ -131,6 +131,8 @@ B.registerView('mail', {
           <div class="ol-read-acts">
             <button class="ol-btn" data-act="reply">${icon('reply')}<span>Reply</span></button>
             <button class="ol-btn" data-act="replyall">${icon('reply')}<span>Reply all</span></button>
+            <button class="ol-btn" data-act="todo">${icon('check')}<span>To-do</span></button>
+            <button class="ol-btn ol-flagbtn${(msgs.find(x => x.id === m.id) || {}).flag ? ' is-on' : ''}" data-act="flag">${icon('flag')}<span>${(msgs.find(x => x.id === m.id) || {}).flag ? 'Clear flag' : 'Flag'}</span></button>
             ${html ? `<button class="ol-btn ol-icon" data-act="mode" title="Plain text">${icon('file')}</button>` : ''}
             <a class="ol-btn ol-icon" href="https://outlook.office.com/mail/" target="_blank" rel="noopener" title="Open in Outlook">${icon('external')}</a>
           </div>
@@ -149,10 +151,22 @@ B.registerView('mail', {
       };
       paint();
       const mine = /a\.taylor12@uea\.ac\.uk/i;
-      reader.onclick = e => {
+      reader.onclick = async e => {
         if (e.target.closest('.ol-back')) { page.classList.remove('has-sel'); return; }
         const b = e.target.closest('[data-act]'); if (!b) return;
         const act = b.dataset.act;
+        if (act === 'todo') {
+          b.disabled = true;
+          N.todo && N.todo.post({ action: 'add', title: 'Follow up: ' + (m.subject || 'email').slice(0, 140), ref: m.id, detail: 'From ' + nameOf(m.from) }).then(() => { $('span', b).textContent = 'Added'; N.home && N.home.refresh(); });
+          return;
+        }
+        if (act === 'flag') {
+          const item = msgs.find(x => x.id === m.id); const on = !!(item && item.flag);
+          await O.setFlag(m.id, on ? 'cleared' : 'red');
+          if (item) item.flag = on ? null : 'red';
+          b.classList.toggle('is-on', !on); $('span', b).textContent = on ? 'Flag' : 'Clear flag';
+          renderList(); return;
+        }
         if (act === 'mode') { asHtml = !asHtml; b.title = asHtml ? 'Plain text' : 'Formatted'; paint(); return; }
         const all = act === 'replyall';
         const cc = all ? [m.to, m.cc].join(';').split(/[;,]/).map(s => s.trim()).filter(s => s && !mine.test(s) && s.toLowerCase() !== m.from.toLowerCase()).join('; ') : '';
@@ -163,6 +177,7 @@ B.registerView('mail', {
       };
     }
     O.selectEmail = select;
+    O.flagLive = (id, color) => { const m = msgs.find(x => x.id === id); if (m) m.flag = color === 'none' ? null : color; renderList(); const it = $(`.ol-item[data-id="${CSS.escape(id)}"]`, list); if (it) { it.scrollIntoView({ block: 'center' }); it.classList.add('is-arrived'); setTimeout(() => it.classList.remove('is-arrived'), 1600); } };
     let refs = new Set();
     O.markRefs = ids => { refs = new Set(ids); if (query || filter !== 'all') { query = ''; filter = 'all'; $('.ol-search input', view).value = ''; $$('.ol-chip', view).forEach(x => x.classList.toggle('is-on', x.dataset.f === 'all')); } renderList(); };
     list.onclick = e => { const b = e.target.closest('.ol-item'); if (b) select(b.dataset.id); };
@@ -181,7 +196,7 @@ B.registerView('mail', {
       if (want) select(want, true);
       else if (!B.isMobile() && msgs[0]) select(msgs[0].id);
     })();
-    return () => { alive = false; O.selectEmail = null; O.markRefs = null; O.current = {}; rays && rays.destroy(); };
+    return () => { alive = false; O.selectEmail = null; O.markRefs = null; O.flagLive = null; O.current = {}; rays && rays.destroy(); };
   },
 });
 
@@ -203,6 +218,7 @@ O.show = ({ emails = [], events = [] }) => {
     if (B.currentId() === 'calendar' && O.focusEvent) O.focusEvent(p); else { O.pending = p; N.go('calendar'); }
   }
 };
+O.setFlag = (id, state) => post('/api/ms/flag', { id, state });
 O.counts = async () => {
   const [m, c] = await Promise.all([get('/api/ms/mail?limit=120'), get('/api/ms/calendar?days=1')]);
   const today = localDay(new Date());

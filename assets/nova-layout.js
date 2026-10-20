@@ -176,37 +176,112 @@ function accordion(items, opts = {}) {
 
 /* ---------------------------------------------------------------- Outlook (calendar + inbox) on the home page */
 const fmtTime = iso => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-const dayKey = d => d.toISOString().slice(0, 10);
 async function msGet(path) {
   try { const r = await fetch(path, { credentials: 'same-origin', cache: 'no-store' }); if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return null; return await r.json(); } catch (e) { return null; }
 }
 N.ms = { get: msGet, fmtTime };
-async function outlookSection(el) {
-  const st = await msGet('/api/ms/status');
-  if (!st || st.notConfigured || !el.isConnected) return;     // not set up on this site: stay hidden
-  el.hidden = false;
-  if (!st.connected && st.source === 'flow') {
-    el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Waiting for the first sync</b><small>Your calendar and emails appear here once the Power Automate flows send their first update.${st.lastReject ? `<br>Last sync email was turned away at ${new Date(st.lastReject.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}: ${esc(st.lastReject.why)} (from ${esc(st.lastReject.from)}).` : ''}</small></div></div>`;
-    return;
-  }
-  if (!st.connected) {
-    el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Connect your Outlook</b><small>Show your calendar and latest emails here, and let the assistant answer “what’s on tonight?”</small></div><a class="nv-mapbtn" href="/ms/connect">${icon('link')}<span>Connect</span></a></div>`;
-    return;
-  }
-  const synced = st.lastSync ? 'Updated ' + new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
-  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span class="nv-ms-stats"><button data-go="mail"><b class="nv-c-unread"></b>unread</button><button data-go="calendar"><b class="nv-c-today"></b>on today</button><em>${esc(synced)}</em></span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-ms-colhead"><span class="nv-kicker">Calendar</span><button class="nv-ms-all" data-go="calendar">Open calendar ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-ms-colhead"><span class="nv-kicker">Inbox</span><button class="nv-ms-all" data-go="mail">All mail ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div></div>`;
-  const [cal, mail] = await Promise.all([msGet('/api/ms/calendar?days=2'), msGet('/api/ms/mail')]);
-  if (!el.isConnected) return;
-  const today = dayKey(new Date()), tomorrow = dayKey(new Date(Date.now() + 864e5));
-  const evs = (cal && cal.events) || [];
-  $('.nv-ms-cal .nv-ms-list', el).innerHTML = cal && cal.error ? `<div class="nv-empty">${esc(cal.error)}</div>` : evs.length ? evs.slice(0, 7).map(e => {
-    const d = e.start.slice(0, 10);
-    return `<button class="nv-ms-item" data-ev="${esc(e.id || '')}" data-start="${esc(e.start)}"><span class="nv-ms-when">${d === today ? '' : d === tomorrow ? 'Tmrw ' : ''}${e.allDay ? 'All day' : fmtTime(e.start)}</span><b>${esc(e.subject || '(no title)')}</b>${e.location ? `<small>${esc(e.location)}</small>` : ''}</button>`;
-  }).join('') : '<div class="nv-empty">Nothing on today or tomorrow.</div>';
-  const msgs = (mail && mail.messages) || [];
-  if (N.counter) { N.counter($('.nv-c-unread', el), msgs.filter(m => m.unread).length); N.counter($('.nv-c-today', el), evs.filter(e => e.start.slice(0, 10) === today).length); }
-  $('.nv-ms-mail .nv-ms-list', el).innerHTML = mail && mail.error ? `<div class="nv-empty">${esc(mail.error)}</div>` : msgs.length ? msgs.slice(0, 6).map(m => `<button class="nv-ms-item${m.unread ? ' is-unread' : ''}" data-mail="${esc(m.id || '')}"><span class="nv-ms-when">${new Date(m.received).toDateString() === new Date().toDateString() ? fmtTime(m.received) : new Date(m.received).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span><b>${esc(m.subject || '(no subject)')}</b><small>${esc(m.from)} · ${esc((m.preview || '').slice(0, 90))}</small></button>`).join('') : '<div class="nv-empty">Inbox is empty.</div>';
+/* Home's live panels (to-do, calendar, inbox) draw straight away from the last data seen (kept in
+   localStorage), so switching back to Home never waits or pops. Fresh data is fetched in the
+   background and only the parts that changed are redrawn, without animating again. */
+const HOME_KEY = 'novaHomeData';
+const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const relDue = iso => {
+  const ms = Date.parse(iso) - Date.now(), h = ms / 36e5;
+  if (ms < 0) return { txt: 'overdue', cls: 'is-late' };
+  if (h < 24) return { txt: h < 1 ? 'due within the hour' : `due in ${Math.round(h)} h`, cls: 'is-soon' };
+  const d = new Date(iso);
+  return { txt: 'due ' + d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + fmtTime(iso), cls: h < 72 ? 'is-near' : '' };
+};
+const TODO_IC = { lecture: 'book-open', deadline: 'clock', email: 'mail', manual: 'check' };
+function todoRow(t) {
+  const due = t.due ? relDue(t.due) : null;
+  return `<li class="nv-todo${due ? ' ' + due.cls : ''}" data-todo="${esc(t.id)}"${t.ref ? ` data-ref="${esc(t.ref)}" data-kind="${esc(t.kind)}"` : ''}>
+    <button class="nv-todo-tick" data-act="done" title="Done">${icon('check')}</button>
+    <span class="nv-todo-ic">${icon(TODO_IC[t.kind] || 'check')}</span>
+    <span class="nv-todo-main"><b>${esc(t.title)}</b><small>${due ? `<em>${esc(due.txt)}</em>` : ''}${t.course ? `<i>${esc(t.course)}</i>` : ''}${t.detail ? esc(t.detail) : ''}</small></span>
+    <button class="nv-todo-x" data-act="dismiss" title="Dismiss">${icon('x')}</button></li>`;
 }
+const flagDot = m => m.flag ? `<i class="nv-flag nv-flag-${m.flag}" title="${m.flag === 'red' ? 'Sent to you or a small group' : 'Sent to a group of 6 to 10'}"></i>` : '';
+function paintHome(el, d) {
+  if (!d || !el.isConnected) return;
+  const now = new Date(), today = localDay(now), tomorrow = localDay(new Date(Date.now() + 864e5));
+  // calendar: what's left today, then tomorrow (by your own clock, not UTC)
+  const evs = ((d.cal && d.cal.events) || []).filter(e => { const k = localDay(new Date(e.start)); return (k === today && Date.parse(e.end) > Date.now() - 15 * 60000) || k === tomorrow; }).slice(0, 7);
+  const msgs = ((d.mail && d.mail.messages) || []).slice(0, 6);
+  const todos = (d.todos && d.todos.todos) || [];
+  const set = (sel, html) => { const n = $(sel, el); if (n && n.dataset.html !== html) { n.innerHTML = html; n.dataset.html = html; } };
+  set('.nv-todo-list', todos.length ? todos.slice(0, 8).map(todoRow).join('') + (todos.length > 8 ? `<li class="nv-todo-more">${todos.length - 8} more</li>` : '') : '<li class="nv-empty">Nothing to do. Lectures you’ve had and deadlines from your emails appear here.</li>');
+  set('.nv-ms-cal .nv-ms-list', evs.length ? evs.map(e => {
+    const k = localDay(new Date(e.start)), past = Date.parse(e.end) < Date.now();
+    return `<button class="nv-ms-item${past ? ' is-past' : ''}" data-ev="${esc(e.id || '')}" data-start="${esc(e.start)}"><span class="nv-ms-when">${k === tomorrow ? 'Tmrw ' : ''}${e.allDay ? 'All day' : fmtTime(e.start)}</span><b>${esc(e.subject || '(no title)')}</b>${e.location ? `<small>${esc(String(e.location).split(' - ').pop())}</small>` : ''}</button>`;
+  }).join('') : '<div class="nv-empty">Nothing left today or tomorrow.</div>');
+  set('.nv-ms-mail .nv-ms-list', msgs.length ? msgs.map(m => `<button class="nv-ms-item${m.unread ? ' is-unread' : ''}" data-mail="${esc(m.id || '')}"><span class="nv-ms-when">${new Date(m.received).toDateString() === now.toDateString() ? fmtTime(m.received) : new Date(m.received).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span><b>${flagDot(m)}${esc(m.subject || '(no subject)')}</b><small>${esc(m.from)} · ${esc((m.preview || '').slice(0, 90))}</small></button>`).join('') : '<div class="nv-empty">Inbox is empty.</div>');
+  const flagged = ((d.mail && d.mail.messages) || []).filter(m => m.flag).length;
+  set('.nv-ms-stats', `<span><b>${todos.length}</b>to do</span><button data-go="mail"><b>${flagged}</b>flagged</button><button data-go="calendar"><b>${evs.filter(e => localDay(new Date(e.start)) === today && Date.parse(e.end) > Date.now()).length}</b>left today</button><em>${d.status && d.status.lastSync ? 'Updated ' + fmtTime(new Date(d.status.lastSync).toISOString()) : ''}</em>`);
+}
+async function loadHomeData() {
+  const [status, cal, mail, todos] = await Promise.all([msGet('/api/ms/status'), msGet('/api/ms/calendar?days=2'), msGet('/api/ms/mail?limit=40'), msGet('/api/todos')]);
+  const d = { status, cal, mail, todos, at: Date.now() };
+  if (status && status.connected) { try { localStorage.setItem(HOME_KEY, JSON.stringify(d)); } catch (e) { /* full */ } }
+  return d;
+}
+N.home = {
+  refresh: () => { const el = $('.nv-home .nv-live'); if (el) loadHomeData().then(d => paintHome(el, d)); },
+  data: loadHomeData,
+  // the orb's edits, shown happening: a new task slides in and types itself; done ones strike through
+  async insert(t) {
+    const list = $('.nv-home .nv-todo-list'); if (!list) return;
+    const empty = $('.nv-empty', list); if (empty) empty.remove();
+    const li = h(todoRow({ ...t, title: '' })); li.classList.add('is-new'); list.prepend(li);
+    const b = $('.nv-todo-main b', li);
+    const step = Math.max(1, Math.ceil(t.title.length / 26));      // about half a second, however long
+    for (let i = step; i < t.title.length + step; i += step) { b.textContent = t.title.slice(0, i); await new Promise(r => requestAnimationFrame(r)); }
+    delete list.dataset.html;
+  },
+  async mark(id, how) {
+    const row = $(`.nv-home .nv-todo[data-todo="${CSS.escape(id)}"]`); if (!row) return;
+    row.classList.add('is-arrived-todo'); await new Promise(r => setTimeout(r, 450));
+    row.classList.add(how === 'done' ? 'is-done' : 'is-gone'); await new Promise(r => setTimeout(r, 500));
+  },
+};
+function liveSection(el) {
+  let cached = null; try { cached = JSON.parse(localStorage.getItem(HOME_KEY) || 'null'); } catch (e) { /* bad */ }
+  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span class="nv-ms-stats"></span></div>
+    <div class="nv-live-grid">
+      <div class="nv-ms-col nv-todo-col"><div class="nv-ms-colhead"><span class="nv-kicker">To do</span><button class="nv-ms-all" data-act="add-todo">${icon('plus')} Add</button></div><ul class="nv-todo-list"></ul></div>
+      <div class="nv-ms-col nv-ms-cal"><div class="nv-ms-colhead"><span class="nv-kicker">Calendar</span><button class="nv-ms-all" data-go="calendar">Open ${icon('chevron-right')}</button></div><div class="nv-ms-list"></div></div>
+      <div class="nv-ms-col nv-ms-mail"><div class="nv-ms-colhead"><span class="nv-kicker">Inbox</span><button class="nv-ms-all" data-go="mail">All mail ${icon('chevron-right')}</button></div><div class="nv-ms-list"></div></div>
+    </div>`;
+  if (cached) paintHome(el, cached);
+  else $$('.nv-ms-list, .nv-todo-list', el).forEach(n => { n.innerHTML = '<div class="nv-skel"></div><div class="nv-skel"></div><div class="nv-skel"></div>'; });
+  loadHomeData().then(d => { if (d.status && d.status.notConfigured) { el.hidden = true; return; } paintHome(el, d); });
+  el.addEventListener('click', async e => {
+    const act = e.target.closest('[data-act]');
+    if (act && act.dataset.act === 'add-todo') {
+      const li = h(`<li class="nv-todo nv-todo-new"><span class="nv-todo-ic">${icon('plus')}</span><input type="text" placeholder="New task, then Enter" maxlength="200"></li>`);
+      const list = $('.nv-todo-list', el); list.prepend(li); const inp = $('input', li); inp.focus();
+      inp.onkeydown = async ev => {
+        if (ev.key === 'Escape') { li.remove(); return; }
+        if (ev.key !== 'Enter' || !inp.value.trim()) return;
+        await todoPost({ action: 'add', title: inp.value.trim() }); li.remove(); N.home.refresh();
+      };
+      inp.onblur = () => setTimeout(() => li.isConnected && !inp.value.trim() && li.remove(), 150);
+      return;
+    }
+    const row = e.target.closest('.nv-todo[data-todo]');
+    if (row && act && (act.dataset.act === 'done' || act.dataset.act === 'dismiss')) {
+      row.classList.add(act.dataset.act === 'done' ? 'is-done' : 'is-gone');
+      await todoPost({ action: act.dataset.act, id: row.dataset.todo });
+      setTimeout(() => N.home.refresh(), 320);
+      return;
+    }
+    if (row && row.dataset.ref && N.outlook) { row.dataset.kind === 'lecture' ? N.outlook.openEvent(row.dataset.ref) : N.outlook.openEmail(row.dataset.ref); }
+  });
+}
+async function todoPost(body) {
+  try { const r = await fetch('/api/todos', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); return await r.json(); } catch (e) { return null; }
+}
+N.todo = { post: todoPost };
 
 /* ---------------------------------------------------------------- home */
 function fcSummary() {
@@ -251,10 +326,10 @@ function showHome(view) {
         <button class="nv-today-cell" data-go="flashcards"><span class="nv-today-k">Cards due</span><b>${fc.due}</b><small>${fc.plan ? esc(fc.plan.name) + ' in ' + (days === 0 ? 'under a day' : days + 'd') : fc.streak ? fc.streak + ' day streak' : 'Flashcards'}</small></button>
       </div>
     </section>
-    <section class="nv-sec nv-ms" hidden></section>
+    <section class="nv-sec nv-live"></section>
     <section class="nv-sec"><div class="nv-sec-head"><h2>Modules</h2></div><div class="nv-acc"></div></section>
   </div>`;
-  outlookSection($('.nv-ms', view));
+  liveSection($('.nv-live', view));
   $('.nv-acc', view).appendChild(accordion(modules.map(m => {
     const lec = (m.groups.lecture || []).length;
     return { id: m.id, label: m.title, color: m.color, tagline: summaryOf(m.id), meta: [m.semester, lec ? lec + ' lectures' : 'No lectures yet'].filter(Boolean).join(' · ') };
