@@ -4,8 +4,11 @@
    same textbook-db database via the D1 binding below) but keeps its own separate cookie/session,
    since this is a separate Worker from the engine. */
 
-const SESSION_COOKIE = "site_session";
-const SESSION_DAYS = 90;
+// One hour per PIN entry. The cookie name changed when sessions went hourly, so older long-lived
+// sessions stop working. site_exp (readable by the page) tells the app when to reload.
+const SESSION_COOKIE = "site_session_h";
+const EXP_COOKIE = "site_exp";
+const SESSION_MS = 3600000;
 const PIN_WINDOW_MS = 3600000;
 const PIN_MAX_ATTEMPTS = 8;
 
@@ -25,10 +28,14 @@ function getCookie(request, name) {
 }
 
 async function makeSessionCookie(env) {
-  const expiry = Date.now() + SESSION_DAYS * 86400000;
+  const expiry = Date.now() + SESSION_MS;
   const sig = await hmac(env.SESSION_SECRET, String(expiry));
   const value = `${expiry}.${sig}`;
-  return `${SESSION_COOKIE}=${value}; Max-Age=${SESSION_DAYS * 86400}; Path=/; Secure; HttpOnly; SameSite=Lax`;
+  const age = Math.round(SESSION_MS / 1000);
+  return [
+    `${SESSION_COOKIE}=${value}; Max-Age=${age}; Path=/; Secure; HttpOnly; SameSite=Lax`,
+    `${EXP_COOKIE}=${expiry}; Max-Age=${age}; Path=/; Secure; SameSite=Lax`,
+  ];
 }
 
 async function validSession(request, env) {
@@ -160,9 +167,9 @@ async function handlePinPost(request, env) {
   }
 
   await env.DB.prepare("DELETE FROM pin_attempts WHERE ip = ?").bind(ip).run();
-  const cookie = await makeSessionCookie(env);
+  const cookies = await makeSessionCookie(env);
   const res = new Response(null, { status: 303, headers: { Location: "/" } });
-  res.headers.append("Set-Cookie", cookie);
+  for (const c of cookies) res.headers.append("Set-Cookie", c);
   return res;
 }
 

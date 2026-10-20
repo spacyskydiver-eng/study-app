@@ -1448,8 +1448,22 @@ window.BV = {
   },
 };
 
+/* ------------------------------------------------------------------ hourly PIN
+   The worker gives each PIN entry one hour and sets site_exp to when it ends. When that time
+   passes the page reloads, which brings the PIN screen back. Checked on a timer and whenever
+   the tab wakes up, so a sleeping laptop still locks. */
+function watchSession() {
+  const exp = +(((document.cookie.match(/(?:^|;\s*)site_exp=(\d+)/) || [])[1]) || 0);
+  if (!exp) return;
+  const check = () => { if (Date.now() >= exp) location.reload(); };
+  setTimeout(check, Math.max(1000, exp - Date.now() + 1000));
+  setInterval(check, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+}
+
 /* ------------------------------------------------------------------ boot */
 async function boot() {
+  watchSession();
   const theme = store.get('theme', 'dark');
   document.body.classList.toggle('theme-dark', theme === 'dark'); document.body.classList.toggle('theme-light', theme === 'light');
   const uiMode = store.get('uiMode', 'classic');
