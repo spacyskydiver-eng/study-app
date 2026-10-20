@@ -163,13 +163,58 @@ const STOP = new Set(('show me the a an of in on to which what where whereabouts
   'want see look at from book books textbook textbooks library page pages pull mentioned mention mentions discuss discusses discussed my our there any ' +
   'tell where\'s whats what\'s with be been part parts').split(' '));
 const tokens = s => s.toLowerCase().replace(/[^\p{L}\p{N}\s'-]/gu, ' ').split(/\s+/).map(w => w.replace(/^'+|'+$/g, '')).filter(w => w.length > 1 && !STOP.has(w));
+/* forgiving matching: typos ("leccture", "genetisc", "take m e") still count */
+function lev(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 9;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1), i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1] ? d[i - 2][j - 2] + 1 : 99);
+  return d[a.length][b.length];
+}
+const near = (w, target) => w === target || (target.length > 3 && lev(w, target) <= (target.length > 6 ? 2 : 1));
+function clean(q) {
+  // join stray single letters ("take m e" -> "take me") and lower-case
+  return q.toLowerCase().replace(/\b([a-z])\s(?=[a-z]\b)/g, '$1').replace(/[^\p{L}\p{N}\s'-]/gu, ' ').replace(/\s+/g, ' ').trim();
+}
+const VERBS = ['show', 'open', 'take', 'bring', 'pull', 'find', 'where', 'which', 'navigate', 'jump', 'goto', 'go', 'load', 'display', 'see'];
+const KINDS = { lecture: ['lecture', 'lec', 'lect'], practical: ['practical', 'prac'], seminar: ['seminar'] };
+const MODULE_WORDS = {
+  'Molecular Biology and Genetics': ['genetics', 'genetic', 'molecular', 'molbio', 'gene'],
+  'Biological Chemistry': ['chemistry', 'biochem', 'biochemistry', 'chem'],
+  'Introduction to Biomedicine': ['biomedicine', 'biomed', 'introduction', 'intro'],
+  'Cell Biology and Physiology': ['cell', 'physiology', 'cells'],
+  'Professional Skills for Biosciences': ['skills', 'professional'],
+};
 function navIntent(q) {
-  const s = q.toLowerCase();
-  if (!/\b(show|open|take me|bring up|pull up|find|where|which|go to|look up|navigate)\b/.test(s)) return null;
-  if (/\b(book|books|textbook|textbooks|library|alberts|klug|genetics in medicine)\b/.test(s)) return { kind: 'book' };
-  const lectureish = /\b(lecture|lectures|topic|topics|note|notes|section|module|practical|seminar)\b/.test(s);
-  if (lectureish || /^\s*(show|open|bring up|pull up|take me|go to|find)\b/.test(s)) return { kind: 'note', lectureish, terms: tokens(q) };
+  const s = clean(q), words = s.split(' ');
+  const has = list => words.some(w => list.some(t => near(w, t)));
+  const verb = has(VERBS) || /\b(go to|take me|bring up|pull up|look up)\b/.test(s);
+  // "lecture 8", "leccture 8", "lec8", "practical 2"
+  let kind = null, num = null;
+  for (let k = 0; k < words.length; k++) {
+    const m = words[k].match(/^([a-z]+?)(\d{1,2})$/);
+    const w = m ? m[1] : words[k], n = m ? +m[2] : (/^\d{1,2}$/.test(words[k + 1] || '') ? +words[k + 1] : null);
+    for (const [kd, list] of Object.entries(KINDS)) if (n != null && list.some(t => near(w, t) || w === t)) { kind = kd; num = n; }
+  }
+  const mod = Object.entries(MODULE_WORDS).find(([, list]) => words.some(w => list.some(t => near(w, t))));
+  if (num != null && (verb || words.length <= 6)) return { kind: 'number', which: kind, num, module: mod ? mod[0] : null };
+  if (!verb) return null;
+  if (has(['book', 'books', 'textbook', 'textbooks', 'library', 'alberts', 'klug'])) return { kind: 'book' };
+  const lectureish = has(['lecture', 'lectures', 'topic', 'topics', 'notes', 'section', 'module', 'practical', 'seminar']);
+  if (mod && has(['module']) && tokens(s).every(t => MODULE_WORDS[mod[0]].some(x => near(t, x)) || near(t, 'module'))) return { kind: 'module', module: mod[0] };
+  if (lectureish || /^(show|open|bring|pull|take|go|find|jump)/.test(s)) return { kind: 'note', lectureish, terms: tokens(s) };
   return null;
+}
+function planNumber(intent) {
+  const L = N.model ? N.model() : null; if (!L) return null;
+  const mods = intent.module ? L.modules.filter(m => m.title === intent.module) : L.modules;
+  const which = intent.which || 'lecture';
+  const found = mods.flatMap(m => (m.groups[which] || []).filter(hb => hb.number === intent.num));
+  if (!found.length) return { missing: `${which[0].toUpperCase() + which.slice(1)} ${intent.num}${intent.module ? ' in ' + intent.module : ''}` };
+  const hb = found[0];
+  return { open: hb.id, ids: [hb.id, ...hb.topics.slice(0, 6)], title: `${which[0].toUpperCase() + which.slice(1)} ${hb.number} · ${hb.title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, '')}`, module: hb.module.title,
+    also: found.slice(1, 3).map(x => ({ id: x.id, label: `${x.module.title}: ${x.title}` })) };
 }
 function searchNotes(terms, { noTerms } = {}) {
   if (!terms.length) return [];
@@ -245,6 +290,23 @@ async function ask(q) {
   const a = $('.na-a', turn);
   const intent = navIntent(q);
   try {
+    if (intent && (intent.kind === 'number' || intent.kind === 'module')) {
+      const L = N.model ? N.model() : null;
+      const plan = intent.kind === 'number' ? planNumber(intent)
+        : (() => { const m = L && L.modules.find(x => x.title === intent.module); return m ? { open: m.id, ids: [m.id, ...Object.values(m.groups).flat().map(h => h.id).slice(0, 8)], title: m.title, also: [] } : null; })();
+      if (plan && plan.missing) {
+        a.innerHTML = `<p>I couldn't find ${esc(plan.missing)} in your notes.</p>`;
+        setMood('idle'); st.busy = false; return;
+      }
+      if (plan) {
+        a.innerHTML = `<p>Bringing up <strong>${esc(plan.title)}</strong>${plan.module ? ` in ${esc(plan.module)}` : ''}.</p>${plan.also.length ? `<p class="na-also">Also: ${plan.also.map(x => `<button class="na-jump" data-id="${esc(x.id)}">${esc(x.label)}</button>`).join(', ')}.</p>` : ''}`;
+        $$('.na-jump', a).forEach(bt => bt.onclick = () => takeControl(() => N.map ? N.map.flyTo([bt.dataset.id], { open: bt.dataset.id, caption: bt.textContent }) : B.go(bt.dataset.id)));
+        st.history.push({ q, a: 'Opened ' + plan.title });
+        setMood('idle'); st.busy = false;
+        takeControl(() => N.map ? N.map.flyTo(plan.ids, { open: plan.open, caption: plan.title }) : B.go(plan.open));
+        return;
+      }
+    }
     if (intent && intent.kind === 'note') {
       const plan = planNote(intent);
       if (plan) {
