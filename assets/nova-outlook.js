@@ -110,7 +110,7 @@ B.registerView('mail', {
         const d = dayOf(m.received), today = localDay(new Date()), yest = localDay(new Date(Date.now() - 864e5));
         const head = d !== lastDay ? `<div class="ol-day">${d === today ? 'Today' : d === yest ? 'Yesterday' : new Date(m.received).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div>` : '';
         lastDay = d;
-        return `${head}<button class="ol-item${m.unread ? ' is-unread' : ''}${sel === m.id ? ' is-sel' : ''}" data-id="${esc(m.id)}" role="option"><span class="ol-item-top"><b>${esc(nameOf(m.from))}</b><time>${shortDate(m.received)}</time></span><span class="ol-item-sub">${m.attachments ? icon('paperclip') : ''}${esc(m.subject || '(no subject)')}</span><span class="ol-item-pre">${esc((m.preview || '').replace(/\s+/g, ' ').slice(0, 140))}</span></button>`;
+        return `${head}<button class="ol-item${m.unread ? ' is-unread' : ''}${sel === m.id ? ' is-sel' : ''}${refs.has(m.id) ? ' is-ref' : ''}" data-id="${esc(m.id)}" role="option"><span class="ol-item-top"><b>${esc(nameOf(m.from))}</b><time>${shortDate(m.received)}</time></span><span class="ol-item-sub">${m.attachments ? icon('paperclip') : ''}${esc(m.subject || '(no subject)')}</span><span class="ol-item-pre">${esc((m.preview || '').replace(/\s+/g, ' ').slice(0, 140))}</span></button>`;
       }).join('') : `<div class="ol-empty">${msgs.length ? 'Nothing matches.' : 'No mail synced yet.'}</div>`;
     };
     async function select(id, arrived) {
@@ -163,6 +163,8 @@ B.registerView('mail', {
       };
     }
     O.selectEmail = select;
+    let refs = new Set();
+    O.markRefs = ids => { refs = new Set(ids); if (query || filter !== 'all') { query = ''; filter = 'all'; $('.ol-search input', view).value = ''; $$('.ol-chip', view).forEach(x => x.classList.toggle('is-on', x.dataset.f === 'all')); } renderList(); };
     list.onclick = e => { const b = e.target.closest('.ol-item'); if (b) select(b.dataset.id); };
     $('.ol-filters', view).onclick = e => { const c = e.target.closest('[data-f]'); if (!c) return; filter = c.dataset.f; $$('.ol-chip', view).forEach(x => x.classList.toggle('is-on', x === c)); renderList(); };
     $('.ol-search input', view).oninput = e => { query = e.target.value.trim().toLowerCase(); renderList(); };
@@ -174,11 +176,12 @@ B.registerView('mail', {
       msgs = (r && r.messages) || [];
       if (unreadN) unreadN.set(msgs.filter(m => m.unread).length);
       renderList();
-      const want = O.pending && O.pending.email; O.pending = null;
+      const want = O.pending && O.pending.email, wantRefs = O.pending && O.pending.refs; O.pending = null;
+      if (wantRefs) O.markRefs(wantRefs);
       if (want) select(want, true);
       else if (!B.isMobile() && msgs[0]) select(msgs[0].id);
     })();
-    return () => { alive = false; O.selectEmail = null; O.current = {}; rays && rays.destroy(); };
+    return () => { alive = false; O.selectEmail = null; O.markRefs = null; O.current = {}; rays && rays.destroy(); };
   },
 });
 
@@ -188,6 +191,17 @@ O.openEvent = (id, start, caption) => {
   if (B.currentId() === 'calendar' && O.focusEvent) { O.focusEvent(p); return; }
   O.pending = p;
   N.portal ? N.portal({ to: 'calendar', caption: caption || '', then: () => B.go('calendar') }) : B.go('calendar');
+};
+// the orb found these: bring them up behind the chat and mark them (it stays open, like Jarvis)
+O.show = ({ emails = [], events = [] }) => {
+  if (emails.length) {
+    const ids = emails.map(m => m.id);
+    if (B.currentId() === 'mail' && O.markRefs) { O.markRefs(ids); O.selectEmail(ids[0], true); }
+    else { O.pending = { email: ids[0], refs: ids }; N.go('mail'); }
+  } else if (events.length) {
+    const e = events[0], p = { event: e.id, day: dayOf(e.start), refs: events.map(x => x.id) };
+    if (B.currentId() === 'calendar' && O.focusEvent) O.focusEvent(p); else { O.pending = p; N.go('calendar'); }
+  }
 };
 O.counts = async () => {
   const [m, c] = await Promise.all([get('/api/ms/mail?limit=120'), get('/api/ms/calendar?days=1')]);
@@ -217,7 +231,7 @@ B.registerView('calendar', {
     const main = $('.ol-cal-main', view), side = $('.ol-cal-side', view), title = $('.ol-cal-title', view);
     const rays = null, monthN = null;
     const countMonth = () => { if (!monthN) return; const y = cursor.getFullYear(), m = cursor.getMonth(); monthN.set(evs.filter(e => { const d = new Date(e.start); return d.getFullYear() === y && d.getMonth() === m; }).length); $('.ol-n-label', view).textContent = mode === 'year' ? 'events this month' : 'events in ' + cursor.toLocaleDateString('en-GB', { month: 'long' }); };
-    const evLine = e => `<button class="ol-ev" data-ev="${esc(e.id)}" style="--ev:${evColor(e.subject)}"><time>${e.allDay ? 'All day' : tm(e.start)}</time><b>${esc(e.subject || '(no title)')}</b></button>`;
+    const evLine = e => `<button class="ol-ev${calRefs.has(e.id) ? ' is-ref' : ''}" data-ev="${esc(e.id)}" style="--ev:${evColor(e.subject)}"><time>${e.allDay ? 'All day' : tm(e.start)}</time><b>${esc(e.subject || '(no title)')}</b></button>`;
     function renderMonth() {
       title.textContent = cursor.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
       const first = new Date(cursor); const lead = (first.getDay() + 6) % 7;
@@ -272,8 +286,8 @@ B.registerView('calendar', {
       desc.innerHTML = e ? `${e.organizer ? `<p class="ol-evd-org">Organiser: ${esc(e.organizer)}</p>` : ''}${e.description ? `<div class="ol-text">${esc(e.description)}</div>` : '<p class="ol-faint">No description.</p>'}<p class="ol-evd-acts">${e.link ? `<a class="ol-btn" href="${esc(e.link)}" target="_blank" rel="noopener">${icon('external')}<span>Outlook</span></a>` : ''}</p>` : '<p class="ol-faint">Details unavailable.</p>';
     }
     const render = () => { (mode === 'month' ? renderMonth : mode === 'agenda' ? renderAgenda : renderYear)(); countMonth(); $$('.ol-seg button', view).forEach(b => b.classList.toggle('is-on', b.dataset.mode === mode)); };
-    let arrive = false;
-    O.focusEvent = p => { arrive = !!p.event; if (p.day) { selDay = p.day; const d = new Date(p.day + 'T12:00:00'); cursor = new Date(d.getFullYear(), d.getMonth(), 1); } selEv = p.event || null; if (mode === 'year') mode = 'month'; render(); renderSide(); };
+    let arrive = false, calRefs = new Set();
+    O.focusEvent = p => { arrive = !!p.event; if (p.refs) calRefs = new Set(p.refs); if (p.day) { selDay = p.day; const d = new Date(p.day + 'T12:00:00'); cursor = new Date(d.getFullYear(), d.getMonth(), 1); } selEv = p.event || null; if (mode === 'year') mode = 'month'; render(); renderSide(); };
     view.onclick = e => {
       const nav = e.target.closest('[data-nav]');
       if (nav) {

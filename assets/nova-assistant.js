@@ -346,7 +346,9 @@ async function ask(q, ctx = {}) {
         }
       }
       setMood('idle'); st.busy = false; thread.scrollTop = thread.scrollHeight;
-      // "take me to / show me / open …": the orb hands over and flies there, like the neural map
+      // anything it found comes up on the page behind the chat, marked
+      if (!r.open && !r.draft && N.outlook && ((r.emails || []).length || (r.events || []).length)) N.outlook.show(r);
+      // "take me to / show me / open …": the orb hands over and goes there
       if (r.open && N.outlook && !r.draft) {
         const o = r.open, cap = o.title || (o.page === 'mail' ? 'Your inbox' : o.start ? new Date(o.start).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Your calendar');
         const go = () => o.page === 'mail' ? (o.id ? N.outlook.openEmail(o.id, cap) : N.portal({ to: 'mail', caption: cap })) : (o.id || o.start ? N.outlook.openEvent(o.id, o.start, cap) : N.portal({ to: 'calendar', caption: cap }));

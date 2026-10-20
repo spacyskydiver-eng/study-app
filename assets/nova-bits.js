@@ -162,8 +162,9 @@ N.counter = function counter(el, value = 0, opts = {}) {
   return { set, get value() { return cur; } };
 };
 
-/* ================================================================ Dock */
-const DOCK_KEY = 'novaDockPinned';
+/* ================================================================ Dock
+   Kept deliberately calm: always in the same place, no hiding, no magnifying wobble. Icons lift a
+   little on hover (CSS only), the current page has a dot, Mail / Calendar carry badges. */
 function mountDock() {
   if (N.dock || !B.isNova()) return;
   const items = [
@@ -172,78 +173,29 @@ function mountDock() {
     { id: 'calendar', label: 'Calendar', ic: 'calendar' },
     { sep: true },
     { id: 'flashcards', label: 'Flashcards', ic: 'cards' },
+    { id: 'exam', label: 'Exam practice', ic: 'clipboard-list' },
     { id: 'glossary', label: 'Key terms', ic: 'book-open' },
     { id: 'books', label: 'Book library', ic: 'library' },
-    { id: 'exam', label: 'Exam practice', ic: 'clipboard-list' },
     { map: true, label: 'Neural map', ic: 'graph' },
   ].filter(it => it.sep || it.map || (it.id && B.exists(it.id)));
-  const root = h(`<div class="nb-dock" role="toolbar" aria-label="Dock" data-hidden>
-    <div class="nb-dock-bar">${items.map((it, i) => it.sep ? '<span class="nb-dock-sep" aria-hidden="true"></span>' : `<button class="nb-dock-item" data-i="${i}" aria-label="${esc(it.label)}"><span class="nb-dock-tile">${icon(it.ic)}<span class="nb-dock-badge" hidden></span></span><span class="nb-dock-dot" aria-hidden="true"></span><span class="nb-dock-label">${esc(it.label)}</span></button>`).join('')}</div>
-    <span class="nb-dock-handle" aria-hidden="true"></span>
-  </div>`);
+  const root = h(`<nav class="nb-dock" aria-label="Dock">${items.map((it, i) => it.sep ? '<span class="nb-dock-sep" aria-hidden="true"></span>' : `<button class="nb-dock-item" data-i="${i}" aria-label="${esc(it.label)}">${icon(it.ic)}<span class="nb-dock-badge" hidden></span><span class="nb-dock-label">${esc(it.label)}</span></button>`).join('')}</nav>`);
   document.body.appendChild(root);
-  const bar = $('.nb-dock-bar', root);
-  const bg = h('<span class="nb-dock-bg" aria-hidden="true"></span>'); bar.prepend(bg);
   const btns = $$('.nb-dock-item', root);
-  const BASE = 42, PEAK = 66, DIST = 150, GAP = 9;
-  const st = btns.map(() => ({ s: 1, v: 0, lift: 0, rise: 0, hop: false }));
-  let px = null, raf = 0, last = 0, hideT = 0, rest = null, barW = 0;
-  const reduced = reducedMotion();
-  // resting centres are measured once (not every frame): everything after that is transforms only
-  const measure = () => { const r = bar.getBoundingClientRect(); barW = r.width; rest = btns.map(b => { const q = b.getBoundingClientRect(); return q.left + q.width / 2; }); };
-  const tick = now => {
-    raf = 0;
-    if (!rest) measure();
-    const dt = Math.min(1 / 30, (now - last) / 1000 || 0.016); last = now;
-    let moving = false, extra = 0;
-    const scales = st.map((S, i) => {
-      const reach = px == null ? 1 : Math.abs(px - rest[i]) / DIST;
-      const target = 1 + (PEAK / BASE - 1) * (reach < 1 ? Math.cos(reach * Math.PI / 2) ** 2 : 0);
-      if (reduced) { S.s = target; S.v = 0; }
-      else for (let k = 0; k < 3; k++) { const h2 = dt / 3; S.v = (S.v + h2 * 1400 * (target - S.s)) / (1 + h2 * 75 + h2 * h2 * 1400); S.s += S.v * h2;
-        if (S.hop) { S.rise -= 1500 * h2; S.lift += S.rise * h2; if (S.lift <= 0) { S.lift = 0; S.rise *= -0.32; if (S.rise < 40) { S.rise = 0; S.hop = false; } } } }
-      if (Math.abs(S.v) > 0.001 || Math.abs(target - S.s) > 0.001 || S.hop) moving = true; else S.s = target;
-      extra += BASE * (S.s - 1);
-      return S.s;
-    });
-    let acc = 0;
-    btns.forEach((b, i) => {
-      const e = BASE * (scales[i] - 1), tx = acc + e / 2 - extra / 2; acc += e;
-      b.style.transform = `translate3d(${tx.toFixed(2)}px,0,0)`;
-      b.firstElementChild.style.transform = `translate3d(0,${(-st[i].lift).toFixed(2)}px,0) scale(${scales[i].toFixed(4)})`;
-      b.style.setProperty('--s', scales[i].toFixed(3));
-    });
-    bg.style.transform = `scaleX(${((barW + extra) / Math.max(1, barW)).toFixed(4)})`;
-    if (moving) raf = requestAnimationFrame(tick);
-  };
-  const wake = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } };
-  window.addEventListener('resize', () => { rest = null; });
-  bar.addEventListener('pointerenter', () => { measure(); });
-  const show = () => { clearTimeout(hideT); root.removeAttribute('data-hidden'); };
-  const hideLater = (ms = 900) => { clearTimeout(hideT); hideT = setTimeout(() => { if (!root.matches(':hover') && !root.contains(document.activeElement)) root.setAttribute('data-hidden', ''); }, ms); };
-  bar.addEventListener('pointermove', e => { px = e.clientX; show(); wake(); });
-  bar.addEventListener('pointerleave', () => { px = null; wake(); hideLater(); });
-  const nearEdge = e => { if (e.clientY > window.innerHeight - 26 && Math.abs(e.clientX - window.innerWidth / 2) < 320) show(); };
-  window.addEventListener('pointermove', nearEdge, { passive: true });
-  root.addEventListener('focusin', show); root.addEventListener('focusout', () => hideLater());
-  bar.addEventListener('click', e => {
+  root.addEventListener('click', e => {
     const b = e.target.closest('.nb-dock-item'); if (!b) return;
-    const it = items[+b.dataset.i], S = st[btns.indexOf(b)];
-    if (!reduced && !S.hop) { S.hop = true; S.rise = 420; wake(); }
+    const it = items[+b.dataset.i];
     if (it.map) { N.map && N.map.open(B.currentId()); return; }
     N.go(it.id);
   });
-  const mark = () => { const cur = B.currentId(); btns.forEach(b => { const it = items[+b.dataset.i]; b.classList.toggle('is-active', !!it.id && it.id === cur); }); };
-  // keep the active dot (and the navigator's highlight) in step with the page, however it was reached
   let lastId = null;
-  const markTimer = setInterval(() => { const id = B.currentId(); if (id === lastId) return; lastId = id; mark(); const ex = $('#explorer'); if (ex && N.navigator) N.navigator(ex); }, 700);
+  const mark = () => { const cur = B.currentId(); if (cur === lastId) return; lastId = cur; btns.forEach(b => { const it = items[+b.dataset.i]; b.classList.toggle('is-active', !!it.id && it.id === cur); }); const ex = $('#explorer'); if (ex && N.navigator) N.navigator(ex); };
+  window.addEventListener('hashchange', () => setTimeout(mark, 0));
+  const markTimer = setInterval(mark, 1000);
   mark();
-  // show briefly so it's found, then tuck away
-  setTimeout(show, 600); hideLater(3200);
   N.dock = {
     el: root,
     badge(id, n) { const i = items.findIndex(it => it.id === id); const b = btns.find(x => +x.dataset.i === i); if (!b) return; const el = $('.nb-dock-badge', b); el.hidden = !n; el.textContent = n > 99 ? '99+' : n || ''; },
-    destroy() { cancelAnimationFrame(raf); clearTimeout(hideT); clearInterval(markTimer); window.removeEventListener('pointermove', nearEdge); root.remove(); N.dock = null; },
+    destroy() { clearInterval(markTimer); root.remove(); N.dock = null; },
   };
   refreshBadges();
 }
@@ -258,31 +210,15 @@ setInterval(refreshBadges, 5 * 60000);
 document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') mountDock(); else N.dock && N.dock.destroy(); });
 setTimeout(mountDock, 0);
 
-/* ================================================================ page transitions
-   One plain zoom for every page change (dock, navigator, home, the orb): the page shrinks back and
-   fades, the map behind dollies forward, the new page settles in from slightly larger. Transform and
-   opacity only, no page snapshots. From the open map, the map's own zoom-out is the transition. */
-let going = false;
+/* ================================================================ page changes
+   Plain and quick: the new page zooms in a touch as it appears (CSS on .view-content, see nova.css).
+   Nothing animates out, so nothing can get stuck half-way. From the open map, the map closes and
+   its own fade brings the page back. */
 N.go = function go(id, o = {}) {
   if (!id) return;
-  const nav = () => { if (o.then) o.then(); else B.go(id); };
-  if (N.map && N.map.isOpen && N.map.isOpen()) { if (o.then || B.currentId() !== id) nav(); N.map.close(); return; }
-  if (B.currentId() === id && !o.force) { o.then && o.then(); return; }
-  const view = $('#view');
-  if (reducedMotion() || !view || going || !B.isNova()) { nav(); return; }
-  going = true;
-  N.map && N.map.swoop && N.map.swoop();
-  const out = view.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.96)' }], { duration: 150, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
-  const arrive = () => {
-    nav();
-    requestAnimationFrame(() => {
-      out.cancel();
-      const v = $('#view');
-      if (v) v.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.16,1,.3,1)' });
-      going = false;
-    });
-  };
-  out.finished.then(arrive, arrive);
+  const nav = () => { if (o.then) o.then(); else if (B.currentId() !== id) B.go(id); };
+  if (N.map && N.map.isOpen && N.map.isOpen()) { nav(); N.map.close(); return; }
+  nav();
 };
 N.portal = ({ to, then }) => N.go(to, { then });
 })();

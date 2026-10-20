@@ -95,38 +95,15 @@ const PV = `#version 300 es
 in vec3 aPos; in vec3 aCol; in float aSize; in float aHi;
 uniform mat4 uMVP; uniform float uScale; uniform float uTime; uniform float uDim; uniform float uAny;
 out vec3 vCol; out float vA; out float vHi;
-uniform float uRayT; uniform float uAspect; uniform float uRay;
-float rh(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float rn(vec2 p) { vec2 i = floor(p); vec2 f = p - i; vec2 w = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
-  return mix(mix(rh(i), rh(i + vec2(1.0, 0.0)), w.x), mix(rh(i + vec2(0.0, 1.0)), rh(i + vec2(1.0, 1.0)), w.x), w.y); }
-float rshaft(float u, float t, float seed) {
-  float sway = 0.4 * sin(t * 0.31 + seed) + 0.24 * sin(t * 0.17 + seed * 2.3);
-  float n = 0.7 * rn(vec2(u + sway + seed, t * 0.3)) + 0.3 * rn(vec2(u * 2.4 + sway * 1.5 + seed * 1.7, t * 0.45 + 3.0));
-  return mix(0.05, 1.0, smoothstep(0.2, 0.8, n)); }
-// the same light shafts as the SideRays layer behind the map, sampled where this vertex lands on screen
-float rayLight(vec4 clip) {
-  if (uRay <= 0.0) return 0.0;
-  vec2 q = vec2(clip.x / clip.w * uAspect * 0.5, clip.y / clip.w * 0.5);
-  vec2 v = q - vec2(uAspect * 0.5 + 0.1, 0.62);
-  float heading = -2.48 + 0.035 * sin(uRayT * 0.21);
-  float ang = mod(atan(v.y, v.x) - heading + 3.14159265, 6.28318531) - 3.14159265;
-  float sp = 0.54, off = sp * 0.22, u = ang * 5.0;
-  float a = exp(-pow((ang + off) / sp, 2.0) * 1.4) * rshaft(u, uRayT, 0.0);
-  float b = exp(-pow((ang - off) / (sp * 1.15), 2.0) * 1.4) * rshaft(u * 0.83, uRayT * 0.6, 17.0);
-  float reach = 1.0 / (1.0 + pow(length(v) / 0.4, 0.7));
-  return (a + b) * reach * uRay;
-}
 void main() {
   vec4 p = uMVP * vec4(aPos, 1.0);
   gl_Position = p;
   float d = max(p.w, 1.0);
-  float lit = rayLight(p);
   float tw = 0.78 + 0.22 * sin(uTime * 1.1 + aPos.x * 0.05 + aPos.z * 0.04);
   float pulse = aHi * (0.5 + 0.5 * sin(uTime * 4.0));
-  lit = min(lit, 1.0);
-  gl_PointSize = clamp(aSize * uScale / d * (1.0 + aHi * (1.6 + pulse) + lit * 0.7), 1.2, 90.0);
-  vCol = mix(aCol, vec3(1.0, 0.95, 0.88), min(lit * 0.6, 0.6)); vHi = aHi;
-  vA = tw * uDim * mix(1.0, 0.28, uAny * (1.0 - aHi)) * (1.0 + lit * 1.6) + aHi * 0.8;
+  gl_PointSize = clamp(aSize * uScale / d * (1.0 + aHi * (1.6 + pulse)), 1.2, 90.0);
+  vCol = aCol; vHi = aHi;
+  vA = tw * uDim * mix(1.0, 0.28, uAny * (1.0 - aHi)) + aHi * 0.8;
 }`;
 const PF = `#version 300 es
 precision mediump float;
@@ -144,29 +121,7 @@ const LV = `#version 300 es
 in vec3 aPos; in vec3 aCol; in float aHi;
 uniform mat4 uMVP; uniform float uAlpha; uniform float uAny;
 out vec3 vCol; out float vA;
-uniform float uRayT; uniform float uAspect; uniform float uRay;
-float rh(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float rn(vec2 p) { vec2 i = floor(p); vec2 f = p - i; vec2 w = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
-  return mix(mix(rh(i), rh(i + vec2(1.0, 0.0)), w.x), mix(rh(i + vec2(0.0, 1.0)), rh(i + vec2(1.0, 1.0)), w.x), w.y); }
-float rshaft(float u, float t, float seed) {
-  float sway = 0.4 * sin(t * 0.31 + seed) + 0.24 * sin(t * 0.17 + seed * 2.3);
-  float n = 0.7 * rn(vec2(u + sway + seed, t * 0.3)) + 0.3 * rn(vec2(u * 2.4 + sway * 1.5 + seed * 1.7, t * 0.45 + 3.0));
-  return mix(0.05, 1.0, smoothstep(0.2, 0.8, n)); }
-// the same light shafts as the SideRays layer behind the map, sampled where this vertex lands on screen
-float rayLight(vec4 clip) {
-  if (uRay <= 0.0) return 0.0;
-  vec2 q = vec2(clip.x / clip.w * uAspect * 0.5, clip.y / clip.w * 0.5);
-  vec2 v = q - vec2(uAspect * 0.5 + 0.1, 0.62);
-  float heading = -2.48 + 0.035 * sin(uRayT * 0.21);
-  float ang = mod(atan(v.y, v.x) - heading + 3.14159265, 6.28318531) - 3.14159265;
-  float sp = 0.54, off = sp * 0.22, u = ang * 5.0;
-  float a = exp(-pow((ang + off) / sp, 2.0) * 1.4) * rshaft(u, uRayT, 0.0);
-  float b = exp(-pow((ang - off) / (sp * 1.15), 2.0) * 1.4) * rshaft(u * 0.83, uRayT * 0.6, 17.0);
-  float reach = 1.0 / (1.0 + pow(length(v) / 0.4, 0.7));
-  return (a + b) * reach * uRay;
-}
-void main() { vec4 p = uMVP * vec4(aPos, 1.0); gl_Position = p; float lit = min(rayLight(p), 1.0);
-  vCol = mix(aCol, vec3(1.0, 0.95, 0.88), lit * 0.5); vA = uAlpha * mix(1.0, 0.25, uAny * (1.0 - aHi)) * (1.0 + lit * 1.8) + aHi * 0.5; }`;
+void main() { gl_Position = uMVP * vec4(aPos, 1.0); vCol = aCol; vA = uAlpha * mix(1.0, 0.25, uAny * (1.0 - aHi)) + aHi * 0.5; }`;
 const LF = `#version 300 es
 precision mediump float;
 in vec3 vCol; in float vA; out vec4 o;
@@ -186,7 +141,7 @@ function mount() {
   document.body.insertBefore(host, document.body.firstChild);
   const canvas = document.createElement('canvas'); host.appendChild(canvas);
   const hud = document.createElement('div'); hud.className = 'nmap-hud'; document.body.appendChild(hud);
-  const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, powerPreference: 'low-power' });
+  const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: true, depth: false });
   M = { host, canvas, hud, gl, data: null, ready: false, mode: 'bg', hi: new Set(), raf: 0, last: 0, t: 0, alive: true,
     cam: { yaw: 0.6, pitch: 0.18, dist: 900, tx: 0, ty: 0, tz: 0, fov: 0.95 }, goal: null, spin: 0.035, dim: 0.55, dimGoal: 0.55,
     pointer: { x: -1, y: -1, down: false, moved: 0 }, hover: null, timers: [] };
@@ -208,7 +163,7 @@ function mount() {
   M.vaoL = gl.createVertexArray(); gl.bindVertexArray(M.vaoL);
   attr(M.lProg, 'aPos', M.bLPos, 3); attr(M.lProg, 'aCol', M.bLCol, 3); attr(M.lProg, 'aHi', M.bLHi, 1);
   gl.bindVertexArray(null);
-  M.u = {}; for (const [p, names] of [[M.pProg, ['uMVP', 'uScale', 'uTime', 'uDim', 'uAny', 'uRayT', 'uAspect', 'uRay']], [M.lProg, ['uMVP', 'uAlpha', 'uAny', 'uRayT', 'uAspect', 'uRay']]]) { M.u[p === M.pProg ? 'p' : 'l'] = Object.fromEntries(names.map(n => [n, gl.getUniformLocation(p, n)])); }
+  M.u = {}; for (const [p, names] of [[M.pProg, ['uMVP', 'uScale', 'uTime', 'uDim', 'uAny']], [M.lProg, ['uMVP', 'uAlpha', 'uAny']]]) { M.u[p === M.pProg ? 'p' : 'l'] = Object.fromEntries(names.map(n => [n, gl.getUniformLocation(p, n)])); }
   const sync = () => { nodes.forEach((n, i) => { M.pos[i * 3] = n.x; M.pos[i * 3 + 1] = n.y; M.pos[i * 3 + 2] = n.z; });
     links.forEach((l, i) => { M.lpos.set([l.source.x, l.source.y, l.source.z, l.target.x, l.target.y, l.target.z], i * 6); });
     gl.bindBuffer(gl.ARRAY_BUFFER, M.bPos); gl.bufferSubData(gl.ARRAY_BUFFER, 0, M.pos);
@@ -218,8 +173,6 @@ function mount() {
     if (!M) return;
     sync(); M.ready = true; fitGoal(true); host.classList.remove('is-loading'); kick();
   });
-  // light shafts behind the map, drawn small (soft light needs no detail) and capped at 30 fps; the
-  // nodes and links they cross are lit in the map's own shaders from the same time value
   addRays();
   resize();
   M.ro = new ResizeObserver(() => { resize(); kick(); }); M.ro.observe(host);
@@ -227,12 +180,13 @@ function mount() {
   wireInput();
   kick();
 }
-// (nova-bits.js, which has SideRays, loads after this file: attach the rays as soon as it exists)
+// soft light shafts behind the notes (SideRays, from nova-bits.js, which loads after this file):
+// drawn small and at 30 fps, it's only light so it needs no detail
 function addRays() {
   if (!M || M.rays || reduced || !M.gl) return;
   if (!N.sideRays) { setTimeout(addRays, 300); return; }
   const rl = document.createElement('div'); rl.className = 'nmap-rays'; M.host.insertBefore(rl, M.canvas);
-  M.rays = N.sideRays(rl, { rayColor1: '#E9D5FF', rayColor2: '#7DD3FC', blend: 0.55, origin: 'top-right', speed: 1.6, intensity: 2.6, spread: 2.4, density: 5, falloff: 0.7, glow: 0.5, opacity: 0.75, followMouse: false, intro: true, maxRatio: 0.5, budget: 1.6e5, fps: 30 });
+  M.rays = N.sideRays(rl, { rayColor1: '#E9D5FF', rayColor2: '#7DD3FC', blend: 0.55, origin: 'top-right', speed: 1.4, intensity: 2.2, spread: 2.4, density: 5, falloff: 0.8, glow: 0.4, opacity: 0.6, followMouse: false, intro: true, maxRatio: 0.5, budget: 1.6e5, fps: 30 });
 }
 function unmount() {
   if (!M) return;
@@ -308,8 +262,6 @@ function draw() {
   gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ONE, gl.ONE);
   const m = mvp(); M.m = m;
   const any = M.hi.size ? 1 : 0;
-  const rayT = M.rays ? M.rays.time() : 0, ray = M.rays ? (M.mode === 'map' ? 0.6 : 1) : 0;
-  for (const k of ['l', 'p']) { gl.useProgram(k === 'l' ? M.lProg : M.pProg); gl.uniform1f(M.u[k].uRayT, rayT); gl.uniform1f(M.u[k].uAspect, M.w / M.h); gl.uniform1f(M.u[k].uRay, ray); }
   gl.useProgram(M.lProg); gl.bindVertexArray(M.vaoL);
   gl.uniformMatrix4fv(M.u.l.uMVP, false, m); gl.uniform1f(M.u.l.uAlpha, (M.mode === 'map' ? 0.16 : 0.05) * M.dim / 0.55); gl.uniform1f(M.u.l.uAny, any);
   gl.drawArrays(gl.LINES, 0, M.data.links.length * 2);
@@ -356,11 +308,7 @@ function enterMap() {
 function exitMap(silent) {
   if (!M || M.mode !== 'map') return;
   M.mode = 'bg'; M.flying = false; resize();
-  // zoom back into the page: it starts slightly small and grows to full size as the map recedes
-  const b = document.body;
-  b.classList.add('nova-map-leaving'); b.classList.remove('nova-map-on');
-  void document.getElementById('app').offsetWidth;
-  requestAnimationFrame(() => b.classList.remove('nova-map-leaving'));
+  document.body.classList.remove('nova-map-on');
   M.hud.innerHTML = ''; clearInterval(M.typer);
   M.dimGoal = 0.55; M.spin = 0.035; M.goal.fov = 0.95;
   setHighlight([]); fitGoal(false);
@@ -422,15 +370,13 @@ function open(focusId) {
   if (!enterMap()) return;
   const ids = focusId && M.data.index.has(focusId) ? [focusId] : [];
   setHighlight(ids);
-  M.timers.forEach(clearTimeout); M.timers = [];
-  // one zoom: start close on the page you were reading and pull straight out to the whole map
-  if (ids.length && !reduced) {
-    const n = M.data.nodes[M.data.index.get(focusId)];
-    Object.assign(M.cam, { tx: n.x, ty: n.y, tz: n.z, dist: 30 });
+  // pull right out so the whole map is in view first, then glide to where you are
+  fitGoal(false); M.goal.yaw = M.cam.yaw - 0.5;
+  status('Everything in your notes · ' + M.data.nodes.length + ' notes');
+  if (ids.length) {
+    M.timers.forEach(clearTimeout); M.timers = [];
+    M.timers.push(setTimeout(() => { if (!M || M.mode !== 'map') return; focusGoal(ids); M.goal.dist = Math.max(M.goal.dist, 320); status('You are here · ' + M.data.nodes[M.data.index.get(focusId)].title); }, reduced ? 0 : 1600));
   }
-  fitGoal(false);
-  if (ids.length) { const n = M.data.nodes[M.data.index.get(focusId)]; Object.assign(M.goal, { tx: M.goal.tx * 0.6 + n.x * 0.4, ty: M.goal.ty * 0.6 + n.y * 0.4, tz: M.goal.tz * 0.6 + n.z * 0.4 }); }
-  status(ids.length ? 'You are here · ' + M.data.nodes[M.data.index.get(focusId)].title : 'Everything in your notes · ' + M.data.nodes.length + ' notes');
 }
 /** Highlight notes, fly to them, then (optionally) dive into `open` and show it. */
 function flyTo(ids, opts = {}) {
@@ -481,20 +427,9 @@ function warp(opts = {}) {
   }, reduced ? 50 : 1300));
 }
 
-/** Page change: the map behind the page surges forward and turns, then settles (stays in background mode). */
-function swoop() {
-  if (!M || !M.ready || M.mode === 'map' || reduced) return;
-  const d = M.goal.dist;
-  M.flying = true; M.flyTau = 0.42;
-  M.goal.dist = d * 0.82; M.dimGoal = 0.8;
-  kick();
-  M.timers.push(setTimeout(() => { if (!M || M.mode === 'map') return; M.goal.dist = d; M.dimGoal = 0.55; M.flyTau = 0.8; }, 240));
-  M.timers.push(setTimeout(() => { if (M && M.mode !== 'map') M.flying = false; }, 1500));
-}
-
 /* ---------------------------------------------------------------- lifecycle */
 document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') setTimeout(mount, 0); else unmount(); });
 B.onBoot && B.onBoot(() => setTimeout(mount, 0));
 if (B.V) setTimeout(mount, 0);
-N.map = { open, flyTo, warp, swoop, close: () => exitMap(), isOpen: () => !!(M && M.mode === 'map') };
+N.map = { open, flyTo, warp, close: () => exitMap(), isOpen: () => !!(M && M.mode === 'map') };
 })();
