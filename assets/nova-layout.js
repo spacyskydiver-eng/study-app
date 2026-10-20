@@ -181,7 +181,7 @@ async function outlookSection(el) {
   if (!st || st.notConfigured || !el.isConnected) return;     // not set up on this site: stay hidden
   el.hidden = false;
   if (!st.connected && st.source === 'flow') {
-    el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Waiting for the first sync</b><small>Your calendar and emails appear here once the Power Automate flows send their first update.</small></div></div>`;
+    el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Waiting for the first sync</b><small>Your calendar and emails appear here once the Power Automate flows send their first update.${st.lastReject ? `<br>Last sync email was turned away at ${new Date(st.lastReject.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}: ${esc(st.lastReject.why)} (from ${esc(st.lastReject.from)}).` : ''}</small></div></div>`;
     return;
   }
   if (!st.connected) {

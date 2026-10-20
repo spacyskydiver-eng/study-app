@@ -326,13 +326,27 @@ async function handleSyncEmail(message, env) {
   const want = String(env.SYNC_FROM || "").trim().toLowerCase();
   const token = String(env.SYNC_TOKEN || "").trim();
   const subject = message.headers.get("subject") || "";
-  if (!want || from !== want || !token || !subject.includes(token)) { message.setReject("Not accepted"); return; }
+  await syncTables(env);
+  // SYNC_FROM may be a full address or just the domain (uea.ac.uk); the token is the real check
+  const fromOk = want && (want.includes("@") ? from === want : from.endsWith("@" + want));
+  const note = async why => env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('reject', ?, ?)").bind(JSON.stringify({ why, from, subject: subject.slice(0, 120) }), Date.now()).run();
+  if (!token || !subject.includes(token)) { await note("no token in subject"); message.setReject("Not accepted"); return; }
+  if (!fromOk) { await note("sender not allowed"); message.setReject("Not accepted"); return; }
   const raw = await new Response(message.raw).text();
   const data = syncPayload(raw);
-  if (!data) return;
-  await syncTables(env);
+  if (!data) { await note("no [[SYNC: payload found in the body"); return; }
   const now = Date.now();
-  if (data.type === "mail") {
+  const putMail = (m, unread) => {
+    const id = String(m.id || (m.received || m.receivedDateTime) + m.subject).slice(0, 300);
+    return env.DB.prepare("INSERT OR REPLACE INTO sync_mail (id, subject, sender, received, preview, link, added) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .bind(id, String(m.subject || ""), String(m.from || ""), String(m.received || m.receivedDateTime || ""), String(m.preview || m.bodyPreview || "").slice(0, 400), unread == null ? "" : unread ? "unread" : "read", now);
+  };
+  if (data.type === "batch") {
+    const mails = Array.isArray(data.mail) ? data.mail : [];
+    if (mails.length) await env.DB.batch(mails.map(m => putMail(m, m.isRead == null ? null : !m.isRead)));
+    await env.DB.prepare("DELETE FROM sync_mail WHERE id NOT IN (SELECT id FROM sync_mail ORDER BY received DESC LIMIT 80)").run();
+    if (Array.isArray(data.events)) await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('calendar', ?, ?)").bind(JSON.stringify(data.events), now).run();
+  } else if (data.type === "mail") {
     const id = String(data.id || data.received + data.subject).slice(0, 300);
     await env.DB.prepare("INSERT OR REPLACE INTO sync_mail (id, subject, sender, received, preview, link, added) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .bind(id, String(data.subject || ""), String(data.from || ""), String(data.received || ""), String(data.preview || "").slice(0, 400), String(data.link || ""), now).run();
@@ -348,11 +362,14 @@ async function syncedApi(env, url) {
   await syncTables(env);
   const last = await env.DB.prepare("SELECT at FROM sync_state WHERE k = 'last'").first();
   const p = url.pathname;
-  if (p === "/api/ms/status") return json({ connected: !!last, account: last ? "via Power Automate" : "", source: "flow", lastSync: last ? last.at : 0 });
+  if (p === "/api/ms/status") {
+    const rej = await env.DB.prepare("SELECT v, at FROM sync_state WHERE k = 'reject'").first();
+    return json({ connected: !!last, account: last ? "via Power Automate" : "", source: "flow", lastSync: last ? last.at : 0, lastReject: rej ? { ...JSON.parse(rej.v), at: rej.at } : null });
+  }
   if (!last) return json({ notConnected: true });
   if (p === "/api/ms/mail") {
     const rows = await env.DB.prepare("SELECT subject, sender, received, preview, link FROM sync_mail ORDER BY received DESC LIMIT 15").all();
-    return json({ messages: (rows.results || []).map(r => ({ subject: r.subject, from: r.sender, received: r.received, preview: r.preview, unread: Date.now() - Date.parse(r.received) < 86400000, link: r.link || "https://outlook.office.com/mail/" })) });
+    return json({ messages: (rows.results || []).map(r => ({ subject: r.subject, from: r.sender, received: r.received, preview: r.preview, unread: r.link === "unread" || (r.link === "" && Date.now() - Date.parse(r.received) < 86400000), link: "https://outlook.office.com/mail/" })) });
   }
   if (p === "/api/ms/calendar") {
     const row = await env.DB.prepare("SELECT v FROM sync_state WHERE k = 'calendar'").first();
