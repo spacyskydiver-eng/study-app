@@ -201,3 +201,10 @@ body.ui-nova .books-kicker {
 /* Note: CodeSlots is only used on the PIN login page (study-app/src/index.js), which is served
    before authentication and can't load this file — it has its own self-contained inline copy
    of this component's CSS/JS. Nothing in the main SPA creates a .codeslots element (yet). */
+
+/* ---------- 7. Branched Menu (ported; the file explorer tree) --------------------- */
+body.ui-nova .nav-folder-children { border-left: none; position: relative; }
+body.ui-nova .nav-folder-title, body.ui-nova .nav-file-title { position: relative; z-index: 1; }
+body.ui-nova .bm-lines { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+body.ui-nova .bm-base { fill: none; stroke: var(--background-modifier-border-hover); stroke-width: 1.4; stroke-linecap: round; }
+body.ui-nova .nav-file-title.is-active { box-shadow: inset 2px 0 0 var(--nova-violet), 0 0 16px -6px rgba(139,92,246,.5); background: rgba(139,92,246,.08); border-radius: 0 6px 6px 0; }

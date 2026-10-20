@@ -341,10 +341,38 @@ function renderExplorer() {
   ex.innerHTML = build(V.tree, '');
   ex.onclick = e => {
     const ft = e.target.closest('.nav-folder-title');
-    if (ft) { const f = ft.parentElement; f.classList.toggle('is-collapsed'); const p = ft.dataset.path; f.classList.contains('is-collapsed') ? state.collapsed.add(p) : state.collapsed.delete(p); store.set('collapsed', [...state.collapsed]); return; }
+    if (ft) { const f = ft.parentElement; f.classList.toggle('is-collapsed'); const p = ft.dataset.path; f.classList.contains('is-collapsed') ? state.collapsed.add(p) : state.collapsed.delete(p); store.set('collapsed', [...state.collapsed]); if (!f.classList.contains('is-collapsed')) decorateBranch($('.nav-folder-children', f)); return; }
     const fi = e.target.closest('.nav-file-title');
     if (fi) { go(fi.dataset.id, null, e.ctrlKey || e.metaKey); if (isMobile()) setSide('left', false); }
   };
+  if (document.body.classList.contains('ui-nova')) decorateExplorerBranches();
+}
+
+/* Nova mode: curved branch lines from a trunk to each row, replacing the plain indent guide —
+   ported from the Branched Menu template. Decorates each already-visible .nav-folder-children;
+   a collapsed one is decorated lazily on first expand (above), once it actually has a height. */
+function decorateExplorerBranches() { $$('#explorer .nav-folder-children').forEach(c => { if (!c.closest('.is-collapsed')) decorateBranch(c); }); }
+function decorateBranch(container) {
+  if (!container || container.querySelector(':scope > svg.bm-lines')) return;
+  const rows = Array.from(container.children).filter(c => c.classList.contains('nav-folder') || c.classList.contains('nav-file'));
+  if (!rows.length) return;
+  const rowH = rows[0].offsetHeight || 28;
+  const trunk = 0, r = 7, endX = 11;
+  const rowY = k => k * rowH + rowH / 2;
+  const svgns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgns, 'svg');
+  svg.setAttribute('class', 'bm-lines'); svg.setAttribute('width', endX + 2); svg.setAttribute('height', rows.length * rowH);
+  const base = document.createElementNS(svgns, 'path');
+  base.setAttribute('class', 'bm-base');
+  base.setAttribute('d', `M ${trunk} 0 V ${rowY(rows.length - 1) - r}`);
+  svg.appendChild(base);
+  rows.forEach((_, k) => {
+    const p = document.createElementNS(svgns, 'path');
+    p.setAttribute('class', 'bm-base');
+    p.setAttribute('d', `M ${trunk} ${rowY(k) - r} A ${r} ${r} 0 0 0 ${trunk + r} ${rowY(k)} H ${endX}`);
+    svg.appendChild(p);
+  });
+  container.insertBefore(svg, container.firstChild);
 }
 function revealInExplorer(id) {
   $$('#explorer .nav-file-title.is-active').forEach(e => e.classList.remove('is-active'));
