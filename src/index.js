@@ -153,8 +153,8 @@ async function handlePinPost(request, env) {
   if (attempts >= PIN_MAX_ATTEMPTS) return htmlResponse(loginPage("Too many attempts. Try again later."), 429);
 
   const form = await request.formData().catch(() => null);
-  const given = String((form && form.get("pin")) || "");
-  const expected = env.PIN_CODE || "";
+  const given = String((form && form.get("pin")) || "").trim();
+  const expected = String(env.PIN_CODE || "").trim();
   const ok = given && expected && given.length === expected.length &&
     given.split("").reduce((d, c, i) => d | (c.charCodeAt(0) ^ expected.charCodeAt(i)), 0) === 0;
 
@@ -323,9 +323,10 @@ async function syncTables(env) {
 }
 async function handleSyncEmail(message, env) {
   const from = String(message.from || "").toLowerCase();
-  const want = String(env.SYNC_FROM || "").toLowerCase();
+  const want = String(env.SYNC_FROM || "").trim().toLowerCase();
+  const token = String(env.SYNC_TOKEN || "").trim();
   const subject = message.headers.get("subject") || "";
-  if (!want || from !== want || !env.SYNC_TOKEN || !subject.includes(env.SYNC_TOKEN)) { message.setReject("Not accepted"); return; }
+  if (!want || from !== want || !token || !subject.includes(token)) { message.setReject("Not accepted"); return; }
   const raw = await new Response(message.raw).text();
   const data = syncPayload(raw);
   if (!data) return;
