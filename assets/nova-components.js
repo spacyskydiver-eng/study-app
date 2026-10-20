@@ -280,7 +280,7 @@ function loadGL() {
   if (window.NovaUI.ditherVeil) return Promise.resolve();
   return glLoad || (glLoad = new Promise((res, rej) => {
     const sc = document.createElement('script');
-    sc.src = 'assets/vendor/nova-gl.js?v=20261022'; sc.onload = res; sc.onerror = () => { glLoad = null; rej(); };
+    sc.src = 'assets/vendor/nova-gl.js?v=20261025'; sc.onload = res; sc.onerror = () => { glLoad = null; rej(); };
     document.head.appendChild(sc);
   }));
 }
@@ -350,6 +350,29 @@ new MutationObserver(muts => {
 }).observe(document.body, { childList: true, subtree: true });
 document.addEventListener('bv-uimode', queueScan);
 queueScan();
+
+/* ---------------------------------------------------------------- persistent background
+   One React Bits Galaxy canvas sits behind the whole app while Nova is on. It is mounted once and
+   never torn down on navigation, so it carries on smoothly from page to page. */
+let bgEl = null, bgInst = null;
+function mountBg() {
+  if (bgEl || !document.body.classList.contains('ui-nova')) return;
+  bgEl = document.createElement('div');
+  bgEl.className = 'nova-bg'; bgEl.setAttribute('aria-hidden', 'true');
+  document.body.insertBefore(bgEl, document.body.firstChild);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  loadGL().then(() => {
+    if (!bgEl || !window.NovaUI.galaxy) return;
+    bgInst = window.NovaUI.galaxy(bgEl, {
+      hueShift: 250, saturation: 0.45, density: 0.75, glowIntensity: 0.22, starSpeed: 0.18, speed: 0.6,
+      rotationSpeed: 0.02, twinkleIntensity: 0.35, mouseRepulsion: true, repulsionStrength: 1.1,
+      clickWarp: false, transparent: true, dpr: 1, disableAnimation: reduced,
+    });
+  }).catch(() => {});
+}
+function unmountBg() { if (bgInst) { bgInst.destroy(); bgInst = null; } if (bgEl) { bgEl.remove(); bgEl = null; } }
+document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') mountBg(); else unmountBg(); });
+mountBg();
 
 window.NovaUI.bento = bento;
 window.NovaUI.mountElectric = mountElectric;

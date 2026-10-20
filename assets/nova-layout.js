@@ -317,243 +317,132 @@ const waitImages = (root, ms) => Promise.race([
   new Promise(r => setTimeout(r, ms)),
 ]);
 
-function showDeck(view, id, heading) {
-  const bag = [];
+/* ---------------------------------------------------------------- focus + peek reader
+   A topic is laid out in newspaper columns that fill the screen, so a whole section is visible at
+   once and reads left to right instead of down a long page. Every topic of the lecture is a tab
+   along the top (left / right arrow keys move between them). Clicking any link opens that note in a
+   Peek panel beside the topic, so another note can be read without losing your place. */
+function showLens(view, id, heading) {
   const D = deckModel(id);
   const chs = D.chapters;
-  const startCh = Math.max(0, chs.findIndex(c => c.id === id));
-  const hasEnd = !!D.hubId;
-  view.innerHTML = `<div class="nv-deck" style="--mod:${D.color}">
-    <header class="nv-deck-top">
-      <button class="nv-back" data-go="${esc(D.back.id)}">${icon('arrow-left')}<span>${esc(D.back.label)}</span></button>
-      <div class="nv-deck-name"><span class="nv-kicker">${esc(D.kicker)}</span><b>${esc(D.title)}</b></div>
-      <div class="nv-deck-count"></div>
+  let cur = Math.max(0, chs.findIndex(c => c.id === id));
+  let peekId = null, alive = true;
+  view.innerHTML = `<div class="nv-lens${D.single ? ' is-single' : ''}" style="--mod:${D.color}">
+    <header class="nv-lens-top">
+      <div class="nv-lens-id">
+        <button class="nv-back" data-go="${esc(D.back.id)}" title="${esc(D.back.label)}">${icon('arrow-left')}<span>${esc(D.back.label)}</span></button>
+        <div class="nv-lens-name"><span class="nv-kicker">${esc(D.kicker)}</span><b>${esc(D.title)}</b></div>
+        <div class="nv-lens-hint">${D.single ? '' : '<kbd>←</kbd><kbd>→</kbd> topics · '}click a link to peek</div>
+      </div>
+      ${D.single ? '' : `<nav class="nv-tabs">${chs.map((c, i) => `<button class="nv-tab" data-ch="${i}" title="${esc(c.title)}"><span>${c.n}</span><em>${esc(c.title)}</em></button>`).join('')}</nav>`}
     </header>
-    <div class="nv-deck-body${D.single ? ' is-single' : ''}">
-      ${D.single ? '' : `<nav class="nv-toc"><ol>${chs.map((c, i) => `<li><button data-ch="${i}"><span>${c.n}</span><em>${esc(c.title)}</em></button></li>`).join('')}${hasEnd ? `<li><button data-ch="end"><span>${icon('check')}</span><em>Finish</em></button></li>` : ''}</ol></nav>`}
-      <div class="nv-stage">
-        <div class="nv-measure nv-card"><div class="nv-card-in markdown-preview-view markdown-rendered"><div class="markdown-preview-sizer"></div></div></div>
-      </div>
+    <div class="nv-lens-body">
+      <main class="nv-focus"></main>
+      <aside class="nv-peek" aria-label="Peek">
+        <div class="nv-peek-head"><span class="nv-kicker">Peek</span><b></b>
+          <button class="nv-peek-btn" data-peek-open title="Open this note">${icon('arrow-right')}</button>
+          <button class="nv-peek-btn" data-peek-close title="Close (Esc)">${icon('x')}</button></div>
+        <div class="nv-peek-body"></div>
+      </aside>
     </div>
-    <footer class="nv-deck-foot">
-      <button class="nv-flip" data-dir="-1" title="Previous page (←)">${icon('arrow-left')}</button>
-      <div class="nv-segs">${chs.map((c, i) => `<button class="nv-seg" data-ch="${i}" title="${esc(c.title)}"><b></b></button>`).join('')}</div>
-      <button class="nv-flip" data-dir="1" title="Next page (→)">${icon('arrow-right')}</button>
-    </footer>
   </div>`;
-  const stage = $('.nv-stage', view), measure = $('.nv-measure', view), msizer = $('.markdown-preview-sizer', measure);
-  const pages = new Map();        // chapter -> [{ blocks: [html], first: blockIndex }]
-  let cur = { ch: startCh, pg: 0 }, card = null, busy = false, alive = true;
+  const focus = $('.nv-focus', view), peek = $('.nv-peek', view), lens = $('.nv-lens', view);
 
-  const chapterHead = (c, first) => c.hub ? '' : D.single ? (first ? `<div class="nv-card-head"><h1>${esc(c.title)}</h1></div>` : '') : first
-    ? `<div class="nv-card-head"><span class="nv-card-n">${c.n}</span><h1>${esc(c.title)}</h1></div>`
-    : `<div class="nv-card-run"><span>${c.n}</span>${esc(c.title)}</div>`;
-
-  async function paginate(ch) {
-    if (pages.has(ch)) return pages.get(ch);
-    const c = chs[ch], n = B.V.notes[c.id];
-    const box = cleanBody(n.html, { hub: c.hub });
-    measure.querySelector('.nv-card-in').className = `nv-card-in markdown-preview-view markdown-rendered ${(n.css || []).join(' ')}`;
-    msizer.innerHTML = box.innerHTML;
-    msizer.querySelectorAll('img').forEach(img => { img.loading = 'eager'; });
-    await waitImages(msizer, 4000);
-    if (!alive) return [];
-    const blocks = [...msizer.children].map(el => el.outerHTML);
-    const inner = measure.querySelector('.nv-card-in'), cs = getComputedStyle(inner);
-    const limit = inner.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 16;
-    const out = [];
-    let pageBlocks = [], firstIdx = 0;
-    const startPage = () => { msizer.innerHTML = chapterHead(c, out.length === 0); pageBlocks = []; };
-    const fits = () => msizer.scrollHeight <= limit;
-    const close = () => { out.push({ blocks: pageBlocks, first: firstIdx }); };
-    startPage();
-    for (let bi = 0; bi < blocks.length; bi++) {
-      const tmp = document.createElement('div'); tmp.innerHTML = blocks[bi]; const el = tmp.firstElementChild;
-      msizer.appendChild(el);
-      if (fits()) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(blocks[bi]); continue; }
-      // shrink a figure into the space left rather than leaving half a page empty
-      const imgs = el.querySelectorAll('img');
-      if (imgs.length === 1) {
-        const over = msizer.scrollHeight - limit, ih = imgs[0].offsetHeight;
-        if (ih - over >= 200) {
-          imgs[0].style.maxHeight = (ih - over - 4) + 'px';
-          if (fits()) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(el.outerHTML); continue; }
-          imgs[0].style.maxHeight = '';
-        }
-      }
-      el.remove();
-      // split a long list or table across pages
-      const list = el.querySelector(':scope > ul, :scope > ol'), table = el.querySelector('table');
-      if ((list && list.children.length > 1) || (table && table.tBodies[0] && table.tBodies[0].rows.length > 1)) {
-        const items = list ? [...list.children] : [...table.tBodies[0].rows];
-        const shell = () => { const s = el.cloneNode(true); const l = list ? s.querySelector(':scope > ul, :scope > ol') : s.querySelector('table').tBodies[0]; l.innerHTML = ''; return [s, l]; };
-        let [part, holder] = shell(); msizer.appendChild(part);
-        let start = 0;
-        for (let k = 0; k < items.length; k++) {
-          holder.appendChild(items[k].cloneNode(true));
-          if (fits()) continue;
-          holder.lastElementChild.remove();
-          if (holder.children.length) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(part.outerHTML); }
-          if (pageBlocks.length) close();
-          startPage();
-          [part, holder] = shell();
-          if (list && list.tagName === 'OL') holder.setAttribute('start', String((+list.getAttribute('start') || 1) + k));
-          msizer.appendChild(part); holder.appendChild(items[k].cloneNode(true)); firstIdx = bi; start = k;
-        }
-        if (holder.children.length) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(part.outerHTML); }
-        continue;
-      }
-      // move a dangling heading onto the next page with its content
-      const carry = [];
-      while (pageBlocks.length > 1) { const t = document.createElement('div'); t.innerHTML = pageBlocks[pageBlocks.length - 1]; if (!isHeading(t.firstElementChild)) break; carry.unshift(pageBlocks.pop()); }
-      if (pageBlocks.length) close();
-      startPage();
-      firstIdx = carry.length ? bi - carry.length : bi;
-      for (const hb of carry) { const t = document.createElement('div'); t.innerHTML = hb; msizer.appendChild(t.firstElementChild); pageBlocks.push(hb); }
-      msizer.appendChild(el); pageBlocks.push(blocks[bi]);
-      if (!fits() && pageBlocks.length === 1) { close(); startPage(); }   // a single tall block keeps its own page
-    }
-    if (pageBlocks.length || !out.length) close();
-    msizer.innerHTML = '';
-    pages.set(ch, out);
-    return out;
-  }
-
-  function endPage() {
-    const nx = D.next;
-    return `<div class="nv-end">
-      <div class="nv-end-ring">${icon('check')}</div>
-      <div class="nv-kicker">Finished</div>
-      <h1>${esc(D.title)}</h1>
-      <p>${chs.length - 1} topics read.</p>
-      <div class="nv-end-actions">
-        ${nx ? `<button class="nv-end-btn is-main" data-go="${esc(nx.id)}"><small>Next</small><b>${esc(stripTitle(nx.title))}</b></button>` : `<button class="nv-end-btn is-main" data-go="${esc(D.back.id)}"><small>Done</small><b>Back to ${esc(D.back.label)}</b></button>`}
-        ${B.exists('flashcards') ? `<button class="nv-end-btn" data-go="flashcards"><small>Practise</small><b>Flashcards</b></button>` : ''}
-      </div>
-      ${D.terms.length ? `<div class="nv-end-terms"><div class="nv-kicker">Key terms in this ${esc(D.kind.toLowerCase())}</div><div class="nv-terms">${D.terms.slice(0, 24).map(t => `<a class="internal-link nv-term" data-note="${esc(t)}" href="${esc(B.hashFor(t))}">${esc(B.V.notes[t].title)}</a>`).join('')}</div></div>` : ''}
-    </div>`;
-  }
-
-  function paint(dir) {
-    const isEnd = cur.ch === 'end';
-    const c = isEnd ? null : chs[cur.ch];
-    const list = isEnd ? null : pages.get(cur.ch);
-    const pg = isEnd ? null : list[cur.pg];
-    const n = c && B.V.notes[c.id];
-    const el = h(`<div class="nv-card is-entering${dir ? (dir > 0 ? ' from-right' : ' from-left') : ''}">
-      ${isEnd ? `<div class="nv-card-in">${endPage()}</div>` : `<div class="nv-card-in markdown-preview-view markdown-rendered ${esc((n.css || []).join(' '))}"><div class="markdown-preview-sizer">${chapterHead(c, cur.pg === 0)}${pg.blocks.join('')}</div></div>`}
-    </div>`);
-    if (!isEnd) el.querySelector('.nv-card-in').dataset.note = c.id;
-    stage.appendChild(el);
-    if (!isEnd) B.hydrate(el.querySelector('.nv-card-in'), c.id);
-    const old = card; card = el;
-    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-entering')));
-    if (old) { old.classList.add(dir < 0 ? 'to-right' : 'to-left', 'is-leaving'); setTimeout(() => old.remove(), 450); }
-    // chrome: counter, toc, segments, progress
-    const total = list ? list.length : 1;
-    $('.nv-deck-count', view).innerHTML = isEnd ? 'Finished' : D.single ? (total > 1 ? `${cur.pg + 1} / ${total}` : '') : `<span>${c.hub ? 'Overview' : 'Topic ' + c.n}</span> · ${cur.pg + 1} / ${total}`;
-    $$('.nv-toc button', view).forEach(b => {
-      const k = b.dataset.ch === 'end' ? chs.length : +b.dataset.ch, at = isEnd ? chs.length : cur.ch;
-      b.classList.toggle('is-active', k === at); b.classList.toggle('is-done', k < at);
-      if (k === at) b.scrollIntoView({ block: 'nearest' });
-    });
-    $$('.nv-seg', view).forEach((s, i) => {
-      const f = isEnd || i < cur.ch ? 1 : i > cur.ch ? 0 : (cur.pg + 1) / total;
-      s.querySelector('b').style.width = Math.round(f * 100) + '%';
-      s.classList.toggle('is-active', !isEnd && i === cur.ch);
-    });
-    $('.nv-flip[data-dir="-1"]', view).disabled = !isEnd && cur.ch === 0 && cur.pg === 0;
-    $('.nv-flip[data-dir="1"]', view).disabled = isEnd || (!hasEnd && cur.ch === chs.length - 1 && cur.pg === total - 1);
-    if (D.hubId) markRead(D.hubId, isEnd ? 1 : (cur.ch + (cur.pg + 1) / total) / chs.length);
-    // a page that is still too tall scrolls inside itself
-    const inner = el.querySelector('.nv-card-in');
-    const tall = () => el.classList.toggle('is-tall', inner.scrollHeight > inner.clientHeight + 4);
-    tall(); inner.querySelectorAll('img').forEach(img => { img.loading = 'eager'; if (!img.complete) img.addEventListener('load', tall, { once: true }); });
-    if (glow) glow.refresh();
-  }
-
-  async function goTo(ch, pg, dir, headingId) {
-    if (busy || !alive) return;
-    busy = true;
-    try {
-      if (ch !== 'end') {
-        const list = await paginate(ch);
-        if (!alive) return;
-        if (headingId) { const k = list.findIndex(p => p.blocks.some(b => b.includes(`id="${headingId}"`))); if (k >= 0) pg = k; }
-        pg = pg === 'last' ? list.length - 1 : Math.max(0, Math.min(pg, list.length - 1));
-      }
-      cur = { ch, pg };
-      paint(dir);
-    } finally { busy = false; }
-  }
-  function step(dir) {
-    if (cur.ch === 'end') { if (dir < 0) goTo(chs.length - 1, 'last', -1); return; }
-    const list = pages.get(cur.ch) || [];
-    if (dir > 0) {
-      if (cur.pg < list.length - 1) goTo(cur.ch, cur.pg + 1, 1);
-      else if (cur.ch < chs.length - 1) goTo(cur.ch + 1, 0, 1);
-      else if (hasEnd) goTo('end', 0, 1);
-    } else {
-      if (cur.pg > 0) goTo(cur.ch, cur.pg - 1, -1);
-      else if (cur.ch > 0) goTo(cur.ch - 1, 'last', -1);
-    }
-  }
-
-  // input: keys, wheel, swipe, buttons
-  const onKey = e => {
-    if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable], .na-sheet, .menu, .modal-container')) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (['ArrowRight', 'PageDown', ' ', 'l'].includes(e.key) && !e.shiftKey) { e.preventDefault(); step(1); }
-    else if (['ArrowLeft', 'PageUp', 'h'].includes(e.key) || (e.key === ' ' && e.shiftKey)) { e.preventDefault(); step(-1); }
-    else if (e.key === 'ArrowDown' && !D.single) { e.preventDefault(); if (cur.ch !== 'end' && cur.ch < chs.length - 1) goTo(cur.ch + 1, 0, 1); else if (hasEnd) goTo('end', 0, 1); }
-    else if (e.key === 'ArrowUp' && !D.single) { e.preventDefault(); goTo(cur.ch === 'end' ? chs.length - 1 : Math.max(0, cur.ch - 1), 0, -1); }
+  const cols = (noteId, extraHead, extraTail) => {
+    const n = B.V.notes[noteId];
+    const body = cleanBody(n.html, { hub: !!(D.hubId && noteId === D.hubId) });
+    const el = h(`<div class="nv-cols"><div class="markdown-preview-view markdown-rendered ${esc((n.css || []).join(' '))}"><div class="markdown-preview-sizer">${extraHead || ''}${body.innerHTML}${extraTail || ''}</div></div></div>`);
+    el.dataset.note = noteId;
+    return el;
   };
-  document.addEventListener('keydown', onKey);
-  let wheelAcc = 0, wheelLock = 0;
-  view.addEventListener('wheel', e => {
-    const tall = e.target.closest('.nv-card.is-tall .nv-card-in, .nv-toc');
-    if (tall) { const t = tall; const atEnd = e.deltaY > 0 ? t.scrollTop + t.clientHeight >= t.scrollHeight - 2 : t.scrollTop <= 0; if (!atEnd || t.classList.contains('nv-toc')) return; }
-    e.preventDefault();
-    const now = performance.now(); if (now < wheelLock) return;
-    wheelAcc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-    if (Math.abs(wheelAcc) > 50) { step(Math.sign(wheelAcc)); wheelAcc = 0; wheelLock = now + 520; }
-  }, { passive: false });
-  let sx = null, sy = 0;
-  stage.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') { sx = e.clientX; sy = e.clientY; } });
-  stage.addEventListener('pointerup', e => {
-    if (sx == null) return; const dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) step(dx < 0 ? 1 : -1);
-  });
-  view.addEventListener('click', e => {
+  const scrollToId = (sc, hid) => {
+    const t = hid && sc.querySelector(`[id="${CSS.escape(hid)}"]`);
+    if (!t) return;
+    const left = t.getBoundingClientRect().left - sc.getBoundingClientRect().left + sc.scrollLeft - 24;
+    sc.scrollTo({ left: Math.max(0, left), behavior: 'instant' });
+  };
+
+  function show(i, dir, hid) {
+    cur = i;
+    const c = chs[i];
+    const head = c.hub ? `<div class="nv-col-head"><span class="nv-kicker">Overview</span><h1>${esc(D.title)}</h1></div>`
+      : D.single ? `<div class="nv-col-head"><h1>${esc(c.title)}</h1></div>`
+      : `<div class="nv-col-head"><span class="nv-col-n">${c.n}</span><h1>${esc(c.title)}</h1></div>`;
+    let tail = '';
+    if (!D.single) {
+      const nx = chs[i + 1];
+      if (nx) tail = `<div class="nv-col-next"><button data-ch="${i + 1}"><small>Next topic</small><b>${nx.n} · ${esc(nx.title)}</b>${icon('arrow-right')}</button></div>`;
+      else tail = `<div class="nv-col-next is-end"><div class="nv-kicker">End of ${esc(D.kind.toLowerCase())}</div>
+        ${D.next ? `<button data-go="${esc(D.next.id)}"><small>Next ${esc(D.kind.toLowerCase())}</small><b>${esc(stripTitle(D.next.title))}</b>${icon('arrow-right')}</button>` : `<button data-go="${esc(D.back.id)}"><small>Done</small><b>Back to ${esc(D.back.label)}</b>${icon('arrow-right')}</button>`}
+        ${D.terms.length ? `<div class="nv-terms">${D.terms.slice(0, 30).map(t => `<a class="internal-link nv-term" data-note="${esc(t)}" href="${esc(B.hashFor(t))}">${esc(B.V.notes[t].title)}</a>`).join('')}</div>` : ''}</div>`;
+    }
+    const el = cols(c.id, head, tail);
+    el.classList.add('is-in', dir > 0 ? 'from-right' : dir < 0 ? 'from-left' : 'from-below');
+    focus.querySelectorAll('.nv-cols').forEach(o => o.remove());
+    focus.appendChild(el);
+    B.hydrate(el, c.id);
+    void el.offsetWidth; el.classList.remove('is-in');
+    if (hid) requestAnimationFrame(() => scrollToId(el, hid));
+    $$('.nv-tab', view).forEach((t, k) => { t.classList.toggle('is-active', k === i); t.classList.toggle('is-done', k < i); });
+    const at = $('.nv-tab.is-active', view), bar = $('.nv-tabs', view);
+    if (at && bar) bar.scrollTo({ left: at.offsetLeft - bar.clientWidth / 2 + at.offsetWidth / 2, behavior: dir ? 'smooth' : 'instant' });
+    if (D.hubId) markRead(D.hubId, (i + 1) / chs.length);
+  }
+
+  function openPeek(noteId, hid) {
+    if (!B.V.notes[noteId]) return;
+    peekId = noteId;
+    const n = B.V.notes[noteId];
+    $('.nv-peek-head b', peek).textContent = stripTitle(n.title);
+    const body = $('.nv-peek-body', peek);
+    body.innerHTML = '';
+    const el = cols(noteId);
+    body.appendChild(el);
+    B.hydrate(el, noteId);
+    lens.classList.add('has-peek');
+    if (hid) requestAnimationFrame(() => scrollToId(el, hid));
+  }
+  function closePeek() { peekId = null; lens.classList.remove('has-peek'); }
+
+  // links open in the peek; tabs and buttons switch topic
+  lens.addEventListener('click', e => {
     const a = e.target.closest('a.internal-link[data-note]');
     if (a && !(e.ctrlKey || e.metaKey)) {
-      const k = chs.findIndex(c => c.id === a.dataset.note);
-      if (k >= 0) { e.preventDefault(); e.stopPropagation(); goTo(k, 0, k > cur.ch ? 1 : -1, a.dataset.heading || null); return; }
+      e.preventDefault(); e.stopPropagation(); B.closePopover();
+      if (B.V.notes[a.dataset.note]) openPeek(a.dataset.note, a.dataset.heading || null);
+      else B.go(a.dataset.note);
+      return;
     }
-    const f = e.target.closest('.nv-flip'); if (f) { step(+f.dataset.dir); return; }
+    if (e.target.closest('[data-peek-close]')) { closePeek(); return; }
+    if (e.target.closest('[data-peek-open]')) {
+      const k = chs.findIndex(c => c.id === peekId);
+      const pid = peekId; closePeek();
+      if (k >= 0) show(k, k > cur ? 1 : -1); else if (pid) B.go(pid);
+      return;
+    }
     const t = e.target.closest('[data-ch]');
-    if (t && t.tagName === 'BUTTON') { const k = t.dataset.ch === 'end' ? 'end' : +t.dataset.ch; goTo(k, 0, k === 'end' || k > cur.ch ? 1 : -1); return; }
+    if (t && t.tagName === 'BUTTON') { const k = +t.dataset.ch; if (k !== cur) show(k, k > cur ? 1 : -1); return; }
     const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); e.stopPropagation(); B.go(g.dataset.go); }
   }, true);
-  // re-cut the pages when the stage changes size, staying on the same block
-  let lastSize = '';
-  const ro = new ResizeObserver(() => {
-    const sz = stage.clientWidth + 'x' + stage.clientHeight;
-    if (sz === lastSize) return; const first = !lastSize; lastSize = sz; setH();
-    if (first) return;
-    const at = cur.ch !== 'end' && pages.get(cur.ch) ? pages.get(cur.ch)[cur.pg].first : 0;
-    pages.clear();
-    if (cur.ch === 'end') { paint(0); return; }
-    paginate(cur.ch).then(list => { if (!alive) return; let k = 0; list.forEach((p, i) => { if (p.first <= at) k = i; }); cur.pg = k; paint(0); });
-  });
-  ro.observe(stage);
-  // magic bento spotlight on the page card
-  let glow = null;
-  if (N.bento) { glow = N.bento(stage, { cards: '.nv-card:not(.nv-measure)', spotlightRadius: 420, clickEffect: false }); bag.push(glow); }
-  const setH = () => stage.style.setProperty('--page-h', stage.clientHeight + 'px');
-  setH();
-  requestAnimationFrame(() => goTo(startCh, 0, 0, heading || null));
-  return () => { alive = false; ro.disconnect(); document.removeEventListener('keydown', onKey); destroyAll(bag)(); };
+  // click is the preview here, so the hover popovers stay out of the way
+  lens.addEventListener('mouseover', e => { if (e.target.closest && e.target.closest('a.internal-link')) e.stopPropagation(); });
+  // the wheel moves along the columns
+  lens.addEventListener('wheel', e => {
+    const sc = e.target.closest('.nv-cols');
+    if (!sc || window.innerWidth <= 900) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && sc.scrollWidth > sc.clientWidth) { e.preventDefault(); sc.scrollLeft += e.deltaY; }
+  }, { passive: false });
+  const onKey = e => {
+    if (!alive || (e.target.closest && e.target.closest('input, textarea, select, [contenteditable], .na-sheet, .menu'))) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Escape' && peekId) { closePeek(); return; }
+    if (D.single) return;
+    if (e.key === 'ArrowRight' && cur < chs.length - 1) { e.preventDefault(); show(cur + 1, 1); }
+    else if (e.key === 'ArrowLeft' && cur > 0) { e.preventDefault(); show(cur - 1, -1); }
+  };
+  document.addEventListener('keydown', onKey);
+  show(cur, 0, heading || null);
+  return () => { alive = false; document.removeEventListener('keydown', onKey); };
 }
 
 /* ---------------------------------------------------------------- glossary (key terms A to Z) */
@@ -588,7 +477,7 @@ B.registerView('glossary', {
 const DEFS = {
   home: { title: () => 'Home', icon: 'home', cls: 'nv-view', show: v => showHome(v) },
   module: { title: id => (B.V.notes[id] || {}).title || 'Module', icon: 'layers', cls: 'nv-view', show: (v, id) => showModule(v, id) },
-  deck: { title: id => { const { hubs, topicHub } = model(); const hb = hubs[id] || hubs[topicHub[id]]; return stripTitle(hb ? hb.title : B.V.notes[id].title); }, icon: 'book-open', cls: 'nv-view nv-view-deck', show: (v, id, hd) => showDeck(v, id, hd) },
+  deck: { title: id => { const { hubs, topicHub } = model(); const hb = hubs[id] || hubs[topicHub[id]]; return stripTitle(hb ? hb.title : B.V.notes[id].title); }, icon: 'book-open', cls: 'nv-view nv-view-lens', show: (v, id, hd) => showLens(v, id, hd) },
 };
 N.route = id => {
   if (!B.V || !B.V.notes[id]) return null;
