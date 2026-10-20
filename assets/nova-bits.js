@@ -89,9 +89,13 @@ N.sideRays = function sideRays(container, props = {}) {
   let time = Math.random() * 100, reveal = P.intro && !reduced ? 0 : 1, raf = 0, last = 0, visible = true, alive = true, w = 1, hgt = 1;
   const ptr = { x: 0, y: 0, inside: false }, aim = { v: 0, vel: 0 }, focus = { a: 0, s: 0 };
   const resize = () => { const r = wrap.getBoundingClientRect(); w = Math.max(1, r.width); hgt = Math.max(1, r.height); const ratio = Math.min(window.devicePixelRatio || 1, P.maxRatio, Math.sqrt(P.budget / (w * hgt))); const cw = Math.round(w * ratio), ch = Math.round(hgt * ratio); if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; } };
+  let drawn = 0;
   const frame = now => {
     raf = 0; if (!alive) return;
-    const dt = clamp((now - last) / 1000 || 0, 0, 0.05); last = now;
+    // optional frame cap: keep the loop alive but skip drawing between ticks
+    if (P.fps && now - drawn < 1000 / P.fps - 2) { raf = requestAnimationFrame(frame); return; }
+    drawn = now;
+    const dt = clamp((now - last) / 1000 || 0, 0, 0.1); last = now;
     const spread = clamp(P.spread, 0.1, 8) * 0.225, tilt = clamp(P.tilt, -180, 180) * Math.PI / 180, fr = ORIGINS[P.origin] || ORIGINS['top-right'];
     time += dt * Math.max(0, P.speed) * 0.4 * (reduced ? 0.3 : 1);
     if (reveal < 1) reveal = Math.min(1, reveal + dt / 1.6);
@@ -128,6 +132,7 @@ N.sideRays = function sideRays(container, props = {}) {
   resize(); wake();
   return {
     el: wrap,
+    time: () => time, props: P,
     set(p) { Object.assign(P, p); wake(); },
     destroy() { alive = false; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); window.removeEventListener('pointermove', onMove); document.removeEventListener('visibilitychange', onVis); try { gl.getExtension('WEBGL_lose_context')?.loseContext(); } catch (e) { /* gone */ } wrap.remove(); },
   };
@@ -169,6 +174,7 @@ function mountDock() {
     { id: 'flashcards', label: 'Flashcards', ic: 'cards' },
     { id: 'glossary', label: 'Key terms', ic: 'book-open' },
     { id: 'books', label: 'Book library', ic: 'library' },
+    { id: 'exam', label: 'Exam practice', ic: 'clipboard-list' },
     { map: true, label: 'Neural map', ic: 'graph' },
   ].filter(it => it.sep || it.map || (it.id && B.exists(it.id)));
   const root = h(`<div class="nb-dock" role="toolbar" aria-label="Dock" data-hidden>
@@ -224,9 +230,8 @@ function mountDock() {
     const b = e.target.closest('.nb-dock-item'); if (!b) return;
     const it = items[+b.dataset.i], S = st[btns.indexOf(b)];
     if (!reduced && !S.hop) { S.hop = true; S.rise = 420; wake(); }
-    const r = b.getBoundingClientRect();
     if (it.map) { N.map && N.map.open(B.currentId()); return; }
-    N.go(it.id, { x: r.left + r.width / 2, y: r.top + r.height / 2, caption: it.label });
+    N.go(it.id);
   });
   const mark = () => { const cur = B.currentId(); btns.forEach(b => { const it = items[+b.dataset.i]; b.classList.toggle('is-active', !!it.id && it.id === cur); }); };
   // keep the active dot (and the navigator's highlight) in step with the page, however it was reached
@@ -254,53 +259,30 @@ document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') moun
 setTimeout(mountDock, 0);
 
 /* ================================================================ page transitions
-   Every move between pages (dock, navigator, home, the orb) goes through N.go: the current page
-   sinks and blurs away, the neural map behind it surges and turns, and the new page opens out of
-   the point you came from (the dock icon, the orb). Uses the View Transitions API where the browser
-   has it (Chrome, Edge, Safari 18), with only the page itself captured, so the map stays live
-   underneath; elsewhere a CSS fade does the same job. If the map is open it is closed first. */
+   One plain zoom for every page change (dock, navigator, home, the orb): the page shrinks back and
+   fades, the map behind dollies forward, the new page settles in from slightly larger. Transform and
+   opacity only, no page snapshots. From the open map, the map's own zoom-out is the transition. */
 let going = false;
-// rendering is paused while a view transition's update runs, so this polls with timers, not frames
-const settle = id => new Promise(res => {
-  const t0 = performance.now();
-  const check = () => { if (B.currentId() === id || performance.now() - t0 > 1200) setTimeout(res, 30); else setTimeout(check, 12); };
-  check();
-});
 N.go = function go(id, o = {}) {
   if (!id) return;
-  // from the open map: the map itself is the transition (it recedes as the page fades back in)
-  if (N.map && N.map.isOpen && N.map.isOpen()) { if (o.then) o.then(); else if (B.currentId() !== id) B.go(id); N.map.close(); return; }
+  const nav = () => { if (o.then) o.then(); else B.go(id); };
+  if (N.map && N.map.isOpen && N.map.isOpen()) { if (o.then || B.currentId() !== id) nav(); N.map.close(); return; }
   if (B.currentId() === id && !o.force) { o.then && o.then(); return; }
   const view = $('#view');
-  const nav = () => { if (o.then) o.then(); else B.go(id); };
   if (reducedMotion() || !view || going || !B.isNova()) { nav(); return; }
   going = true;
-  const vr = view.getBoundingClientRect();
-  const x = o.x != null ? o.x - vr.left : vr.width / 2, y = o.y != null ? o.y - vr.top : vr.height * 0.45;
-  const de = document.documentElement;
-  de.style.setProperty('--vt-x', x.toFixed(0) + 'px'); de.style.setProperty('--vt-y', y.toFixed(0) + 'px');
-  de.classList.toggle('vt-from-point', o.x != null);
   N.map && N.map.swoop && N.map.swoop();
-  if (o.x != null) { const ring = h('<span class="nb-vt-ring" aria-hidden="true"></span>'); ring.style.left = o.x + 'px'; ring.style.top = o.y + 'px'; document.body.appendChild(ring); setTimeout(() => ring.remove(), 900); }
-  if (o.caption) {
-    const cap = h(`<div class="nb-vt-cap" aria-hidden="true"><b>${esc(o.caption)}</b></div>`);
-    document.body.appendChild(cap); setTimeout(() => cap.remove(), 1100);
-  }
-  const done = () => { going = false; de.classList.remove('vt-from-point'); };
-  if (document.startViewTransition) {
-    de.classList.add('vt-nova');
-    let ended = false;
-    const end = () => { if (ended) return; ended = true; de.classList.remove('vt-nova'); done(); };
-    try {
-      const t = document.startViewTransition(() => { nav(); return settle(id); });
-      t.finished.finally(end);
-    } catch (e) { nav(); end(); }
-    setTimeout(end, 2500);      // never leave the page stuck mid-transition
-  } else {
-    view.classList.add('nb-leaving');
-    setTimeout(() => { nav(); settle(id).then(() => { const v = $('#view'); v.classList.remove('nb-leaving'); v.classList.add('nb-arriving'); setTimeout(() => { v.classList.remove('nb-arriving'); done(); }, 650); }); }, 260);
-  }
+  const out = view.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.96)' }], { duration: 150, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+  const arrive = () => {
+    nav();
+    requestAnimationFrame(() => {
+      out.cancel();
+      const v = $('#view');
+      if (v) v.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.16,1,.3,1)' });
+      going = false;
+    });
+  };
+  out.finished.then(arrive, arrive);
 };
-// older callers
-N.portal = ({ to, caption, then }) => N.go(to, { caption, then, x: innerWidth - 60, y: innerHeight - 60 });
+N.portal = ({ to, then }) => N.go(to, { then });
 })();

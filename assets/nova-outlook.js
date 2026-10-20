@@ -87,14 +87,14 @@ B.registerView('mail', {
         <div class="ol-search">${icon('search')}<input type="search" placeholder="Search mail" autocomplete="off"></div>
         <div class="ol-head-acts"><button class="ol-btn ol-btn-send ol-new">${icon('plus')}<span>New email</span></button></div>
       </header>
-      <div class="ol-filters">${[['all', 'All'], ['unread', 'Unread'], ['today', 'Today'], ['blackboard', 'Blackboard'], ['uea', 'From UEA']].map(([k, l]) => `<button class="ol-chip${k === 'all' ? ' is-on' : ''}" data-f="${k}">${l}</button>`).join('')}<span class="ol-sync"></span></div>
+      <div class="ol-filters">${[['all', 'All'], ['unread', 'Unread'], ['today', 'Today'], ['blackboard', 'Blackboard']].map(([k, l]) => `<button class="ol-chip${k === 'all' ? ' is-on' : ''}" data-f="${k}">${l}</button>`).join('')}<span class="ol-sync"></span></div>
       <div class="ol-split">
         <div class="ol-list" role="listbox"><div class="ol-empty">Loading…</div></div>
         <article class="ol-reader"><div class="ol-empty ol-reader-empty">${icon('mail')}<span>Pick an email to read it</span></div></article>
       </div>
     </div>`;
     const list = $('.ol-list', view), reader = $('.ol-reader', view), page = $('.ol-mail', view);
-    const rays = ambient(page), unreadN = N.counter ? N.counter($('.ol-n', view), 0) : null;
+    const rays = null, unreadN = N.counter ? N.counter($('.ol-n', view), 0) : null;
     const match = m => {
       if (filter === 'unread' && !m.unread) return false;
       if (filter === 'today' && dayOf(m.received) !== localDay(new Date())) return false;
@@ -131,8 +131,8 @@ B.registerView('mail', {
           <div class="ol-read-acts">
             <button class="ol-btn" data-act="reply">${icon('reply')}<span>Reply</span></button>
             <button class="ol-btn" data-act="replyall">${icon('reply')}<span>Reply all</span></button>
-            ${html ? `<button class="ol-btn" data-act="mode">${icon('file')}<span>Plain text</span></button>` : ''}
-            <a class="ol-btn" href="https://outlook.office.com/mail/" target="_blank" rel="noopener">${icon('external')}<span>Outlook</span></a>
+            ${html ? `<button class="ol-btn ol-icon" data-act="mode" title="Plain text">${icon('file')}</button>` : ''}
+            <a class="ol-btn ol-icon" href="https://outlook.office.com/mail/" target="_blank" rel="noopener" title="Open in Outlook">${icon('external')}</a>
           </div>
         </div>
         <div class="ol-read-body"></div>
@@ -153,7 +153,7 @@ B.registerView('mail', {
         if (e.target.closest('.ol-back')) { page.classList.remove('has-sel'); return; }
         const b = e.target.closest('[data-act]'); if (!b) return;
         const act = b.dataset.act;
-        if (act === 'mode') { asHtml = !asHtml; $('span', b).textContent = asHtml ? 'Plain text' : 'Formatted'; paint(); return; }
+        if (act === 'mode') { asHtml = !asHtml; b.title = asHtml ? 'Plain text' : 'Formatted'; paint(); return; }
         const all = act === 'replyall';
         const cc = all ? [m.to, m.cc].join(';').split(/[;,]/).map(s => s.trim()).filter(s => s && !mine.test(s) && s.toLowerCase() !== m.from.toLowerCase()).join('; ') : '';
         const slot = $('.ol-read-compose', reader);
@@ -208,14 +208,14 @@ B.registerView('calendar', {
     let cursor = new Date(today.getFullYear(), today.getMonth(), 1), selDay = localDay(today), selEv = null;
     view.innerHTML = `<div class="ol-page ol-cal">
       <header class="ol-head">
-        <div><div class="nv-kicker">Outlook <span class="ol-count ol-count-k"><span class="ol-n"></span><small class="ol-n-label">events this month</small></span></div><h1 class="ol-cal-title">Calendar</h1></div>
+        <div><div class="nv-kicker">Outlook</div><h1 class="ol-cal-title">Calendar</h1></div>
         <div class="ol-cal-nav"><button class="ol-btn ol-icon" data-nav="-1" title="Previous">${icon('chevron-left')}</button><button class="ol-btn" data-nav="0">Today</button><button class="ol-btn ol-icon" data-nav="1" title="Next">${icon('chevron-right')}</button></div>
         <div class="ol-seg">${['month', 'agenda', 'year'].map(m => `<button data-mode="${m}"${m === mode ? ' class="is-on"' : ''}>${m[0].toUpperCase() + m.slice(1)}</button>`).join('')}</div>
       </header>
       <div class="ol-cal-split"><div class="ol-cal-main"><div class="ol-empty">Loading…</div></div><aside class="ol-cal-side"></aside></div>
     </div>`;
     const main = $('.ol-cal-main', view), side = $('.ol-cal-side', view), title = $('.ol-cal-title', view);
-    const rays = ambient($('.ol-cal', view)), monthN = N.counter ? N.counter($('.ol-n', view), 0) : null;
+    const rays = null, monthN = null;
     const countMonth = () => { if (!monthN) return; const y = cursor.getFullYear(), m = cursor.getMonth(); monthN.set(evs.filter(e => { const d = new Date(e.start); return d.getFullYear() === y && d.getMonth() === m; }).length); $('.ol-n-label', view).textContent = mode === 'year' ? 'events this month' : 'events in ' + cursor.toLocaleDateString('en-GB', { month: 'long' }); };
     const evLine = e => `<button class="ol-ev" data-ev="${esc(e.id)}" style="--ev:${evColor(e.subject)}"><time>${e.allDay ? 'All day' : tm(e.start)}</time><b>${esc(e.subject || '(no title)')}</b></button>`;
     function renderMonth() {

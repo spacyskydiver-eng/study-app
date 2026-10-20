@@ -22,7 +22,7 @@ const COLORS = {
 };
 const colorOf = s => COLORS[s] || '#8B5CF6';
 // page changes from a click open out of the clicked element (nova-bits.js N.go)
-const goFrom = el => { const r = el.getBoundingClientRect(); N.go ? N.go(el.dataset.go, { x: r.left + Math.min(r.width / 2, 120), y: r.top + r.height / 2 }) : B.go(el.dataset.go); };
+const goFrom = el => (N.go ? N.go(el.dataset.go) : B.go(el.dataset.go));
 const KIND = { lecture: 'Lectures', practical: 'Practicals', seminar: 'Seminars', extra: 'Extras' };
 const KIND_ONE = { lecture: 'Lecture', practical: 'Practical', seminar: 'Seminar', extra: 'Extra' };
 
@@ -101,7 +101,8 @@ function navPane(root) {
   const curMod = moduleOfId(cur);
   const open = new Set(store.get(OPEN_KEY, curMod ? [curMod.id] : []));
   if (curMod) open.add(curMod.id);
-  const tool = (id, ic, label) => B.exists(id) ? `<button class="nv-nav-item${cur === id ? ' is-active' : ''}" data-go="${esc(id)}">${icon(ic)}<span>${esc(label)}</span></button>` : '';
+  // these are also in the dock, so on desktop the navigator shows only the modules
+  const tool = (id, ic, label) => B.exists(id) ? `<button class="nv-nav-item nv-docked${cur === id ? ' is-active' : ''}" data-go="${esc(id)}">${icon(ic)}<span>${esc(label)}</span></button>` : '';
   root.innerHTML = `<nav class="nv-nav">
     ${tool(B.V.home, 'home', 'Home')}
     ${tool('mail', 'mail', 'Mail')}
@@ -118,12 +119,12 @@ function navPane(root) {
           return `${head}<button class="nv-nav-lec${curHub === hb.id ? ' is-active' : ''}" data-go="${esc(hb.id)}" title="${esc(hb.title)}"><b>${hb.number ? plainNum(hb.number) : '·'}</b><span>${esc(hb.title.replace(/\s*\((Lecture|Seminar) \d+\)$/, ''))}</span>${pr ? `<em style="--p:${Math.round(pr * 100)}%"></em>` : ''}</button>`;
         }).join('') : '<div class="nv-nav-empty">No lectures yet</div>'}</div></div>`;
     }).join('')}
-    <div class="nv-nav-label">Library</div>
+    <div class="nv-nav-label nv-docked">Library</div>
     ${tool('glossary', 'book-open', 'Key terms')}
     ${tool('flashcards', 'cards', 'Flashcards')}
     ${tool('exam', 'clipboard-list', 'Exam practice')}
     ${tool('books', 'library', 'Book library')}
-    <button class="nv-nav-item" data-navmap>${icon('graph')}<span>Neural map</span></button>
+    <button class="nv-nav-item nv-docked" data-navmap>${icon('graph')}<span>Neural map</span></button>
   </nav>`;
   root.onclick = e => {
     const t = e.target.closest('[data-toggle]');

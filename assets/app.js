@@ -311,7 +311,7 @@ let novaLoading = null;
 function loadNovaComponents() {
   if (novaLoading) return novaLoading;
   const add = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261043')).then(() => add('assets/nova-map.js?v=20261043')).then(() => add('assets/nova-outlook.js?v=20261041')).then(() => add('assets/nova-bits.js?v=20261044')).then(() => add('assets/nova-assistant.js?v=20261041')).then(relayout);
+  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261045')).then(() => add('assets/nova-map.js?v=20261046')).then(() => add('assets/nova-outlook.js?v=20261045')).then(() => add('assets/nova-bits.js?v=20261046')).then(() => add('assets/nova-assistant.js?v=20261041')).then(relayout);
   return novaLoading;
 }
 function openUiModeMenu(anchorEl) {
