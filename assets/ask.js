@@ -154,6 +154,8 @@ async function explain(body) {
     citation: s.citation || `${s.book || ''}${s.page ? ', p. ' + s.page : ''}`, text: s.text || '' })).filter(s => s.page && s.book) };
 }
 
+B.ask = { explain, md, linkTerms, chipsFor, apiBase: () => API };
+
 /* ---------- panel */
 function chipsFor(text) {
   const words = text.split(/\s+/).length;
@@ -209,6 +211,8 @@ function enableDrag(panel) {
 function openPanel(info) {
   closePanel();
   const ctx = context(info);
+  // Nova has its own assistant (orb + conversation sheet); it reuses the engine call below
+  if (B.isNova() && window.NovaUI && window.NovaUI.assistant) { window.NovaUI.assistant.open({ selection: info.text, ctx, noteId: info.id }); return; }
   const where = [ctx.note.lecture, ctx.note.title].filter(Boolean).join(' › ');
   const history = [];
   panel = h(`<div class="ask-panel" role="dialog" aria-label="Ask about the highlighted text">

@@ -120,6 +120,9 @@ const BENTO_SURFACES = [
   ['.fc-plan-grid', '.fc-plan'],
   ['.fc-decks', '.fc-deck'],
   ['.exam-review-grid', ':scope > *'],
+  ['.nv-timeline', '.nv-lec'],
+  ['.nv-tools', '.nv-tool'],
+  ['.nv-today', '.nv-today-cell'],
 ];
 const MB_LAYERS = ['magic-bento__light', 'magic-bento__rim', 'magic-bento__border'];
 
@@ -272,14 +275,14 @@ function bento(root, opts = {}) {
 }
 
 /* ---------------------------------------------------------------- Electric Logo
-   WebGL2 port of the React Bits <ElectricLogo /> lives in assets/vendor/electric-logo.js
+   WebGL2 port of the React Bits <ElectricLogo /> and the other WebGL ports live in assets/vendor/nova-gl.js
    (bundled with ogl, ~70 KB) and is only fetched the first time a surface needs it. */
-let elogoLoad = null;
-function loadElectric() {
-  if (window.NovaUI.electricLogo) return Promise.resolve();
-  return elogoLoad || (elogoLoad = new Promise((res, rej) => {
+let glLoad = null;
+function loadGL() {
+  if (window.NovaUI.ditherVeil) return Promise.resolve();
+  return glLoad || (glLoad = new Promise((res, rej) => {
     const sc = document.createElement('script');
-    sc.src = 'assets/vendor/electric-logo.js?v=20261020'; sc.onload = res; sc.onerror = rej;
+    sc.src = 'assets/vendor/nova-gl.js?v=20261022'; sc.onload = res; sc.onerror = () => { glLoad = null; rej(); };
     document.head.appendChild(sc);
   }));
 }
@@ -287,7 +290,7 @@ function mountElectric(el) {
   if (el._elogo) return;
   el._elogo = 'loading';
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  loadElectric().then(() => {
+  loadGL().then(() => {
     if (!el.isConnected || !document.body.classList.contains('ui-nova')) { el._elogo = null; return; }
     el._elogo = window.NovaUI.electricLogo(el, {
       color: '#E9DDFF', glowColor: '#8B5CF6', scale: 0.62, speed: reduced ? 0.4 : 2.2,
@@ -321,6 +324,16 @@ function scan() {
     box.className = 'nova-elogo'; box.setAttribute('aria-hidden', 'true');
     c.prepend(box);
   });
+  document.querySelectorAll('.fc-stage-area').forEach(el => {
+    if (el._eborder) return;
+    el._eborder = 'loading';
+    loadGL().then(() => {
+      if (!el.isConnected || !document.body.classList.contains('ui-nova')) { el._eborder = null; return; }
+      const inst = window.NovaUI.electricBorder(el, { color: '#A78BFA', glowColor: '#8B5CF6', borderRadius: 22, strands: 2, chaos: 0.35, spread: 0.45, glow: 0.5, intensity: 0.7, arcs: 0.6 });
+      el._eborder = inst;
+      live.add({ root: el, destroy() { inst.destroy(); el._eborder = null; } });
+    }).catch(() => { el._eborder = null; });
+  });
   document.querySelectorAll('.nova-elogo').forEach(el => {
     if (el._elogo) return;
     mountElectric(el);
@@ -342,4 +355,5 @@ queueScan();
 
 window.NovaUI.bento = bento;
 window.NovaUI.mountElectric = mountElectric;
+window.NovaUI.loadGL = loadGL;
 })();

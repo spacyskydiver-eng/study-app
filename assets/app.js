@@ -49,6 +49,8 @@ const ICON = {
   'check-circle': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
   'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
   'zap': '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+  'mic': '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/>',
+  'arrow-up': '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
   'bug': '<rect width="8" height="14" x="8" y="6" rx="4"/><path d="m19 7-3 2M5 7l3 2M19 19l-3-2M5 19l3-2M20 13h-4M4 13h4M10 4l1 2M14 4l-1 2"/>',
   'cards': '<rect width="16" height="12" x="4" y="7" rx="2"/><path d="M8 3h10a2 2 0 0 1 2 2v8"/>',
   'copy': '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
@@ -88,6 +90,8 @@ const PREFIXED = [];  // ids such as 'book/Alberts 7e/412'
 const hooks = { hydrate: [], boot: [] };
 function viewFor(id) {
   if (SPECIAL[id]) return SPECIAL[id];
+  // Nova mode re-lays out modules, lectures and the home page with its own views
+  if (V && document.body.classList.contains('ui-nova') && window.NovaUI && window.NovaUI.route) { const nv = window.NovaUI.route(id); if (nv) return nv; }
   return PREFIXED.find(p => id.startsWith(p.prefix)) || null;
 }
 const titleOf = id => {
@@ -291,17 +295,15 @@ function setUiMode(mode) {
   document.body.classList.toggle('ui-nova', mode === 'nova');
   store.set('uiMode', mode);
   document.dispatchEvent(new CustomEvent('bv-uimode', { detail: { mode } }));
-  if (mode === 'nova') loadNovaComponents();
+  if (mode === 'nova' && !(window.NovaUI && window.NovaUI.route)) loadNovaComponents(); else relayout();
 }
+// re-render the explorer and the open view for the current interface mode
+function relayout() { if (!V || !$('#explorer')) return; renderExplorer(); renderTabs(); route(); }
 let novaLoading = null;
 function loadNovaComponents() {
   if (novaLoading) return novaLoading;
-  novaLoading = new Promise((resolve) => {
-    const s = document.createElement('script');
-    s.src = 'assets/nova-components.js?v=20261021';
-    s.onload = resolve; s.onerror = resolve;
-    document.head.appendChild(s);
-  });
+  const add = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
+  novaLoading = add('assets/nova-components.js?v=20261022').then(() => add('assets/nova-layout.js?v=20261022')).then(() => add('assets/nova-assistant.js?v=20261022')).then(relayout);
   return novaLoading;
 }
 function openUiModeMenu(anchorEl) {
@@ -315,6 +317,7 @@ function openUiModeMenu(anchorEl) {
 /* ------------------------------------------------------------------ file explorer */
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 function renderExplorer() {
+  if (document.body.classList.contains('ui-nova') && window.NovaUI && window.NovaUI.navigator) { window.NovaUI.navigator($('#explorer')); return; }
   const build = (node, prefix) => {
     const folders = Object.keys(node).filter(k => k !== '__files__').sort(collator.compare);
     const files = (node.__files__ || []).slice().sort((a, b) => collator.compare(a.split('/').pop(), b.split('/').pop()));
@@ -1431,6 +1434,9 @@ window.BV = {
   onBoot(f) { hooks.boot.push(f); },
   refreshTabs() { renderTabs(); if (current.id) setCrumbs(current.id); },
   isNova: () => document.body.classList.contains('ui-nova'),
+  backlinksOf: id => [...(backlinks[id] || [])],
+  currentId: () => current.id,
+  renderExplorer() { renderExplorer(); },
   // Swaps a plain `<span class="books-spinner"></span> Label…` for the Nova Lattice Loader,
   // once it's loaded. A no-op in Classic mode, and a safe no-op if Nova's JS hasn't finished
   // its lazy load yet (the spinner just stays the plain dot, which is a fine fallback).
