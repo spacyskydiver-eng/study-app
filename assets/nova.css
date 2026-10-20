@@ -778,4 +778,4 @@ body.ui-nova .nv-mod-bar { display: flex; align-items: center; gap: 14px; }
 .na-also { color: #A6ACD6; font-size: 13px; }
 .na-jump { background: none; border: 0; padding: 0; color: #C4B5FD; font: inherit; cursor: pointer; border-bottom: 1px dashed rgba(196,181,253,.5); }
 /* keep the map calm behind reading: a darker veil under the text */
-body.ui-nova .view-content.nv-view-lens, body.ui-nova .view-content.nv-view:not(.nv-view-lens) { background: rgba(4, 5, 12, .5); }
+body.ui-nova .view-content.nv-view-lens, body.ui-nova .view-content.nv-view:not(.nv-view-lens) { background: rgba(4, 5, 12, .38); }

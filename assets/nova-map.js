@@ -114,7 +114,8 @@ void main() {
   float glow = pow(1.0 - r, 2.2);
   float core = smoothstep(0.42, 0.0, r);
   vec3 c = vCol * glow + vec3(1.0) * core * (0.45 + vHi * 0.5);
-  o = vec4(c * vA, 0.0);
+  c *= vA;
+  o = vec4(c, max(c.r, max(c.g, c.b)));
 }`;
 const LV = `#version 300 es
 in vec3 aPos; in vec3 aCol; in float aHi;
@@ -124,7 +125,7 @@ void main() { gl_Position = uMVP * vec4(aPos, 1.0); vCol = aCol; vA = uAlpha * m
 const LF = `#version 300 es
 precision mediump float;
 in vec3 vCol; in float vA; out vec4 o;
-void main() { o = vec4(vCol * vA, 0.0); }`;
+void main() { vec3 c = vCol * vA; o = vec4(c, max(c.r, max(c.g, c.b))); }`;
 function program(gl, vs, fs) {
   const mk = (t, s) => { const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh); if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(sh)); return sh; };
   const p = gl.createProgram(); gl.attachShader(p, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
@@ -142,10 +143,10 @@ function mount() {
   const hud = document.createElement('div'); hud.className = 'nmap-hud'; document.body.appendChild(hud);
   const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: true, depth: false });
   M = { host, canvas, hud, gl, data: null, ready: false, mode: 'bg', hi: new Set(), raf: 0, last: 0, t: 0, alive: true,
-    cam: { yaw: 0.6, pitch: 0.18, dist: 900, tx: 0, ty: 0, tz: 0, fov: 0.95 }, goal: null, spin: 0.035, dim: 0.45, dimGoal: 0.45,
+    cam: { yaw: 0.6, pitch: 0.18, dist: 900, tx: 0, ty: 0, tz: 0, fov: 0.95 }, goal: null, spin: 0.035, dim: 0.55, dimGoal: 0.55,
     pointer: { x: -1, y: -1, down: false, moved: 0 }, hover: null, timers: [] };
   M.goal = { ...M.cam };
-  if (!gl) { host.classList.add('no-gl'); return; }
+  if (!gl) { host.classList.add('no-gl'); console.warn('Nova map: WebGL2 is not available in this browser'); return; }
   M.data = buildData();
   M.pProg = program(gl, PV, PF); M.lProg = program(gl, LV, LF);
   const nodes = M.data.nodes, links = M.data.links;
@@ -204,7 +205,7 @@ function bounds() {
 function fitGoal(immediate) {
   const { c, r } = bounds();
   // background: close enough that the notes spread across the screen like a star field
-  Object.assign(M.goal, { tx: c[0], ty: c[1], tz: c[2], dist: r * (M.mode === 'map' ? 2.2 : 1.25), pitch: 0.18 });
+  Object.assign(M.goal, { tx: c[0], ty: c[1], tz: c[2], dist: r * (M.mode === 'map' ? 2.6 : 1.25), pitch: 0.18 });
   if (immediate) Object.assign(M.cam, { tx: M.goal.tx, ty: M.goal.ty, tz: M.goal.tz, dist: M.goal.dist });
 }
 function eye() {
@@ -249,11 +250,11 @@ function draw() {
   const gl = M.gl; if (!gl || !M.data) return;
   gl.viewport(0, 0, M.canvas.width, M.canvas.height);
   gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+  gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ONE, gl.ONE);
   const m = mvp(); M.m = m;
   const any = M.hi.size ? 1 : 0;
   gl.useProgram(M.lProg); gl.bindVertexArray(M.vaoL);
-  gl.uniformMatrix4fv(M.u.l.uMVP, false, m); gl.uniform1f(M.u.l.uAlpha, (M.mode === 'map' ? 0.16 : 0.035) * M.dim / 0.45); gl.uniform1f(M.u.l.uAny, any);
+  gl.uniformMatrix4fv(M.u.l.uMVP, false, m); gl.uniform1f(M.u.l.uAlpha, (M.mode === 'map' ? 0.16 : 0.05) * M.dim / 0.55); gl.uniform1f(M.u.l.uAny, any);
   gl.drawArrays(gl.LINES, 0, M.data.links.length * 2);
   gl.useProgram(M.pProg); gl.bindVertexArray(M.vaoP);
   gl.uniformMatrix4fv(M.u.p.uMVP, false, m); gl.uniform1f(M.u.p.uScale, M.h * M.dpr * 1.6); gl.uniform1f(M.u.p.uTime, M.t); gl.uniform1f(M.u.p.uDim, M.dim); gl.uniform1f(M.u.p.uAny, any);
@@ -300,7 +301,7 @@ function exitMap(silent) {
   M.mode = 'bg'; M.flying = false; resize();
   document.body.classList.remove('nova-map-on');
   M.hud.innerHTML = ''; clearInterval(M.typer);
-  M.dimGoal = 0.45; M.spin = 0.035; M.goal.fov = 0.95;
+  M.dimGoal = 0.55; M.spin = 0.035; M.goal.fov = 0.95;
   setHighlight([]); fitGoal(false);
   document.removeEventListener('keydown', onMapKey, true);
   if (!silent) kick();
@@ -360,8 +361,13 @@ function open(focusId) {
   if (!enterMap()) return;
   const ids = focusId && M.data.index.has(focusId) ? [focusId] : [];
   setHighlight(ids);
-  if (ids.length) { focusGoal(ids); status('You are here · ' + M.data.nodes[M.data.index.get(focusId)].title); }
-  else { fitGoal(false); status('Everything in your notes'); }
+  // pull right out so the whole map is in view first, then glide to where you are
+  fitGoal(false); M.goal.yaw = M.cam.yaw - 0.5;
+  status('Everything in your notes · ' + M.data.nodes.length + ' notes');
+  if (ids.length) {
+    M.timers.forEach(clearTimeout); M.timers = [];
+    M.timers.push(setTimeout(() => { if (!M || M.mode !== 'map') return; focusGoal(ids); M.goal.dist = Math.max(M.goal.dist, 320); status('You are here · ' + M.data.nodes[M.data.index.get(focusId)].title); }, reduced ? 0 : 1600));
+  }
 }
 /** Highlight notes, fly to them, then (optionally) dive into `open` and show it. */
 function flyTo(ids, opts = {}) {
@@ -372,9 +378,9 @@ function flyTo(ids, opts = {}) {
   setHighlight(ids);
   M.flying = true; M.flyTau = 0.55;
   // pull back a little first, then sweep in to the group
-  M.goal.dist = Math.max(M.cam.dist, bounds().r * 1.8);
+  fitGoal(false);
   status(opts.caption ? 'Locating · ' + opts.caption : 'Locating');
-  const t1 = setTimeout(() => { if (!M) return; focusGoal(ids); M.goal.yaw = M.cam.yaw + 0.6; status(opts.caption || 'Found'); }, reduced ? 0 : 450);
+  const t1 = setTimeout(() => { if (!M) return; focusGoal(ids); M.goal.yaw = M.cam.yaw + 0.6; status(opts.caption || 'Found'); }, reduced ? 0 : 1100);
   M.timers.push(t1);
   if (!opts.open) { M.timers.push(setTimeout(() => { if (M) M.flying = false; }, 1800)); return; }
   const dwell = opts.dwell ?? 1500;
@@ -385,13 +391,13 @@ function flyTo(ids, opts = {}) {
     M.flyTau = 0.35;
     document.body.classList.add('nova-map-dive');
     status('Opening · ' + (n ? n.title : ''));
-  }, (reduced ? 0 : 450) + dwell));
+  }, (reduced ? 0 : 1100) + dwell));
   M.timers.push(setTimeout(() => {
     if (!M) return;
     B.go(opts.open, opts.heading || null);
     document.body.classList.remove('nova-map-dive');
     exitMap();
-  }, (reduced ? 0 : 450) + dwell + 850));
+  }, (reduced ? 0 : 1100) + dwell + 850));
 }
 /** Rush through the map (no node to aim at), then run `then`. Used for opening a book page. */
 function warp(opts = {}) {
