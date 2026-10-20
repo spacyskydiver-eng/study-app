@@ -196,6 +196,36 @@ const MODULE_WORDS = {
   'Cell Biology and Physiology': ['cell', 'physiology', 'cells'],
   'Professional Skills for Biosciences': ['skills', 'professional'],
 };
+/* is this a "go and research X in my books" request? Returns the topic, or null.
+   Loose on purpose: typos, "can you", "for me", "in the textbooks" anywhere. Navigation
+   ("open the book", "find lecture 8", "show me my notes on X") and mail/calendar stay out. */
+const BOOKISH = ['book', 'books', 'textbook', 'textbooks', 'library', 'alberts', 'lehninger', 'klug'];
+const INFO = '(?:info(?:rmation)?|stuff|everything|anything|details?|sections?|pages?|bits|content|material|explanations?|facts|more)';
+function researchTopic(q) {
+  let s = clean(q);
+  const w = s.split(' ');
+  if (w[0] && (near(w[0], 'research') || near(w[0], 'reasearch'))) { w[0] = 'research'; s = w.join(' '); }
+  if (/\b(e-?mails?|inbox|outlook|calendar|timetable|diary|to-?do|flag(ged)?)\b/.test(s)) return null;
+  if (/\b(lecture|lec|practical|seminar|workshop|week)\s?\d/.test(s)) return null;
+  const bookish = w.some(x => BOOKISH.some(t => near(x, t)));
+  let t = s.replace(/^(?:(?:hey|ok|okay|so|right|yo)\s+)?(?:(?:nova|jarvis)\s+)?(?:please\s+)?(?:(?:can|could|would|will) you\s+|i (?:want|need) you to\s+|help me\s+|i want to\s+|i need to\s+|lets?\s+)?(?:please\s+)?/, '');
+  t = t.replace(/\b(?:in|from|through|using|across|with) (?:all )?(?:of )?(?:the |my |our )?(?:text ?books?|books?|library|alberts|lehninger|klug)\b/g, ' ')
+       .replace(/\b(?:the |my |our )?(?:text ?books?|books?|library)\b/g, ' ').replace(/\b(?:please|for me|thanks|thank you|quickly)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  const strong = new RegExp(`^(?:research|look (?:up|into)|lookup|search(?: up)?(?: (?:for|on|about))?|read (?:up )?(?:on|about)|tell me(?: everything| more)? (?:about|on)|teach me(?: about)?|dig (?:up|into)(?: ${INFO})?(?: (?:on|about))?|what (?:do|does)(?: they| it)? say (?:on|about)|explore)\\s+`);
+  const soft = new RegExp(`^(?:find|get|pull(?: up| out)?|give|grab|fetch|show)(?: me)?(?: out)?(?: (?:some|all|any|the best|the|more|good))? ${INFO}(?: (?:on|about|for|regarding|re))?\\s+`);
+  const m = t.match(strong) || t.match(soft);
+  let topic;
+  if (m) topic = t.slice(m[0].length);
+  else if (bookish) {
+    // "what do the books say about X", "X textbooks", "find X in the books"
+    if (/^(?:open|show|go|take|bring|load|launch)\b/.test(t) && !/\b(?:on|about)\b/.test(t)) return null;
+    topic = t.replace(/^(?:find|get|show|pull up|look for|what do(?:es)?|what)\s+(?:me\s+)?/, '').replace(/^(?:the |my )?(?:text ?books?|books?|library)\s+(?:say\s+)?/, '');
+  } else return null;
+  topic = topic.replace(/^(?:on|about|for|regarding|into|what|the topic of)\s+/, '').replace(/\b(?:text ?books?|books?|library)\b/g, ' ').replace(/\s+(?:now|pls|plz)$/, '').replace(/\s+/g, ' ').trim();
+  if (!bookish && /\b(?:my )?(?:notes?|flashcards?|key terms?|module)\b/.test(topic)) return null;
+  if (!topic || topic.length < 3 || /^\d+$/.test(topic) || /^(?:it|that|this|them)$/.test(topic)) return null;
+  return topic;
+}
 function navIntent(q) {
   const s = clean(q), words = s.split(' ');
   const has = list => words.some(w => list.some(t => near(w, t)));
@@ -398,7 +428,8 @@ async function ask(q, ctx = {}) {
     // mail and calendar questions (and anything asked from the Mail / Calendar pages) go to Jarvis
     const lq = clean(q);
     // "find information on X", "research X", "what do the textbooks say about X": research mode
-    const rq = q.match(/^\s*(?:please\s+)?(?:can you\s+)?(?:research|look up|find (?:me )?(?:some |all )?(?:info(?:rmation)?|stuff|everything|the best (?:info(?:rmation)?|stuff)|sections?)(?: in the (?:text)?books)? (?:on|about|for)|search (?:the |my )?(?:text)?books (?:for|on|about)|what do (?:the|my) (?:text)?books say (?:on|about))\s+(.{2,120}?)\s*[?.!]*$/i);
+    const topic = !ctx.emailId ? researchTopic(q) : null;
+    const rq = topic ? [q, topic] : null;
     if (rq && N.research && B.books) {
       a.innerHTML = `<p>Pulling the best sections on <strong>${esc(rq[1])}</strong> out of your textbooks.</p>`;
       st.history.push({ q, a: 'Researched ' + rq[1] + ' in the textbooks.' });
