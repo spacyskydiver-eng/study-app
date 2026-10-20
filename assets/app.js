@@ -1462,7 +1462,9 @@ window.BV = {
    the tab wakes up, so a sleeping laptop still locks. */
 function watchSession() {
   const exp = +(((document.cookie.match(/(?:^|;\s*)site_exp=(\d+)/) || [])[1]) || 0);
-  if (!exp) return;
+  // no session cookie means this is a saved copy of the page: reload once so the server asks for the PIN
+  if (!exp) { try { if (!sessionStorage.getItem('bv-pin-reload')) { sessionStorage.setItem('bv-pin-reload', '1'); location.reload(); } } catch (e) { /* storage blocked */ } return; }
+  try { sessionStorage.removeItem('bv-pin-reload'); } catch (e) { /* storage blocked */ }
   const check = () => { if (Date.now() >= exp) location.reload(); };
   setTimeout(check, Math.max(1000, exp - Date.now() + 1000));
   setInterval(check, 30000);

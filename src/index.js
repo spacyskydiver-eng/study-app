@@ -600,7 +600,12 @@ export default {
     if (tok && url.pathname === `/outbox/${tok}.rss`) return outboxFeed(env, url);
     if (await validSession(request, env)) {
       if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || url.pathname === "/api/jarvis") return handleMs(request, env, url);
-      return env.ASSETS.fetch(request);
+      // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
+      const res = await env.ASSETS.fetch(request);
+      if (!(res.headers.get("content-type") || "").includes("text/html")) return res;
+      const out = new Response(res.body, res);
+      out.headers.set("Cache-Control", "private, no-store");
+      return out;
     }
     return htmlResponse(loginPage(), 401);
   },
