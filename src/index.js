@@ -357,6 +357,8 @@ async function handleSyncEmail(message, env) {
   await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('last', ?, ?)").bind(String(data.type || ""), now).run();
 }
 // what the site's /api/ms/* endpoints return when the data comes from the flows
+// Outlook connector times are UTC without a zone marker; add Z so browsers don't read them as local
+const utc = v => { v = String(v || ""); return /T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(v) ? v.replace(/\.\d+$/, "") + "Z" : v; };
 const pick = (o, ...keys) => { for (const k of keys) { const v = k.split(".").reduce((x, y) => (x == null ? x : x[y]), o); if (v != null && v !== "") return v; } return ""; };
 async function syncedApi(env, url) {
   await syncTables(env);
@@ -377,7 +379,7 @@ async function syncedApi(env, url) {
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end = start.getTime() + days * 86400000;
     const evs = (row ? JSON.parse(row.v) : []).map(e => ({
-      subject: pick(e, "subject", "Subject"), start: String(pick(e, "start", "start.dateTime", "Start")), end: String(pick(e, "end", "end.dateTime", "End")),
+      subject: pick(e, "subject", "Subject"), start: utc(pick(e, "start", "start.dateTime", "Start")), end: utc(pick(e, "end", "end.dateTime", "End")),
       allDay: !!pick(e, "isAllDay", "IsAllDay"), location: String(pick(e, "location", "location.displayName", "Location")), link: pick(e, "webLink", "WebLink") || "https://outlook.office.com/calendar/",
     })).filter(e => { const t = Date.parse(e.start); return t >= start.getTime() - 86400000 && t < end; }).sort((a, b) => a.start.localeCompare(b.start));
     return json({ events: evs });
