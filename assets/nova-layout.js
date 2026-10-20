@@ -180,11 +180,16 @@ async function outlookSection(el) {
   const st = await msGet('/api/ms/status');
   if (!st || st.notConfigured || !el.isConnected) return;     // not set up on this site: stay hidden
   el.hidden = false;
+  if (!st.connected && st.source === 'flow') {
+    el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Waiting for the first sync</b><small>Your calendar and emails appear here once the Power Automate flows send their first update.</small></div></div>`;
+    return;
+  }
   if (!st.connected) {
     el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Connect your Outlook</b><small>Show your calendar and latest emails here, and let the assistant answer “what’s on tonight?”</small></div><a class="nv-mapbtn" href="/ms/connect">${icon('link')}<span>Connect</span></a></div>`;
     return;
   }
-  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span>${esc(st.account || '')}</span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-kicker">Calendar</div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-kicker">Inbox</div><div class="nv-ms-list">Loading…</div></div></div>`;
+  const synced = st.lastSync ? ' · updated ' + new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span>${esc((st.account || '') + synced)}</span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-kicker">Calendar</div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-kicker">Inbox</div><div class="nv-ms-list">Loading…</div></div></div>`;
   const [cal, mail] = await Promise.all([msGet('/api/ms/calendar?days=2'), msGet('/api/ms/mail')]);
   if (!el.isConnected) return;
   const today = dayKey(new Date()), tomorrow = dayKey(new Date(Date.now() + 864e5));

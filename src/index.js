@@ -233,6 +233,7 @@ function msPage(title, text) {
 async function handleMs(request, env, url) {
   const p = url.pathname;
   if (!env.MS_CLIENT_ID || !env.MS_CLIENT_SECRET) {
+    if (p.startsWith("/api/") && env.SYNC_TOKEN) return syncedApi(env, url);
     if (p.startsWith("/api/")) return json({ notConfigured: true });
     return msPage("Outlook is not set up yet", "The Microsoft app details (MS_CLIENT_ID and MS_CLIENT_SECRET) have not been added to this site.");
   }
@@ -285,7 +286,89 @@ async function handleMs(request, env, url) {
   return json({ error: "not found" }, 404);
 }
 
+
+/* ------------------------------------------------------------------ Power Automate sync by email
+   UEA blocks third-party apps, so two Power Automate flows email the data instead:
+     - on each new email: a SYNC mail item; every 30 minutes: a SYNC calendar snapshot
+   Mail sent to sync@<domain> reaches this worker through Cloudflare Email Routing. The payload is
+   base64 JSON between [[SYNC: and :SYNC]] (base64 survives HTML and quoted-printable untouched).
+   Only accepted when the sender matches SYNC_FROM and the subject carries SYNC_TOKEN. */
+function qpDecode(s) { return s.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/gi, (m, h) => String.fromCharCode(parseInt(h, 16))); }
+function b64Text(s) { try { const bin = atob(s.replace(/[^A-Za-z0-9+/=]/g, "")); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); } catch (e) { return ""; } }
+function mimeTexts(raw) {
+  const out = [raw];
+  const bounds = [...raw.matchAll(/boundary="?([^";\r\n]+)"?/gi)].map(m => m[1]);
+  for (const b of bounds) {
+    for (const part of raw.split("--" + b)) {
+      const cut = part.search(/\r?\n\r?\n/); if (cut < 0) continue;
+      const head = part.slice(0, cut), body = part.slice(cut).trim();
+      const cte = (head.match(/content-transfer-encoding:\s*([\w-]+)/i) || [])[1] || "";
+      if (/base64/i.test(cte)) out.push(b64Text(body));
+      else if (/quoted-printable/i.test(cte)) out.push(qpDecode(body));
+      else out.push(body);
+    }
+  }
+  return out;
+}
+function syncPayload(raw) {
+  for (const t of mimeTexts(raw)) {
+    const m = t.replace(/<[^>]*>/g, "").match(/\[\[SYNC:([\s\S]*?):SYNC\]\]/);
+    if (m) { try { return JSON.parse(b64Text(m[1].replace(/&#61;|&#x3d;/gi, "="))); } catch (e) { /* try the next part */ } }
+  }
+  return null;
+}
+async function syncTables(env) {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS sync_mail (id TEXT PRIMARY KEY, subject TEXT, sender TEXT, received TEXT, preview TEXT, link TEXT, added INTEGER)").run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS sync_state (k TEXT PRIMARY KEY, v TEXT, at INTEGER)").run();
+}
+async function handleSyncEmail(message, env) {
+  const from = String(message.from || "").toLowerCase();
+  const want = String(env.SYNC_FROM || "").toLowerCase();
+  const subject = message.headers.get("subject") || "";
+  if (!want || from !== want || !env.SYNC_TOKEN || !subject.includes(env.SYNC_TOKEN)) { message.setReject("Not accepted"); return; }
+  const raw = await new Response(message.raw).text();
+  const data = syncPayload(raw);
+  if (!data) return;
+  await syncTables(env);
+  const now = Date.now();
+  if (data.type === "mail") {
+    const id = String(data.id || data.received + data.subject).slice(0, 300);
+    await env.DB.prepare("INSERT OR REPLACE INTO sync_mail (id, subject, sender, received, preview, link, added) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .bind(id, String(data.subject || ""), String(data.from || ""), String(data.received || ""), String(data.preview || "").slice(0, 400), String(data.link || ""), now).run();
+    await env.DB.prepare("DELETE FROM sync_mail WHERE id NOT IN (SELECT id FROM sync_mail ORDER BY received DESC LIMIT 60)").run();
+  } else if (data.type === "calendar") {
+    await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('calendar', ?, ?)").bind(JSON.stringify(data.events || []), now).run();
+  }
+  await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('last', ?, ?)").bind(String(data.type || ""), now).run();
+}
+// what the site's /api/ms/* endpoints return when the data comes from the flows
+const pick = (o, ...keys) => { for (const k of keys) { const v = k.split(".").reduce((x, y) => (x == null ? x : x[y]), o); if (v != null && v !== "") return v; } return ""; };
+async function syncedApi(env, url) {
+  await syncTables(env);
+  const last = await env.DB.prepare("SELECT at FROM sync_state WHERE k = 'last'").first();
+  const p = url.pathname;
+  if (p === "/api/ms/status") return json({ connected: !!last, account: last ? "via Power Automate" : "", source: "flow", lastSync: last ? last.at : 0 });
+  if (!last) return json({ notConnected: true });
+  if (p === "/api/ms/mail") {
+    const rows = await env.DB.prepare("SELECT subject, sender, received, preview, link FROM sync_mail ORDER BY received DESC LIMIT 15").all();
+    return json({ messages: (rows.results || []).map(r => ({ subject: r.subject, from: r.sender, received: r.received, preview: r.preview, unread: Date.now() - Date.parse(r.received) < 86400000, link: r.link || "https://outlook.office.com/mail/" })) });
+  }
+  if (p === "/api/ms/calendar") {
+    const row = await env.DB.prepare("SELECT v FROM sync_state WHERE k = 'calendar'").first();
+    const days = Math.min(14, Math.max(1, Number(url.searchParams.get("days")) || 2));
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const end = start.getTime() + days * 86400000;
+    const evs = (row ? JSON.parse(row.v) : []).map(e => ({
+      subject: pick(e, "subject", "Subject"), start: String(pick(e, "start", "start.dateTime", "Start")), end: String(pick(e, "end", "end.dateTime", "End")),
+      allDay: !!pick(e, "isAllDay", "IsAllDay"), location: String(pick(e, "location", "location.displayName", "Location")), link: pick(e, "webLink", "WebLink") || "https://outlook.office.com/calendar/",
+    })).filter(e => { const t = Date.parse(e.start); return t >= start.getTime() - 86400000 && t < end; }).sort((a, b) => a.start.localeCompare(b.start));
+    return json({ events: evs });
+  }
+  return json({ error: "not found" }, 404);
+}
+
 export default {
+  async email(message, env) { return handleSyncEmail(message, env); },
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/pin" && request.method === "POST") return handlePinPost(request, env);
