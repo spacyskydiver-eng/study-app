@@ -1,5 +1,7 @@
 /* Nova assistant: the AI helper rebuilt around a Strands orb (React Bits).
-   - an orb sits docked in the corner of every Nova page; click it (or highlight text and press Ask)
+   - an orb sits docked in the corner of every Nova page; click it or press Ctrl J
+   - closing only hides it: the chat is kept until "New chat"
+   - "show me / which lecture / open … in the book" questions drive the neural map (nova-map.js)
    - a conversation sheet slides in with a large orb at the top that reacts to what is happening:
      it drifts when idle, stirs when hovered, "listens" while you talk to it, churns while the answer
      is being worked out, and speaks in time with the answer as it types itself out
@@ -13,7 +15,7 @@ const B = window.BV;
 const { icon, esc, $, $$, h, store } = B;
 const N = window.NovaUI;
 
-let dock = null, dockOrb = null, sheet = null, orb = null, state = null;
+let dock = null, sheet = null, orb = null, state = null;
 
 /* ---------------------------------------------------------------- context from what is on screen */
 function clip(s, n) { s = String(s || '').replace(/\n{3,}/g, '\n\n').trim(); return s.length <= n ? s : s.slice(0, n) + '…'; }
@@ -65,90 +67,173 @@ function setMood(mood) {
   else if (mood === 'idle' || mood === 'error') orb.set({ listening: false, level: undefined, energy: mood === 'error' ? 0.2 : 0.5, speed: 1 });
 }
 
-/* ---------------------------------------------------------------- dock */
+/* ---------------------------------------------------------------- dock (CSS only: no WebGL running all the time) */
 function mountDock() {
   if (dock || !B.isNova()) return;
-  dock = h(`<button class="na-dock" title="Ask the assistant" aria-label="Open the assistant"><span class="na-dock-orb"></span></button>`);
+  dock = h(`<button class="na-dock" title="Ask the assistant (Ctrl J)" aria-label="Open the assistant"><span class="na-dock-orb"><i></i></span></button>`);
   document.body.appendChild(dock);
   dock.addEventListener('click', () => open());
-  N.loadGL().then(() => {
-    if (!dock || !N.strands) return;
-    dockOrb = N.strands($('.na-dock-orb', dock), { energy: 0.45, glassSize: 1.15, intro: true, interactive: true, clickPulse: true, maxDevicePixelRatio: 2 });
-  }).catch(() => {});
 }
-function unmountDock() {
-  if (dockOrb) { dockOrb.destroy(); dockOrb = null; }
-  if (dock) { dock.remove(); dock = null; }
-}
+function unmountDock() { if (dock) { dock.remove(); dock = null; } }
 
-/* ---------------------------------------------------------------- sheet */
-function suggestionsFor(c) {
-  if (c.fromSelection) return B.ask.chipsFor(c.selection);
-  if (!c.ctx) return ['What should I focus on for the exam?', 'Quiz me on this module', 'Explain the hardest idea here'];
-  return [`Summarise “${clip(c.ctx.note.title, 48)}”`, 'Explain this simply', 'What would an exam ask here?', 'Give me an example'];
+/* ---------------------------------------------------------------- sheet: built once, hidden and shown, so the chat survives closing */
+const SUGGEST = ['Which lecture covers Okazaki fragments?', 'Show me where PCR is explained', 'Explain this page simply', 'What would an exam ask here?'];
+function whereText() {
+  const pc = pageContext();
+  if (!pc) return 'Your notes and textbooks';
+  const n = pc.ctx.note;
+  return [n.lecture && n.lecture !== n.title ? n.lecture : '', n.title].filter(Boolean).join(' › ');
 }
-function open(opts = {}) {
-  if (!B.isNova()) return;
-  const fromSelection = !!opts.selection && !!opts.ctx;
-  const page = fromSelection ? null : pageContext();
-  const c = fromSelection ? { fromSelection, selection: opts.selection, ctx: opts.ctx, noteId: opts.noteId } : { fromSelection: false, selection: page ? page.selection : 'General question', ctx: page ? page.ctx : null, noteId: page ? page.noteId : null };
-  if (sheet && state && !fromSelection && state.c.noteId === c.noteId) { sheet.classList.add('is-open'); $('.na-input', sheet).focus(); return; }
-  close(true);
-  state = { c, history: [], busy: false, rec: null };
-  const where = c.ctx ? [c.ctx.note.lecture && c.ctx.note.lecture !== c.ctx.note.title ? c.ctx.note.lecture : '', c.ctx.note.title].filter(Boolean).join(' › ') : 'Your notes and textbooks';
+function build() {
+  state = { history: [], busy: false, rec: null };
   sheet = h(`<div class="na-sheet" role="dialog" aria-label="Assistant" data-mood="idle">
     <div class="na-top">
-      <button class="na-x" title="Close (Esc)">${icon('x')}</button>
+      <div class="na-bar">
+        <button class="na-new" title="Start a new chat">${icon('plus')}<span>New chat</span></button>
+        <button class="na-x" title="Close (Esc)">${icon('x')}</button>
+      </div>
       <div class="na-orb"></div>
       <div class="na-status">Ready</div>
-      <div class="na-where">${icon(c.fromSelection ? 'quote' : 'book-open')}<span>${esc(where)}</span></div>
-      ${c.fromSelection ? `<blockquote class="na-sel">${esc(clip(c.selection, 280))}</blockquote>` : ''}
+      <div class="na-where">${icon('book-open')}<span></span></div>
     </div>
     <div class="na-thread" aria-live="polite"></div>
-    <div class="na-chips">${suggestionsFor(c).map(s => `<button class="na-chip">${esc(s)}</button>`).join('')}</div>
+    <div class="na-chips">${SUGGEST.map(s => `<button class="na-chip">${esc(s)}</button>`).join('')}</div>
     <form class="na-form">
       <button type="button" class="na-mic" title="Speak your question">${icon('mic')}</button>
-      <input class="na-input" type="text" maxlength="400" autocomplete="off" placeholder="${c.fromSelection ? 'Ask about the highlighted text…' : 'Ask about what you are reading…'}">
+      <input class="na-input" type="text" maxlength="400" autocomplete="off" placeholder="Ask, or say “show me…”">
       <button class="na-send" type="submit" title="Ask">${icon('arrow-up')}</button>
     </form>
-    <div class="na-foot">Answers come from this note and your textbooks</div>
+    <div class="na-foot">Answers come from your notes and textbooks · “show me” opens it on the map</div>
   </div>`);
   document.body.appendChild(sheet);
-  if (dock) dock.classList.add('is-hidden');
-  requestAnimationFrame(() => sheet && sheet.classList.add('is-open'));
   B.wireLinks(sheet);
-  N.loadGL().then(() => {
-    if (!sheet || !N.strands) return;
-    orb = N.strands($('.na-orb', sheet), { energy: 0.5, glassSize: 1.05, intro: true });
-  }).catch(() => {});
   const input = $('.na-input', sheet);
-  $('.na-x', sheet).onclick = () => close();
+  // pointerdown so a busy frame never swallows the close
+  $('.na-x', sheet).addEventListener('pointerdown', e => { e.preventDefault(); close(); });
+  $('.na-new', sheet).addEventListener('click', newChat);
   $('.na-chips', sheet).addEventListener('click', e => { const b = e.target.closest('.na-chip'); if (b) ask(b.textContent); });
   $('.na-form', sheet).addEventListener('submit', e => { e.preventDefault(); ask(input.value); });
   $('.na-mic', sheet).addEventListener('click', toggleMic);
   if (!SR()) $('.na-mic', sheet).hidden = true;
-  document.addEventListener('keydown', onKey, true);
-  setTimeout(() => { if (sheet && !B.isMobile()) input.focus({ preventScroll: true }); }, 60);
 }
-function onKey(e) { if (e.key === 'Escape' && sheet) { e.stopPropagation(); close(); } }
-function close(instant) {
+function open() {
+  if (!B.isNova()) return;
+  if (!sheet) build();
+  $('.na-where span', sheet).textContent = whereText();
+  sheet.hidden = false;
+  requestAnimationFrame(() => sheet && sheet.classList.add('is-open'));
+  if (dock) dock.classList.add('is-hidden');
+  if (!orb) N.loadGL().then(() => {
+    if (!sheet || orb || !sheet.classList.contains('is-open') || !N.strands) return;
+    orb = N.strands($('.na-orb', sheet), { energy: 0.5, glassSize: 1.05, intro: true });
+    setMood(sheet.dataset.mood || 'idle');
+  }).catch(() => {});
+  document.addEventListener('keydown', onKey, true);
+  setTimeout(() => { if (sheet && !B.isMobile()) $('.na-input', sheet).focus({ preventScroll: true }); }, 60);
+}
+function onKey(e) { if (e.key === 'Escape' && sheet && sheet.classList.contains('is-open')) { e.stopPropagation(); close(); } }
+/** Hide the sheet. The conversation stays; only "New chat" clears it. */
+function close() {
   stopMic();
   document.removeEventListener('keydown', onKey, true);
-  if (orb) { orb.destroy(); orb = null; }
-  if (sheet) {
-    const s = sheet; sheet = null;
-    if (instant) s.remove(); else { s.classList.remove('is-open'); setTimeout(() => s.remove(), 320); }
-  }
-  if (state && state.typer) cancelAnimationFrame(state.typer);
-  state = null;
+  if (orb) { orb.destroy(); orb = null; }       // no WebGL running while it is closed
+  if (sheet) sheet.classList.remove('is-open');
   if (dock) dock.classList.remove('is-hidden');
+}
+function newChat() {
+  if (!sheet) return;
+  if (state && state.typer) cancelAnimationFrame(state.typer);
+  stopMic();
+  state = { history: [], busy: false, rec: null };
+  $('.na-thread', sheet).innerHTML = '';
+  $('.na-chips', sheet).hidden = false;
+  sheet.classList.remove('has-thread');
+  setMood('idle');
+  $('.na-input', sheet).focus();
+}
+function destroy() {
+  close();
+  if (sheet) { sheet.remove(); sheet = null; }
+  state = null;
+}
+
+/* ---------------------------------------------------------------- "show me": find notes and drive the map */
+const STOP = new Set(('show me the a an of in on to which what where whereabouts is are was does do did lecture lectures topic topics note notes about talk talks ' +
+  'talking covers cover covered explain explained explains section sections module bring up open take find go for that this it please can could you i ' +
+  'want see look at from book books textbook textbooks library page pages pull mentioned mention mentions discuss discusses discussed my our there any ' +
+  'tell where\'s whats what\'s with be been part parts').split(' '));
+const tokens = s => s.toLowerCase().replace(/[^\p{L}\p{N}\s'-]/gu, ' ').split(/\s+/).map(w => w.replace(/^'+|'+$/g, '')).filter(w => w.length > 1 && !STOP.has(w));
+function navIntent(q) {
+  const s = q.toLowerCase();
+  if (!/\b(show|open|take me|bring up|pull up|find|where|which|go to|look up|navigate)\b/.test(s)) return null;
+  if (/\b(book|books|textbook|textbooks|library|alberts|klug|genetics in medicine)\b/.test(s)) return { kind: 'book' };
+  const lectureish = /\b(lecture|lectures|topic|topics|note|notes|section|module|practical|seminar)\b/.test(s);
+  if (lectureish || /^\s*(show|open|bring up|pull up|take me|go to|find)\b/.test(s)) return { kind: 'note', lectureish, terms: tokens(q) };
+  return null;
+}
+function searchNotes(terms, { noTerms } = {}) {
+  if (!terms.length) return [];
+  const phrase = terms.join(' ');
+  const res = [];
+  for (const [id, n] of Object.entries(B.V.notes)) {
+    const p = n.props || {};
+    const isTerm = id.startsWith('02 Key Terms/');
+    if (noTerms && isTerm) continue;
+    if (!['topic', 'hub', 'key term', 'subject hub'].includes(p.type)) continue;
+    const title = (n.title + ' ' + ((p.aliases || []).join(' '))).toLowerCase(), text = (n.text || '').toLowerCase();
+    let score = 0, hits = 0;
+    for (const t of terms) {
+      const inTitle = title.includes(t);
+      const re = new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      const c = Math.min(6, (text.match(re) || []).length);
+      if (inTitle) score += 8; score += c; if (inTitle || c) hits++;
+    }
+    if (!hits) continue;
+    if (terms.length > 1) { if (title.includes(phrase)) score += 25; else if (text.includes(phrase)) score += 8; }
+    score *= hits / terms.length;
+    if (p.type === 'topic') score *= 1.15;
+    res.push({ id, score, isTerm, type: p.type });
+  }
+  return res.sort((a, b) => b.score - a.score);
+}
+function planNote(intent) {
+  const L = N.model ? N.model() : null;
+  const hits = searchNotes(intent.terms, { noTerms: intent.lectureish });
+  if (!hits.length || !L) return null;
+  // add up topic hits per lecture and pick the lecture that talks about it most
+  const byHub = new Map();
+  for (const r of hits.slice(0, 40)) {
+    const hub = L.hubs[r.id] ? r.id : L.topicHub[r.id];
+    if (!hub) continue;
+    const e = byHub.get(hub) || { hub, score: 0, topics: [] };
+    e.score += r.score; if (r.id !== hub) e.topics.push(r); byHub.set(hub, e);
+  }
+  const ranked = [...byHub.values()].sort((a, b) => b.score - a.score);
+  const top = hits[0];
+  if (!ranked.length || (top.isTerm && !intent.lectureish && top.score > ranked[0].score)) {
+    return { open: top.id, ids: [top.id, ...hits.slice(1, 5).map(h => h.id)], title: B.V.notes[top.id].title, also: [] };
+  }
+  const best = ranked[0];
+  const topic = best.topics[0];
+  const hubTitle = L.hubs[best.hub].title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, '');
+  return {
+    open: topic ? topic.id : best.hub,
+    ids: [topic ? topic.id : best.hub, best.hub, ...best.topics.slice(1, 5).map(t => t.id)],
+    title: hubTitle + (topic ? ' › ' + B.V.notes[topic.id].title.replace(/^\d+\s+/, '') : ''),
+    module: L.hubs[best.hub].module ? L.hubs[best.hub].module.title : '',
+    also: ranked.slice(1, 3).map(r => ({ id: r.topics[0] ? r.topics[0].id : r.hub, label: L.hubs[r.hub].title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, '') })),
+  };
+}
+function takeControl(fn) {
+  // hide the chat (it is kept) and let the map take over
+  setTimeout(() => { close(); fn(); }, 650);
 }
 
 /* ---------------------------------------------------------------- asking */
 async function ask(q) {
   q = String(q || '').trim();
   if (!q || !state || state.busy) return;
-  const st = state, c = st.c;
+  const st = state;
   st.busy = true;
   const input = $('.na-input', sheet); input.value = '';
   $('.na-chips', sheet).hidden = true;
@@ -158,29 +243,46 @@ async function ask(q) {
   sheet.classList.add('has-thread');
   setMood('thinking');
   const a = $('.na-a', turn);
+  const intent = navIntent(q);
   try {
-    const body = c.ctx
-      ? { question: q, selection: c.selection, ...c.ctx, history: st.history.slice(-4) }
-      : { question: q, selection: c.selection, note: { id: '', title: 'Biomedicine notes', subject: '', lecture: '', summary: '' }, section: { heading: '', text: '' }, block: '', history: st.history.slice(-4) };
+    if (intent && intent.kind === 'note') {
+      const plan = planNote(intent);
+      if (plan) {
+        a.innerHTML = `<p>Bringing up <strong>${esc(plan.title)}</strong>${plan.module ? ` in ${esc(plan.module)}` : ''}.</p>${plan.also.length ? `<p class="na-also">Also comes up in ${plan.also.map(x => `<button class="na-jump" data-id="${esc(x.id)}">${esc(x.label)}</button>`).join(', ')}.</p>` : ''}`;
+        $$('.na-jump', a).forEach(b => b.onclick = () => takeControl(() => N.map ? N.map.flyTo([b.dataset.id], { open: b.dataset.id, caption: b.textContent }) : B.go(b.dataset.id)));
+        st.history.push({ q, a: 'Opened ' + plan.title });
+        setMood('idle'); st.busy = false;
+        takeControl(() => N.map ? N.map.flyTo(plan.ids, { open: plan.open, caption: plan.title }) : B.go(plan.open));
+        return;
+      }
+    }
+    const pc = pageContext();
+    const body = pc
+      ? { question: q, selection: pc.selection, ...pc.ctx, history: st.history.slice(-4) }
+      : { question: q, selection: 'General question', note: { id: '', title: 'Biomedicine notes', subject: '', lecture: '', summary: '' }, section: { heading: '', text: '' }, block: '', history: st.history.slice(-4) };
     const r = await B.ask.explain(body);
     if (state !== st) return;
     st.history.push({ q, a: r.answer });
-    a.innerHTML = B.ask.linkTerms(B.ask.md(r.answer), c.noteId);
+    a.innerHTML = B.ask.linkTerms(B.ask.md(r.answer), pc ? pc.noteId : null);
     await typeOut(a, st);
     if (state !== st) return;
+    const openBook = s => {
+      const go = () => { store.set('bookHighlight', { book: s.book, page: s.page, text: s.text }); B.go(`book/${s.book}/${s.page}`); };
+      takeControl(() => N.map ? N.map.warp({ caption: `Opening ${s.citation}`, then: go }) : go());
+    };
     if (r.sources.length) {
       const src = h(`<div class="na-sources">${r.sources.slice(0, 4).map((s, i) => `<button class="na-source" data-i="${i}" title="${esc(s.text.slice(0, 200))}">${icon('book-open')}<span>${esc(s.citation)}</span></button>`).join('')}</div>`);
       a.appendChild(src);
-      $$('.na-source', src).forEach(b => b.onclick = () => {
-        const s = r.sources[+b.dataset.i];
-        store.set('bookHighlight', { book: s.book, page: s.page, text: s.text });
-        B.go(`book/${s.book}/${s.page}`, null, true);
-      });
+      $$('.na-source', src).forEach(b => b.onclick = () => openBook(r.sources[+b.dataset.i]));
     }
     const tools = h(`<div class="na-tools"><button class="na-tool" data-copy title="Copy answer">${icon('copy')}</button></div>`);
     a.appendChild(tools);
     $('[data-copy]', tools).onclick = async () => { try { await navigator.clipboard.writeText(r.answer); B.toast('Answer copied'); } catch (e) { B.toast('Copy failed'); } };
     setMood('idle');
+    if (intent && intent.kind === 'book' && r.sources.length) {
+      a.insertAdjacentHTML('beforeend', `<p class="na-also">Opening ${esc(r.sources[0].citation)}…</p>`);
+      openBook(r.sources[0]);
+    }
   } catch (err) {
     if (state !== st) return;
     const api = B.ask.apiBase();
@@ -190,7 +292,7 @@ async function ask(q) {
   }
   st.busy = false;
   thread.scrollTop = thread.scrollHeight;
-  if (!B.isMobile()) input.focus({ preventScroll: true });
+  if (!B.isMobile() && sheet.classList.contains('is-open')) input.focus({ preventScroll: true });
 }
 
 /* type the answer out, with the orb "speaking" in time */
@@ -274,10 +376,10 @@ function stopMic() {
 }
 
 /* ---------------------------------------------------------------- lifecycle */
-document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') mountDock(); else { close(true); unmountDock(); } });
+document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') mountDock(); else { destroy(); unmountDock(); } });
 document.addEventListener('keydown', e => {
   if (!B.isNova() || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'j') return;
-  e.preventDefault(); if (sheet) close(); else open();
+  e.preventDefault(); if (sheet && sheet.classList.contains('is-open')) close(); else open();
 });
 mountDock();
 N.assistant = { open, close };

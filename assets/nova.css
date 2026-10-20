@@ -714,3 +714,68 @@ body.ui-nova .nv-lens > *, body.ui-nova .nv-lens-top > * { min-width: 0; }
 body.ui-nova .nv-lens-hint { margin-left: auto; flex: none; font-size: 11.5px; color: var(--text-faint); white-space: nowrap; }
 body.ui-nova .nv-lens-hint kbd { font: 10.5px var(--font-monospace-theme, monospace); padding: 1px 5px; border-radius: 5px; border: 1px solid rgba(151,125,255,.25); margin-right: 2px; color: var(--text-muted); }
 @media (max-width: 900px) { body.ui-nova .nv-lens-hint { display: none; } }
+
+/* =====================================================================
+   NOVA MAP — the 3D graph as background, and map mode (assets/nova-map.js)
+   ===================================================================== */
+.nova-map canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.nova-map { transition: filter .6s; }
+.nova-map.is-loading canvas { opacity: .6; }
+body.ui-nova #app { transition: opacity .55s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1), filter .55s; }
+body.nova-map-on #app { opacity: 0; transform: scale(.965); filter: blur(6px); pointer-events: none; }
+body.nova-map-on .nova-map { pointer-events: auto; z-index: 2; }
+body.nova-map-on .nova-map::after { background: radial-gradient(80% 70% at 50% 50%, transparent 40%, rgba(4,4,12,.45) 100%); }
+body.nova-map-on .na-dock { opacity: 0; pointer-events: none; }
+body.nova-map-on .nova-map canvas { cursor: grab; }
+body.nova-map-dive .nova-map { filter: brightness(1.6) saturate(1.2); }
+body.nova-map-warp .nova-map { filter: blur(1.5px) brightness(1.8); }
+.nmap-hud { position: fixed; inset: 0; z-index: 3; pointer-events: none; font-family: "Inter", ui-sans-serif, system-ui, sans-serif; color: #E6E8FF; }
+.nmap-hud:empty { display: none; }
+.nmap-top { position: absolute; top: 22px; left: 26px; display: flex; flex-direction: column; gap: 6px; animation: nmap-in .5s cubic-bezier(.22,1,.36,1) both; }
+.nmap-brand { display: flex; align-items: center; gap: 9px; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: #8FE9FF; font-weight: 650; }
+.nmap-brand i { width: 8px; height: 8px; border-radius: 50%; background: #22D3EE; box-shadow: 0 0 12px #22D3EE; animation: nmap-blink 1.6s ease-in-out infinite; }
+.nmap-status { font-size: 22px; font-weight: 650; letter-spacing: -.01em; min-height: 1.3em; text-shadow: 0 0 24px rgba(139,92,246,.6); }
+.nmap-legend { position: absolute; left: 26px; bottom: 26px; display: flex; flex-wrap: wrap; gap: 6px 14px; max-width: 60vw; font-size: 11.5px; color: #A6ACD6; animation: nmap-in .6s .1s cubic-bezier(.22,1,.36,1) both; }
+.nmap-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.nmap-legend i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+.nmap-hint { position: absolute; right: 26px; bottom: 28px; font-size: 11.5px; color: #8B8FBF; animation: nmap-in .6s .15s both; }
+.nmap-exit { position: absolute; top: 22px; right: 26px; pointer-events: auto; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(143,233,255,.35); background: rgba(6,10,24,.6); color: #DFF8FF; font: 600 13px inherit; cursor: pointer; backdrop-filter: blur(8px); animation: nmap-in .5s .05s both; }
+.nmap-exit:hover { border-color: #22D3EE; box-shadow: 0 0 22px -6px #22D3EE; }
+.nmap-exit .svg-icon { width: 15px; height: 15px; }
+.nmap-marks { position: absolute; inset: 0; }
+.nmap-mark { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity .3s; }
+.nmap-mark i { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid rgba(143,233,255,.85); box-shadow: 0 0 18px rgba(34,211,238,.5), inset 0 0 12px rgba(34,211,238,.35); animation: nmap-ring 1.8s ease-out infinite; }
+.nmap-mark i::before, .nmap-mark i::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 1px dashed rgba(143,233,255,.45); animation: nmap-spin 6s linear infinite; }
+.nmap-mark i::after { inset: 8px; border-style: solid; border-color: rgba(255,255,255,.5) transparent; animation-duration: 2.4s; }
+.nmap-mark b { position: absolute; left: 32px; top: -11px; white-space: nowrap; font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 6px; background: rgba(6,10,24,.72); border: 1px solid rgba(143,233,255,.3); color: #E6FBFF; }
+.nmap-mark b::before { content: ''; position: absolute; right: 100%; top: 50%; width: 12px; height: 1px; background: rgba(143,233,255,.6); }
+.nmap-mark.is-main i { width: 60px; height: 60px; left: -30px; top: -30px; border-color: #fff; }
+.nmap-mark.is-main b { font-size: 14px; left: 40px; top: -13px; border-color: rgba(255,255,255,.5); }
+.nmap-tip { position: absolute; left: 0; top: 0; padding: 4px 10px; border-radius: 7px; font-size: 12.5px; background: rgba(6,10,24,.85); border: 1px solid color-mix(in srgb, var(--c, #A78BFA) 60%, transparent); color: #fff; white-space: nowrap; pointer-events: none; }
+@keyframes nmap-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes nmap-blink { 50% { opacity: .35; } }
+@keyframes nmap-ring { 0% { transform: scale(.7); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1.15); opacity: .7; } }
+@keyframes nmap-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { body.ui-nova #app { transition: opacity .2s; } .nmap-mark i, .nmap-mark i::before, .nmap-mark i::after { animation: none; } }
+/* map buttons */
+body.ui-nova .nv-mapbtn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(143,233,255,.3); background: rgba(34,211,238,.07); color: #BDF3FF; font: 600 12px var(--nv-font, inherit); cursor: pointer; flex: none; }
+body.ui-nova .nv-mapbtn:hover { border-color: #22D3EE; box-shadow: 0 0 18px -6px #22D3EE; }
+body.ui-nova .nv-mapbtn .svg-icon { width: 14px; height: 14px; }
+body.ui-nova .nv-mod-bar { display: flex; align-items: center; gap: 14px; }
+/* assistant: header bar, CSS dock orb, nav answers */
+.na-bar { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
+.na-bar .na-x { position: static; }
+.na-new { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; border: 1px solid rgba(151,125,255,.25); background: rgba(151,125,255,.06); color: #C9CCF2; font: 600 12px inherit; cursor: pointer; }
+.na-new:hover { border-color: #A78BFA; color: #fff; }
+.na-new .svg-icon { width: 13px; height: 13px; }
+.na-top { padding-top: 46px; }
+.na-x { z-index: 2; }
+.na-dock { background: none; box-shadow: 0 16px 40px -16px rgba(139,92,246,.9); }
+.na-dock-orb { position: relative; display: block; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), transparent 28%), radial-gradient(circle at 50% 60%, #2a1f5c, #0a0918 72%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), inset 0 -8px 18px rgba(34,211,238,.25); }
+.na-dock-orb i { position: absolute; inset: 22% 8%; border-radius: 50%; background: conic-gradient(from 0deg, #ff6b6b, #ffb347, #fff3c4, #93f1ff, #3569fa, #8b5cf6, #ff6b6b); filter: blur(7px); opacity: .85; transform: scaleY(.38); animation: na-swirl 6s linear infinite; }
+@keyframes na-swirl { to { transform: scaleY(.38) rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .na-dock-orb i { animation: none; } }
+.na-also { color: #A6ACD6; font-size: 13px; }
+.na-jump { background: none; border: 0; padding: 0; color: #C4B5FD; font: inherit; cursor: pointer; border-bottom: 1px dashed rgba(196,181,253,.5); }
+/* keep the map calm behind reading: a darker veil under the text */
+body.ui-nova .view-content.nv-view-lens, body.ui-nova .view-content.nv-view:not(.nv-view-lens) { background: rgba(4, 5, 12, .5); }

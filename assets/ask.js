@@ -51,10 +51,8 @@ function check(delay) {
   clearTimeout(pending);
   pending = setTimeout(() => { const info = selection(); if (info) showFab(info); else hideFab(); }, delay);
 }
-document.addEventListener('mouseup', e => { if (e.target.closest && e.target.closest('.ask-fab, .ask-panel')) return; check(10); });
-document.addEventListener('keyup', e => { if (e.shiftKey || e.key === 'Shift') check(10); });
-document.addEventListener('selectionchange', () => { if (B.isMobile()) check(350); else if (fab && !selection()) hideFab(); });
-document.addEventListener('scroll', hideFab, true);
+// Highlight-to-ask is switched off: questions go through the assistant instead (Nova), so the
+// selection listeners that showed the floating Ask button are no longer attached.
 
 /* ---------- context sent with the question */
 const TOP = /^el-(h1|h2|h3)\b/;

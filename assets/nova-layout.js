@@ -119,7 +119,7 @@ function navPane(root) {
     ${tool('flashcards', 'cards', 'Flashcards')}
     ${tool('exam', 'clipboard-list', 'Exam practice')}
     ${tool('books', 'library', 'Book library')}
-    ${tool('graph', 'graph', 'Graph')}
+    <button class="nv-nav-item" data-navmap>${icon('graph')}<span>Neural map</span></button>
   </nav>`;
   root.onclick = e => {
     const t = e.target.closest('[data-toggle]');
@@ -128,6 +128,7 @@ function navPane(root) {
       const s = new Set(store.get(OPEN_KEY, [])); mod.classList.contains('is-open') ? s.add(t.dataset.toggle) : s.delete(t.dataset.toggle); store.set(OPEN_KEY, [...s]);
       return;
     }
+    if (e.target.closest('[data-navmap]')) { N.map && N.map.open(B.currentId()); return; }
     if (e.target.closest('[data-act-switch]')) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', ctrlKey: true, bubbles: true })); return; }
     const g = e.target.closest('[data-go]');
     if (g) B.go(g.dataset.go);
@@ -246,7 +247,7 @@ function showModule(view, id) {
   view.innerHTML = `<div class="nv-page nv-module" style="--mod:${m.color}">
     <header class="nv-mod-head">
       <div class="nv-mod-text">
-        <button class="nv-back" data-go="${esc(B.V.home)}">${icon('arrow-left')} Home</button>
+        <div class="nv-mod-bar"><button class="nv-back" data-go="${esc(B.V.home)}">${icon('arrow-left')} Home</button><button class="nv-mapbtn" data-map title="See this module on the neural map">${icon('graph')}<span>Map</span></button></div>
         <div class="nv-kicker">${esc(m.semester ? m.semester + ' module' : 'Module')}</div>
         <h1>${esc(m.title)}</h1>
         ${tagline ? `<p class="nv-lede">${esc(tagline)}</p>` : ''}
@@ -257,6 +258,7 @@ function showModule(view, id) {
   </div>`;
   B.hydrate($('.nv-raw', view), id);
   view.onclick = e => {
+    if (e.target.closest('[data-map]')) { N.map && N.map.open(id); return; }
     const g = e.target.closest('[data-go]');
     if (g && !e.target.closest('.nv-raw')) { e.preventDefault(); e.stopPropagation(); B.go(g.dataset.go); }
   };
@@ -333,6 +335,7 @@ function showLens(view, id, heading) {
         <button class="nv-back" data-go="${esc(D.back.id)}" title="${esc(D.back.label)}">${icon('arrow-left')}<span>${esc(D.back.label)}</span></button>
         <div class="nv-lens-name"><span class="nv-kicker">${esc(D.kicker)}</span><b>${esc(D.title)}</b></div>
         <div class="nv-lens-hint">${D.single ? '' : '<kbd>←</kbd><kbd>→</kbd> topics · '}click a link to peek</div>
+        <button class="nv-mapbtn" data-map title="See this on the neural map (M)">${icon('graph')}<span>Map</span></button>
       </div>
       ${D.single ? '' : `<nav class="nv-tabs">${chs.map((c, i) => `<button class="nv-tab" data-ch="${i}" title="${esc(c.title)}"><span>${c.n}</span><em>${esc(c.title)}</em></button>`).join('')}</nav>`}
     </header>
@@ -414,6 +417,7 @@ function showLens(view, id, heading) {
       return;
     }
     if (e.target.closest('[data-peek-close]')) { closePeek(); return; }
+    if (e.target.closest('[data-map]')) { N.map && N.map.open(chs[cur].id); return; }
     if (e.target.closest('[data-peek-open]')) {
       const k = chs.findIndex(c => c.id === peekId);
       const pid = peekId; closePeek();
@@ -436,6 +440,7 @@ function showLens(view, id, heading) {
     if (!alive || (e.target.closest && e.target.closest('input, textarea, select, [contenteditable], .na-sheet, .menu'))) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === 'Escape' && peekId) { closePeek(); return; }
+    if ((e.key === 'm' || e.key === 'M') && N.map && !N.map.isOpen()) { e.preventDefault(); N.map.open(chs[cur].id); return; }
     if (D.single) return;
     if (e.key === 'ArrowRight' && cur < chs.length - 1) { e.preventDefault(); show(cur + 1, 1); }
     else if (e.key === 'ArrowLeft' && cur > 0) { e.preventDefault(); show(cur - 1, -1); }

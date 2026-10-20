@@ -371,8 +371,8 @@ function mountBg() {
   }).catch(() => {});
 }
 function unmountBg() { if (bgInst) { bgInst.destroy(); bgInst = null; } if (bgEl) { bgEl.remove(); bgEl = null; } }
-document.addEventListener('bv-uimode', e => { if (e.detail.mode === 'nova') mountBg(); else unmountBg(); });
-mountBg();
+// (replaced by the 3D map background in nova-map.js; kept callable for testing)
+document.addEventListener('bv-uimode', e => { if (e.detail.mode !== 'nova') unmountBg(); });
 
 window.NovaUI.bento = bento;
 window.NovaUI.mountElectric = mountElectric;
