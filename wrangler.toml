@@ -10,3 +10,7 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "textbook-db"
 database_id = "3d08b552-4bd0-4e1e-b405-74849513ae17"
+
+# Workers AI: the assistant's answers over mail and calendar (/api/jarvis)
+[ai]
+binding = "AI"

@@ -233,7 +233,7 @@ function msPage(title, text) {
 async function handleMs(request, env, url) {
   const p = url.pathname;
   if (!env.MS_CLIENT_ID || !env.MS_CLIENT_SECRET) {
-    if (p.startsWith("/api/") && env.SYNC_TOKEN) return syncedApi(env, url);
+    if (p.startsWith("/api/") && env.SYNC_TOKEN) return syncedApi(env, url, request);
     if (p.startsWith("/api/")) return json({ notConfigured: true });
     return msPage("Outlook is not set up yet", "The Microsoft app details (MS_CLIENT_ID and MS_CLIENT_SECRET) have not been added to this site.");
   }
@@ -347,9 +347,27 @@ function syncPayload(raw) {
   return out.mail.length || out.batchMail || out.events ? out : null;
 }
 async function syncTables(env) {
-  await env.DB.prepare("CREATE TABLE IF NOT EXISTS sync_mail (id TEXT PRIMARY KEY, subject TEXT, sender TEXT, received TEXT, preview TEXT, link TEXT, added INTEGER)").run();
-  await env.DB.prepare("CREATE TABLE IF NOT EXISTS sync_state (k TEXT PRIMARY KEY, v TEXT, at INTEGER)").run();
+  await env.DB.batch([
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS sync_state (k TEXT PRIMARY KEY, v TEXT, at INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS mail2 (id TEXT PRIMARY KEY, subject TEXT, sender TEXT, recips TEXT, cc TEXT, received TEXT, preview TEXT, unread INTEGER, att INTEGER, html TEXT, body TEXT, added INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS ev2 (id TEXT PRIMARY KEY, subject TEXT, start TEXT, finish TEXT, allday INTEGER, location TEXT, organizer TEXT, body TEXT, link TEXT)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS outbox (id TEXT PRIMARY KEY, recips TEXT, cc TEXT, subject TEXT, html TEXT, created INTEGER)"),
+  ]);
 }
+// email / event HTML to readable text (for the assistant, search and previews)
+function htmlToText(html) {
+  let s = String(html || "");
+  if (!/<[a-z!/][^>]*>/i.test(s)) return s.replace(/\r/g, "").trim();
+  s = s.replace(/<(style|script|head|title)[^>]*>[\s\S]*?<\/\1>/gi, "").replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|tr|h\d|table|ul|ol|blockquote)>/gi, "\n").replace(/<li[^>]*>/gi, "\n• ").replace(/<\/t[dh]>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (m, n) => String.fromCodePoint(+n)).replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCodePoint(parseInt(n, 16))).replace(/&amp;/gi, "&");
+  return s.split("\n").map(l => l.replace(/[ \t ͏‌]+/g, " ").trim()).join("\n")
+    .replace(/^Warning: This email is from outside the UEA system[^\n]*\n*/m, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+const truthy = v => v === true || /^true$/i.test(String(v));
+const addrList = v => { if (Array.isArray(v)) return v.map(x => (x && (x.emailAddress ? x.emailAddress.address : x.address)) || String(x)).join("; "); return String(v || "").replace(/^\[\]$/, ""); };
 async function handleSyncEmail(message, env) {
   const from = String(message.from || "").toLowerCase();
   const want = String(env.SYNC_FROM || "").trim().toLowerCase();
@@ -365,49 +383,202 @@ async function handleSyncEmail(message, env) {
   const data = syncPayload(raw);
   if (!data) { await note("no [[SYNC: payload found in the body"); return; }
   const now = Date.now();
-  const putMail = (m, unread) => {
-    const id = String(m.id || (m.received || m.receivedDateTime) + m.subject).slice(0, 300);
-    return env.DB.prepare("INSERT OR REPLACE INTO sync_mail (id, subject, sender, received, preview, link, added) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .bind(id, String(m.subject || ""), String(m.from || ""), String(m.received || m.receivedDateTime || ""), String(m.preview || m.bodyPreview || "").slice(0, 400), unread == null ? "" : unread ? "unread" : "read", now);
-  };
-  const writes = [
-    ...data.mail.map(m => putMail(m, null)),
-    ...(data.batchMail || []).map(m => putMail(m, m.isRead == null ? null : !m.isRead)),
-  ];
-  if (writes.length) await env.DB.batch(writes);
-  await env.DB.prepare("DELETE FROM sync_mail WHERE id NOT IN (SELECT id FROM sync_mail ORDER BY received DESC LIMIT 80)").run();
-  if (data.events) await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('calendar', ?, ?)").bind(JSON.stringify(data.events), now).run();
+  // the flows' own messages (SYNC / SYNC-SEND) are never shown as mail
+  const own = m => /^\s*SYNC\b/.test(String(m.subject || ""));
+  const quick = data.mail.filter(m => !own(m)).map(m => env.DB.prepare(
+    "INSERT INTO mail2 (id, subject, sender, recips, cc, received, preview, unread, att, html, body, added) VALUES (?, ?, ?, '', '', ?, ?, 1, 0, '', '', ?) ON CONFLICT(id) DO NOTHING")
+    .bind(String(m.id || m.received + m.subject).slice(0, 400), String(m.subject || ""), String(m.from || ""), utc(m.received), String(m.preview || "").slice(0, 400), now));
+  const full = (data.batchMail || []).filter(m => !own(m)).map(m => {
+    const html = String(pick(m, "body", "Body") || "");
+    const text = htmlToText(html) || String(pick(m, "preview", "bodyPreview") || "");
+    return env.DB.prepare("INSERT OR REPLACE INTO mail2 (id, subject, sender, recips, cc, received, preview, unread, att, html, body, added) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(String(pick(m, "id", "Id") || pick(m, "received", "receivedDateTime") + m.subject).slice(0, 400), String(pick(m, "subject", "Subject") || ""), String(pick(m, "from", "From") || ""),
+        addrList(pick(m, "to", "toRecipients")), addrList(pick(m, "cc", "ccRecipients")), utc(pick(m, "received", "receivedDateTime")),
+        String(pick(m, "preview", "bodyPreview") || text).replace(/^Warning: This email is from outside the UEA system[^\n]*\s*/, "").slice(0, 400),
+        truthy(pick(m, "isRead", "IsRead")) ? 0 : 1, truthy(pick(m, "att", "hasAttachments")) ? 1 : 0, html.slice(0, 60000), text.slice(0, 30000), now);
+  });
+  for (let i = 0; i < quick.length + full.length; i += 50) await env.DB.batch([...quick, ...full].slice(i, i + 50));
+  await env.DB.prepare("DELETE FROM mail2 WHERE id NOT IN (SELECT id FROM mail2 ORDER BY received DESC LIMIT 400)").run();
+  if (data.events) {
+    const rows = data.events.map(e => env.DB.prepare("INSERT OR REPLACE INTO ev2 (id, subject, start, finish, allday, location, organizer, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(String(pick(e, "id", "Id") || pick(e, "start", "start.dateTime") + pick(e, "subject")).slice(0, 400), String(pick(e, "subject", "Subject") || ""),
+        utc(pick(e, "start", "start.dateTime", "Start")), utc(pick(e, "end", "end.dateTime", "End")), truthy(pick(e, "allDay", "isAllDay", "IsAllDay")) ? 1 : 0,
+        String(pick(e, "location", "location.displayName", "Location") || ""), addrList(pick(e, "organizer", "Organizer")),
+        htmlToText(pick(e, "body", "Body")).replace(/_{8,}[\s\S]*$/, "").slice(0, 4000), String(pick(e, "link", "webLink", "WebLink") || "")));
+    // a calendar snapshot replaces what was stored (deleted / moved events disappear)
+    await env.DB.prepare("DELETE FROM ev2").run();
+    for (let i = 0; i < rows.length; i += 80) await env.DB.batch(rows.slice(i, i + 80));
+  }
   await env.DB.prepare("INSERT OR REPLACE INTO sync_state (k, v, at) VALUES ('last', ?, ?)").bind(data.events ? "calendar" : "mail", now).run();
 }
 // what the site's /api/ms/* endpoints return when the data comes from the flows
 // Outlook connector times are UTC without a zone marker; add Z so browsers don't read them as local
 const utc = v => { v = String(v || ""); return /T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(v) ? v.replace(/\.\d+$/, "") + "Z" : v; };
 const pick = (o, ...keys) => { for (const k of keys) { const v = k.split(".").reduce((x, y) => (x == null ? x : x[y]), o); if (v != null && v !== "") return v; } return ""; };
-async function syncedApi(env, url) {
+const OUTLOOK = "https://outlook.office.com/mail/";
+const mailOut = (r, full) => ({ id: r.id, subject: r.subject, from: r.sender, to: r.recips, cc: r.cc, received: r.received, preview: r.preview, unread: !!r.unread, attachments: !!r.att, link: OUTLOOK, ...(full ? { html: r.html, text: r.body } : {}) });
+const evOut = r => ({ id: r.id, subject: r.subject, start: r.start, end: r.finish, allDay: !!r.allday, location: r.location, organizer: r.organizer, ...(r.body != null ? { description: r.body } : {}), link: r.link || "https://outlook.office.com/calendar/" });
+async function eventsBetween(env, from, to, withBody) {
+  const rows = await env.DB.prepare(`SELECT id, subject, start, finish, allday, location, organizer, ${withBody ? "body," : ""} link FROM ev2 WHERE finish >= ? AND start < ? ORDER BY start`).bind(from, to).all();
+  return (rows.results || []).map(evOut);
+}
+const isoDay = t => new Date(t).toISOString().slice(0, 19) + "Z";
+async function syncedApi(env, url, request) {
   await syncTables(env);
   const last = await env.DB.prepare("SELECT at FROM sync_state WHERE k = 'last'").first();
-  const p = url.pathname;
+  const p = url.pathname, q = url.searchParams;
   if (p === "/api/ms/status") {
     const rej = await env.DB.prepare("SELECT v, at FROM sync_state WHERE k = 'reject'").first();
-    return json({ connected: !!last, account: last ? "via Power Automate" : "", source: "flow", lastSync: last ? last.at : 0, lastReject: rej ? { ...JSON.parse(rej.v), at: rej.at } : null });
+    return json({ connected: !!last, account: last ? "via Power Automate" : "", source: "flow", lastSync: last ? last.at : 0, lastReject: rej ? { ...JSON.parse(rej.v), at: rej.at } : null, ai: !!env.AI, canSend: true });
+  }
+  if (p === "/api/ms/send" && request.method === "POST") return queueSend(env, request, url);
+  if (p === "/api/ms/outbox") {
+    const rows = await env.DB.prepare("SELECT id, recips, subject, created FROM outbox ORDER BY created DESC LIMIT 20").all();
+    return json({ items: rows.results || [] });
   }
   if (!last) return json({ notConnected: true });
   if (p === "/api/ms/mail") {
-    const rows = await env.DB.prepare("SELECT subject, sender, received, preview, link FROM sync_mail ORDER BY received DESC LIMIT 15").all();
-    return json({ messages: (rows.results || []).map(r => ({ subject: r.subject, from: r.sender, received: r.received, preview: r.preview, unread: r.link === "unread" || (r.link === "" && Date.now() - Date.parse(r.received) < 86400000), link: "https://outlook.office.com/mail/" })) });
+    if (q.get("id")) {
+      const r = await env.DB.prepare("SELECT * FROM mail2 WHERE id = ?").bind(q.get("id")).first();
+      return r ? json({ message: mailOut(r, true) }) : json({ error: "not found" }, 404);
+    }
+    const limit = Math.min(400, Math.max(1, Number(q.get("limit")) || 15));
+    const rows = await env.DB.prepare("SELECT id, subject, sender, recips, cc, received, preview, unread, att FROM mail2 ORDER BY received DESC LIMIT ?").bind(limit).all();
+    return json({ messages: (rows.results || []).map(r => mailOut(r)) });
   }
   if (p === "/api/ms/calendar") {
-    const row = await env.DB.prepare("SELECT v FROM sync_state WHERE k = 'calendar'").first();
-    const days = Math.min(14, Math.max(1, Number(url.searchParams.get("days")) || 2));
-    const start = new Date(); start.setHours(0, 0, 0, 0);
-    const end = start.getTime() + days * 86400000;
-    const evs = (row ? JSON.parse(row.v) : []).map(e => ({
-      subject: pick(e, "subject", "Subject"), start: utc(pick(e, "start", "start.dateTime", "Start")), end: utc(pick(e, "end", "end.dateTime", "End")),
-      allDay: !!pick(e, "isAllDay", "IsAllDay"), location: String(pick(e, "location", "location.displayName", "Location")), link: pick(e, "webLink", "WebLink") || "https://outlook.office.com/calendar/",
-    })).filter(e => { const t = Date.parse(e.start); return t >= start.getTime() - 86400000 && t < end; }).sort((a, b) => a.start.localeCompare(b.start));
-    return json({ events: evs });
+    if (q.get("id")) {
+      const r = await env.DB.prepare("SELECT * FROM ev2 WHERE id = ?").bind(q.get("id")).first();
+      return r ? json({ event: evOut(r) }) : json({ error: "not found" }, 404);
+    }
+    let from, to;
+    if (q.get("from")) { from = q.get("from"); to = q.get("to") || isoDay(Date.parse(from) + 31 * 864e5); }
+    else {
+      const days = Math.min(400, Math.max(1, Number(q.get("days")) || 2));
+      const start = new Date(); start.setUTCHours(0, 0, 0, 0);
+      from = isoDay(start.getTime() - 864e5); to = isoDay(start.getTime() + days * 864e5);
+    }
+    return json({ events: await eventsBetween(env, from, to, q.get("full") === "1") });
   }
+  if (p === "/api/jarvis" && request.method === "POST") return jarvis(env, request);
   return json({ error: "not found" }, 404);
+}
+
+/* ------------------------------------------------------------------ sending through Outlook
+   The site can't reach UEA's mail directly, so a third flow ("When a feed item is published" on
+   /outbox/<SYNC_TOKEN>.rss) picks queued messages up and sends them with "Send an email (V2)".
+   Each item's description is base64 JSON {to, cc, subject, html}. Only drafts Alex confirmed reach it. */
+const okAddr = s => /^[^\s@<>;,]+@[^\s@<>;,]+\.[a-z]{2,}$/i.test(s);
+const splitAddrs = v => String(v || "").split(/[;,\s]+/).map(x => x.trim()).filter(Boolean);
+const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+async function queueSend(env, request) {
+  let d; try { d = await request.json(); } catch (e) { return json({ error: "bad request" }, 400); }
+  const to = splitAddrs(d.to), cc = splitAddrs(d.cc);
+  if (!to.length || ![...to, ...cc].every(okAddr)) return json({ error: "Check the email addresses." }, 400);
+  const subject = String(d.subject || "").trim().slice(0, 250);
+  const text = String(d.body || "").slice(0, 20000);
+  if (!subject || !text.trim()) return json({ error: "Add a subject and a message." }, 400);
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM outbox WHERE created > ?").bind(Date.now() - 3600000).first();
+  if (recent && recent.n >= 20) return json({ error: "That's 20 emails this hour; try again later." }, 429);
+  const html = `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt">${escHtml(text).replace(/\r?\n/g, "<br>")}</div>`;
+  const id = crypto.randomUUID();
+  await env.DB.prepare("INSERT INTO outbox (id, recips, cc, subject, html, created) VALUES (?, ?, ?, ?, ?, ?)").bind(id, to.join(";"), cc.join(";"), subject, html, Date.now()).run();
+  await env.DB.prepare("DELETE FROM outbox WHERE created < ?").bind(Date.now() - 7 * 864e5).run();
+  return json({ queued: true, id });
+}
+function b64utf8(s) { const bytes = new TextEncoder().encode(s); let bin = ""; for (const b of bytes) bin += String.fromCharCode(b); return btoa(bin); }
+async function outboxFeed(env, url) {
+  await syncTables(env);
+  const rows = await env.DB.prepare("SELECT * FROM outbox WHERE created > ? ORDER BY created DESC LIMIT 20").bind(Date.now() - 6 * 3600000).all();
+  const items = (rows.results || []).map(r => `<item><guid isPermaLink="false">${r.id}</guid><title>${escHtml(r.subject)}</title><link>${url.origin}/#${r.id}</link><description>${b64utf8(JSON.stringify({ to: r.recips, cc: r.cc, subject: r.subject, html: r.html }))}</description><pubDate>${new Date(r.created).toUTCString()}</pubDate></item>`).join("");
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Outbox</title><link>${url.origin}/</link><description>Queued emails</description><lastBuildDate>${new Date().toUTCString()}</lastBuildDate>${items}</channel></rss>`,
+    { headers: { "Content-Type": "application/rss+xml; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+/* ------------------------------------------------------------------ Jarvis: answers over mail + calendar
+   Workers AI (binding AI). The question is matched against stored mail and events; the best matches
+   go to the model in full, the rest as a one-line index. The model replies as JSON so a draft can be
+   shown for review and only sent when Alex presses Send. */
+const STOP = new Set("a an the and or of to in on at for from with about is are was were be been i me my you your it this that these those what whats which who whom when where how do does did can could would should will please email emails mail mails message messages inbox outlook find show tell give get any some all today tomorrow yesterday week calendar event events summarise summarize summary draft write reply send new latest recent got have has had there their them they he she his her him".split(" "));
+const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+const londonDate = t => new Date(t).toLocaleString("en-GB", { timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const londonDay = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+async function jarvis(env, request) {
+  if (!env.AI) return json({ error: "The AI isn't switched on for this site yet (Workers AI binding missing)." }, 503);
+  let d; try { d = await request.json(); } catch (e) { return json({ error: "bad request" }, 400); }
+  const q = String(d.q || "").slice(0, 2000);
+  const lq = q.toLowerCase();
+  const history = (Array.isArray(d.history) ? d.history : []).slice(-6).map(h => ({ q: String(h.q || "").slice(0, 600), a: String(h.a || "").slice(0, 900) }));
+  const now = Date.now(), today = londonDay(now);
+  const words = [...new Set((lq + " " + history.slice(-2).map(h => h.q.toLowerCase()).join(" ")).match(/[a-z0-9@.\-']{3,}/g) || [])].filter(w => !STOP.has(w));
+
+  const mails = ((await env.DB.prepare("SELECT id, subject, sender, recips, cc, received, preview, unread, body FROM mail2 ORDER BY received DESC LIMIT 400").all()).results || []);
+  const scoreMail = m => { const hay = (m.subject + " " + m.sender + " " + m.recips).toLowerCase(), body = (m.body || "").toLowerCase(); let s = 0; for (const w of words) { if (hay.includes(w)) s += 3; if (body.includes(w)) s += 1; } return s; };
+  const wantToday = /\btoday|this morning|tonight\b/.test(lq), wantYest = /\byesterday\b/.test(lq);
+  const focus = new Map();
+  if (d.emailId) { const m = mails.find(x => x.id === d.emailId); if (m) focus.set(m.id, 9000); }
+  if (wantToday || wantYest) mails.filter(m => londonDay(m.received) === (wantYest ? londonDay(now - 864e5) : today)).slice(0, 10).forEach(m => focus.set(m.id, focus.get(m.id) || 1500));
+  if (/\b(latest|recent|new|unread|last)\b/.test(lq) && !focus.size) mails.slice(0, 6).forEach(m => focus.set(m.id, 1200));
+  mails.map(m => [m, scoreMail(m)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 6).forEach(([m]) => { if (!focus.has(m.id)) focus.set(m.id, 2500); });
+  const mailRef = [], mailIndex = [], mailFull = [];
+  mails.slice(0, 120).concat(mails.filter(m => focus.has(m.id) && mails.indexOf(m) >= 120)).forEach(m => {
+    const k = "E" + (mailRef.push(m.id));
+    mailIndex.push(`${k} | ${londonDate(m.received)} | from ${m.sender}${m.unread ? " | UNREAD" : ""} | ${m.subject}`);
+    if (focus.has(m.id)) mailFull.push(`### ${k}\nFrom: ${m.sender}\nTo: ${m.recips}${m.cc ? "\nCc: " + m.cc : ""}\nDate: ${londonDate(m.received)}\nSubject: ${m.subject}\n\n${(m.body || m.preview || "").slice(0, focus.get(m.id))}`);
+  });
+
+  // calendar: the next two weeks always, plus anything the question names (a month, or matching words)
+  const start = new Date(); start.setUTCHours(0, 0, 0, 0);
+  const evMap = new Map();
+  (await eventsBetween(env, isoDay(start.getTime() - 864e5), isoDay(start.getTime() + 15 * 864e5), true)).forEach(e => evMap.set(e.id, e));
+  const mi = MONTHS.findIndex(m => new RegExp("\\b" + m.slice(0, 3) + "(" + m.slice(3) + ")?\\b").test(lq));
+  if (mi >= 0) { const y = start.getUTCFullYear() + (mi < start.getUTCMonth() - 2 ? 1 : 0); (await eventsBetween(env, isoDay(Date.UTC(y, mi, 1)), isoDay(Date.UTC(y, mi + 1, 1)), true)).slice(0, 120).forEach(e => evMap.set(e.id, e)); }
+  if (/\b(next|this) month\b/.test(lq)) (await eventsBetween(env, isoDay(start.getTime()), isoDay(start.getTime() + 45 * 864e5), true)).slice(0, 150).forEach(e => evMap.set(e.id, e));
+  if (words.length) {
+    const all = (await env.DB.prepare("SELECT id, subject, start, finish, allday, location, organizer, body, link FROM ev2 ORDER BY start").all()).results || [];
+    all.map(r => { const hay = (r.subject + " " + r.location + " " + r.body).toLowerCase(); return [r, words.filter(w => hay.includes(w)).length]; })
+      .filter(x => x[1] > 0).sort((a, b) => b[1] - a[1] || a[0].start.localeCompare(b[0].start)).slice(0, 25).forEach(([r]) => evMap.set(r.id, evOut(r)));
+  }
+  const evRef = [], evLines = [...evMap.values()].sort((a, b) => a.start.localeCompare(b.start)).map(e => {
+    const k = "C" + evRef.push(e.id);
+    return `${k} | ${e.allDay ? londonDay(e.start) + " all day" : londonDate(e.start) + " to " + new Date(e.end).toLocaleTimeString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" })} | ${e.subject}${e.location ? " | " + e.location : ""}${e.description ? " | notes: " + e.description.replace(/\s+/g, " ").slice(0, 300) : ""}`;
+  });
+
+  const system = `You are Jarvis, the assistant built into Alex Taylor's study site. Alex is a first-year BSc Biomedicine student at the University of East Anglia (UEA); his email is A.Taylor12@uea.ac.uk. You can read his Outlook inbox and calendar below (synced copies) and you can prepare emails for him to send.
+Now: ${londonDate(now)} (UK time).
+Rules:
+- Use only the emails and events given. If something isn't there, say so plainly. Never invent senders, dates or content.
+- Be concise and direct, UK English, no exclamation marks. Use short markdown (bold, bullet lists) when it helps.
+- When you mention specific emails or events, put their keys (E3, C7) in "refs" so the site can link them; in the reply text use their names, not the keys.
+- When Alex asks you to write, draft, reply to or send an email, put the email in "draft": to (addresses separated by ;), cc, subject, body (plain text, line breaks as \\n, signed "Alex"). Take addresses from the emails below; if you can't find the person's address, leave "to" empty and say so. For a reply, use "Re: " + the original subject. Never say an email has been sent; say the draft is ready to check.
+- Reply with JSON only: {"reply": "markdown text", "refs": ["E1","C2"], "draft": null or {"to":"","cc":"","subject":"","body":""}}`;
+  const context = `INBOX (newest first, ${mails.length} stored):\n${mailIndex.join("\n") || "(empty)"}\n\nEMAILS IN FULL:\n${mailFull.join("\n\n") || "(none matched)"}\n\nCALENDAR (${evLines.length} events shown):\n${evLines.join("\n") || "(none)"}`;
+  const messages = [{ role: "system", content: system }, { role: "user", content: context.slice(0, 60000) }, { role: "assistant", content: '{"reply": "Got it. I have your inbox and calendar.", "refs": [], "draft": null}' }];
+  for (const h of history) { messages.push({ role: "user", content: h.q }, { role: "assistant", content: JSON.stringify({ reply: h.a, refs: [], draft: null }) }); }
+  messages.push({ role: "user", content: q + (d.draft ? `\n\n(Current draft being edited: ${JSON.stringify(d.draft).slice(0, 4000)})` : "") });
+
+  let out = null, raw = "";
+  for (const model of ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct-fast"]) {
+    try {
+      const r = await env.AI.run(model, { messages, max_tokens: 1400, temperature: 0.3, response_format: { type: "json_object" } });
+      raw = r && r.response;
+      out = typeof raw === "object" && raw ? raw : JSON.parse(String(raw).replace(/^[^{]*/, "").replace(/[^}]*$/, ""));
+      if (out && typeof out.reply === "string") break;
+    } catch (e) {
+      if (typeof raw === "string" && raw.trim()) { out = { reply: raw.trim(), refs: [], draft: null }; break; }
+      out = { reply: "", error: String(e && e.message || e) };
+    }
+  }
+  if (!out || (!out.reply && !out.draft)) return json({ error: "The AI didn't answer" + (out && out.error ? ": " + out.error : ".") }, 502);
+  const refs = (Array.isArray(out.refs) ? out.refs : []).map(String);
+  const emails = refs.filter(r => /^E\d+$/.test(r)).map(r => mails.find(m => m.id === mailRef[+r.slice(1) - 1])).filter(Boolean).map(m => ({ id: m.id, subject: m.subject, from: m.sender, received: m.received, unread: !!m.unread }));
+  const events = refs.filter(r => /^C\d+$/.test(r)).map(r => evMap.get(evRef[+r.slice(1) - 1])).filter(Boolean).map(e => ({ id: e.id, subject: e.subject, start: e.start, end: e.end, allDay: e.allDay, location: e.location }));
+  // keys the model wrote into the text become the email / event name
+  const refName = (t, n) => { if (t === "E") { const m = mails.find(x => x.id === mailRef[n - 1]); return m ? `“${m.subject}”` : ""; } const e = evMap.get(evRef[n - 1]); return e ? `“${e.subject}”` : ""; };
+  const reply = String(out.reply || "").replace(/\(?\b([EC])(\d+)\b\)?/g, (m, t, n) => refName(t, +n) || m).replace(/ {2,}/g, " ").trim();
+  let draft = out.draft && typeof out.draft === "object" ? { to: String(out.draft.to || ""), cc: String(out.draft.cc || ""), subject: String(out.draft.subject || ""), body: String(out.draft.body || "") } : null;
+  if (draft && !draft.subject && !draft.body) draft = null;
+  return json({ reply, emails, events, draft });
 }
 
 export default {
@@ -415,8 +586,11 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/pin" && request.method === "POST") return handlePinPost(request, env);
+    // the send flow reads queued emails from here; the secret token in the path is the key
+    const tok = String(env.SYNC_TOKEN || "").trim();
+    if (tok && url.pathname === `/outbox/${tok}.rss`) return outboxFeed(env, url);
     if (await validSession(request, env)) {
-      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/")) return handleMs(request, env, url);
+      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || url.pathname === "/api/jarvis") return handleMs(request, env, url);
       return env.ASSETS.fetch(request);
     }
     return htmlResponse(loginPage(), 401);

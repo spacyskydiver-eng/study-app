@@ -102,6 +102,8 @@ function navPane(root) {
   const tool = (id, ic, label) => B.exists(id) ? `<button class="nv-nav-item${cur === id ? ' is-active' : ''}" data-go="${esc(id)}">${icon(ic)}<span>${esc(label)}</span></button>` : '';
   root.innerHTML = `<nav class="nv-nav">
     ${tool(B.V.home, 'home', 'Home')}
+    ${tool('mail', 'mail', 'Mail')}
+    ${tool('calendar', 'calendar', 'Calendar')}
     <div class="nv-nav-label">Modules</div>
     ${modules.map(m => {
       const lecs = Object.keys(KIND).flatMap(k => (m.groups[k] || []).map(hb => ({ hb, k })));
@@ -189,17 +191,17 @@ async function outlookSection(el) {
     return;
   }
   const synced = st.lastSync ? ' · updated ' + new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
-  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span>${esc((st.account || '') + synced)}</span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-kicker">Calendar</div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-kicker">Inbox</div><div class="nv-ms-list">Loading…</div></div></div>`;
+  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span>${esc((st.account || '') + synced)}</span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-ms-colhead"><span class="nv-kicker">Calendar</span><button class="nv-ms-all" data-go="calendar">Open calendar ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-ms-colhead"><span class="nv-kicker">Inbox</span><button class="nv-ms-all" data-go="mail">All mail ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div></div>`;
   const [cal, mail] = await Promise.all([msGet('/api/ms/calendar?days=2'), msGet('/api/ms/mail')]);
   if (!el.isConnected) return;
   const today = dayKey(new Date()), tomorrow = dayKey(new Date(Date.now() + 864e5));
   const evs = (cal && cal.events) || [];
   $('.nv-ms-cal .nv-ms-list', el).innerHTML = cal && cal.error ? `<div class="nv-empty">${esc(cal.error)}</div>` : evs.length ? evs.slice(0, 7).map(e => {
     const d = e.start.slice(0, 10);
-    return `<a class="nv-ms-item" href="${esc(e.link || '#')}" target="_blank" rel="noopener"><span class="nv-ms-when">${d === today ? '' : d === tomorrow ? 'Tmrw ' : ''}${e.allDay ? 'All day' : fmtTime(e.start)}</span><b>${esc(e.subject || '(no title)')}</b>${e.location ? `<small>${esc(e.location)}</small>` : ''}</a>`;
+    return `<button class="nv-ms-item" data-ev="${esc(e.id || '')}" data-start="${esc(e.start)}"><span class="nv-ms-when">${d === today ? '' : d === tomorrow ? 'Tmrw ' : ''}${e.allDay ? 'All day' : fmtTime(e.start)}</span><b>${esc(e.subject || '(no title)')}</b>${e.location ? `<small>${esc(e.location)}</small>` : ''}</button>`;
   }).join('') : '<div class="nv-empty">Nothing on today or tomorrow.</div>';
   const msgs = (mail && mail.messages) || [];
-  $('.nv-ms-mail .nv-ms-list', el).innerHTML = mail && mail.error ? `<div class="nv-empty">${esc(mail.error)}</div>` : msgs.length ? msgs.slice(0, 6).map(m => `<a class="nv-ms-item${m.unread ? ' is-unread' : ''}" href="${esc(m.link || '#')}" target="_blank" rel="noopener"><span class="nv-ms-when">${new Date(m.received).toDateString() === new Date().toDateString() ? fmtTime(m.received) : new Date(m.received).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span><b>${esc(m.subject || '(no subject)')}</b><small>${esc(m.from)} · ${esc((m.preview || '').slice(0, 90))}</small></a>`).join('') : '<div class="nv-empty">Inbox is empty.</div>';
+  $('.nv-ms-mail .nv-ms-list', el).innerHTML = mail && mail.error ? `<div class="nv-empty">${esc(mail.error)}</div>` : msgs.length ? msgs.slice(0, 6).map(m => `<button class="nv-ms-item${m.unread ? ' is-unread' : ''}" data-mail="${esc(m.id || '')}"><span class="nv-ms-when">${new Date(m.received).toDateString() === new Date().toDateString() ? fmtTime(m.received) : new Date(m.received).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span><b>${esc(m.subject || '(no subject)')}</b><small>${esc(m.from)} · ${esc((m.preview || '').slice(0, 90))}</small></button>`).join('') : '<div class="nv-empty">Inbox is empty.</div>';
 }
 
 /* ---------------------------------------------------------------- home */
@@ -255,6 +257,8 @@ function showHome(view) {
   }), { defaultIndex: Math.max(0, modules.indexOf(lastHub ? lastHub.module : modules[0])), expandRatio: 0.46 }));
   view.onclick = e => {
     if (e.target.closest('[data-ask-open]')) { N.assistant && N.assistant.open(); return; }
+    const ml = e.target.closest('[data-mail]'); if (ml && N.outlook) { N.outlook.openEmail(ml.dataset.mail); return; }
+    const ev = e.target.closest('[data-ev]'); if (ev && N.outlook) { N.outlook.openEvent(ev.dataset.ev, ev.dataset.start); return; }
     const g = e.target.closest('[data-go]'); if (g) B.go(g.dataset.go);
   };
   mountGL($('.nv-laser', view), 'laserFlow', { surfaceRef: { current: $('#nv-today', view) }, beamPosition: 0.72, color: '#8B5CF6', intensity: 1.3, fog: 0, dust: 0.8, speed: 0.9, spread: 1, spill: 0.6 }, bag);
