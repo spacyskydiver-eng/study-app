@@ -78,6 +78,12 @@ function unmountDock() { if (dock) { dock.remove(); dock = null; } }
 
 /* ---------------------------------------------------------------- sheet: built once, hidden and shown, so the chat survives closing */
 const SUGGEST = ['Summarise my emails from today', 'What’s on tomorrow?', 'Which lecture covers Okazaki fragments?', 'Explain this page simply'];
+function chipsHere() {
+  const id = B.currentId();
+  if (id === 'mail') return N.outlook && N.outlook.current.emailId ? ['Summarise this email', 'Draft a reply to this', 'Do I need to do anything?', 'What came in today?'] : ['Summarise my emails from today', 'Anything from Blackboard I need to act on?', 'Find the email about the formative', 'Write an email to my tutor'];
+  if (id === 'calendar') return ['What’s on today?', 'What does my week look like?', 'When is reading week?', 'Take me to my next BIO-4018A lecture'];
+  return SUGGEST;
+}
 function whereText() {
   if (['mail', 'calendar'].includes(B.currentId())) return 'Your mail and calendar';
   const pc = pageContext();
@@ -121,6 +127,7 @@ function open() {
   if (!B.isNova()) return;
   if (!sheet) build();
   $('.na-where span', sheet).textContent = whereText();
+  if (!sheet.classList.contains('has-thread')) $('.na-chips', sheet).innerHTML = chipsHere().map(s => `<button class="na-chip">${esc(s)}</button>`).join('');
   sheet.hidden = false;
   requestAnimationFrame(() => sheet && sheet.classList.add('is-open'));
   if (dock) dock.classList.add('is-hidden');
@@ -293,10 +300,19 @@ async function ask(q, ctx = {}) {
   try {
     // mail and calendar questions (and anything asked from the Mail / Calendar pages) go to Jarvis
     const lq = clean(q);
+    const goPage = lq.match(/^(?:please )?(?:open|show|go to|take me to|bring up|pull up|launch)(?: up)?(?: my| the)? (mail|inbox|emails?|outlook|calendar|timetable|diary)$/);
+    if (goPage && N.portal) {
+      const to = /calendar|timetable|diary/.test(goPage[1]) ? 'calendar' : 'mail';
+      a.innerHTML = `<p>Opening your ${to === 'mail' ? 'inbox' : 'calendar'}.</p>`;
+      st.history.push({ q, a: 'Opened ' + to });
+      setMood('idle'); st.busy = false;
+      takeControl(() => N.portal({ to, caption: to === 'mail' ? 'Your inbox' : 'Your calendar' }));
+      return;
+    }
     const onOutlook = ['mail', 'calendar'].includes(B.currentId()) || !!ctx.emailId || !!st.draft;
     const outlookish = /\b(e-?mails?|mail|inbox|outlook|messages?|repl(y|ied|ies)|draft|send|sent|wrote|cc|calendar|schedule|timetable|diary|events?|meetings?|appointments?|busy|free time|deadlines?|announcements?|blackboard|seminars?|tutorials?|reading week|lectures? (today|tomorrow|this week|next week|on (mon|tues|wednes|thurs|fri)day))\b/.test(lq)
       || /what('?s| is) on\b|\bon (today|tonight|tomorrow)\b|\bdo i have\b|\bwhen is\b|\bwhere (is|do i have) my\b/.test(lq);
-    if (outlookish || (onOutlook && !intent)) {
+    if (outlookish || (onOutlook && (!intent || intent.kind === 'note'))) {
       const body = { q, history: st.history.slice(-6), emailId: ctx.emailId || (N.outlook && N.outlook.current.emailId) || null, draft: st.draft ? st.draft.value() : null };
       let r = null;
       try { const res = await fetch('/api/jarvis', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); r = (res.headers.get('content-type') || '').includes('json') ? await res.json() : { error: 'The site returned ' + res.status + '.' }; } catch (e) { r = { error: 'Network error.' }; }
@@ -313,7 +329,12 @@ async function ask(q, ctx = {}) {
         ...(r.events || []).map(e => `<button class="na-ref" data-ev="${esc(e.id)}" data-start="${esc(e.start)}">${icon('calendar')}<span><b>${esc(e.subject)}</b><small>${new Date(e.start).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${e.location ? ' · ' + esc(e.location.split(' - ').pop()) : ''}</small></span></button>`)];
       if (refs.length) {
         const box = h(`<div class="na-refs">${refs.slice(0, 8).join('')}</div>`);
-        box.onclick = ev => { const m = ev.target.closest('[data-mail]'), c = ev.target.closest('[data-ev]'); if (m && N.outlook) N.outlook.openEmail(m.dataset.mail); if (c && N.outlook) N.outlook.openEvent(c.dataset.ev, c.dataset.start); };
+        box.onclick = ev => {
+          const m = ev.target.closest('[data-mail]'), c = ev.target.closest('[data-ev]'); if (!N.outlook) return;
+          const cap = (m || c).querySelector('b').textContent;
+          if (m) (B.currentId() === 'mail' ? N.outlook.openEmail(m.dataset.mail) : takeControl(() => N.outlook.openEmail(m.dataset.mail, cap)));
+          if (c) (B.currentId() === 'calendar' ? N.outlook.openEvent(c.dataset.ev, c.dataset.start) : takeControl(() => N.outlook.openEvent(c.dataset.ev, c.dataset.start, cap)));
+        };
         a.appendChild(box);
       }
       if (r.draft && N.outlook) {
@@ -325,6 +346,13 @@ async function ask(q, ctx = {}) {
         }
       }
       setMood('idle'); st.busy = false; thread.scrollTop = thread.scrollHeight;
+      // "take me to / show me / open …": the orb hands over and flies there, like the neural map
+      if (r.open && N.outlook && !r.draft) {
+        const o = r.open, cap = o.title || (o.page === 'mail' ? 'Your inbox' : o.start ? new Date(o.start).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Your calendar');
+        const go = () => o.page === 'mail' ? (o.id ? N.outlook.openEmail(o.id, cap) : N.portal({ to: 'mail', caption: cap })) : (o.id || o.start ? N.outlook.openEvent(o.id, o.start, cap) : N.portal({ to: 'calendar', caption: cap }));
+        if (B.currentId() === o.page) go(); else takeControl(go);
+        return;
+      }
       if (!B.isMobile() && sheet.classList.contains('is-open') && !(r.draft && st.draft)) input.focus({ preventScroll: true });
       return;
     }

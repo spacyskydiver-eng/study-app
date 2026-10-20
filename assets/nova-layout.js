@@ -190,8 +190,8 @@ async function outlookSection(el) {
     el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2></div><div class="nv-ms-connect"><div><b>Connect your Outlook</b><small>Show your calendar and latest emails here, and let the assistant answer “what’s on tonight?”</small></div><a class="nv-mapbtn" href="/ms/connect">${icon('link')}<span>Connect</span></a></div>`;
     return;
   }
-  const synced = st.lastSync ? ' · updated ' + new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
-  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span>${esc((st.account || '') + synced)}</span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-ms-colhead"><span class="nv-kicker">Calendar</span><button class="nv-ms-all" data-go="calendar">Open calendar ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-ms-colhead"><span class="nv-kicker">Inbox</span><button class="nv-ms-all" data-go="mail">All mail ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div></div>`;
+  const synced = st.lastSync ? 'Updated ' + new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+  el.innerHTML = `<div class="nv-sec-head"><h2>Today</h2><span class="nv-ms-stats"><button data-go="mail"><b class="nv-c-unread"></b>unread</button><button data-go="calendar"><b class="nv-c-today"></b>on today</button><em>${esc(synced)}</em></span></div><div class="nv-ms-grid"><div class="nv-ms-col nv-ms-cal"><div class="nv-ms-colhead"><span class="nv-kicker">Calendar</span><button class="nv-ms-all" data-go="calendar">Open calendar ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div><div class="nv-ms-col nv-ms-mail"><div class="nv-ms-colhead"><span class="nv-kicker">Inbox</span><button class="nv-ms-all" data-go="mail">All mail ${icon('chevron-right')}</button></div><div class="nv-ms-list">Loading…</div></div></div>`;
   const [cal, mail] = await Promise.all([msGet('/api/ms/calendar?days=2'), msGet('/api/ms/mail')]);
   if (!el.isConnected) return;
   const today = dayKey(new Date()), tomorrow = dayKey(new Date(Date.now() + 864e5));
@@ -201,6 +201,7 @@ async function outlookSection(el) {
     return `<button class="nv-ms-item" data-ev="${esc(e.id || '')}" data-start="${esc(e.start)}"><span class="nv-ms-when">${d === today ? '' : d === tomorrow ? 'Tmrw ' : ''}${e.allDay ? 'All day' : fmtTime(e.start)}</span><b>${esc(e.subject || '(no title)')}</b>${e.location ? `<small>${esc(e.location)}</small>` : ''}</button>`;
   }).join('') : '<div class="nv-empty">Nothing on today or tomorrow.</div>';
   const msgs = (mail && mail.messages) || [];
+  if (N.counter) { N.counter($('.nv-c-unread', el), msgs.filter(m => m.unread).length); N.counter($('.nv-c-today', el), evs.filter(e => e.start.slice(0, 10) === today).length); }
   $('.nv-ms-mail .nv-ms-list', el).innerHTML = mail && mail.error ? `<div class="nv-empty">${esc(mail.error)}</div>` : msgs.length ? msgs.slice(0, 6).map(m => `<button class="nv-ms-item${m.unread ? ' is-unread' : ''}" data-mail="${esc(m.id || '')}"><span class="nv-ms-when">${new Date(m.received).toDateString() === new Date().toDateString() ? fmtTime(m.received) : new Date(m.received).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span><b>${esc(m.subject || '(no subject)')}</b><small>${esc(m.from)} · ${esc((m.preview || '').slice(0, 90))}</small></button>`).join('') : '<div class="nv-empty">Inbox is empty.</div>';
 }
 

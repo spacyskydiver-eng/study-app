@@ -551,7 +551,8 @@ Rules:
 - Be concise and direct, UK English, no exclamation marks. Use short markdown (bold, bullet lists) when it helps.
 - When you mention specific emails or events, put their keys (E3, C7) in "refs" so the site can link them; in the reply text use their names, not the keys.
 - When Alex asks you to write, draft, reply to or send an email, put the email in "draft": to (addresses separated by ;), cc, subject, body (plain text, line breaks as \\n, signed "Alex"). Take addresses from the emails below; if you can't find the person's address, leave "to" empty and say so. For a reply, use "Re: " + the original subject. Never say an email has been sent; say the draft is ready to check.
-- Reply with JSON only: {"reply": "markdown text", "refs": ["E1","C2"], "draft": null or {"to":"","cc":"","subject":"","body":""}}`;
+- When Alex asks you to open, show, go to, pull up or take him to an email, his inbox, his calendar or a day, set "open": {"page": "mail" or "calendar", "ref": the key (E3 / C2) or null, "date": "YYYY-MM-DD" or null}, and keep "reply" to one short line. Otherwise "open" is null.
+- Reply with JSON only: {"reply": "markdown text", "refs": ["E1","C2"], "draft": null or {"to":"","cc":"","subject":"","body":""}, "open": null or {"page":"","ref":null,"date":null}}`;
   const context = `INBOX (newest first, ${mails.length} stored):\n${mailIndex.join("\n") || "(empty)"}\n\nEMAILS IN FULL:\n${mailFull.join("\n\n") || "(none matched)"}\n\nCALENDAR (${evLines.length} events shown):\n${evLines.join("\n") || "(none)"}`;
   const messages = [{ role: "system", content: system }, { role: "user", content: context.slice(0, 60000) }, { role: "assistant", content: '{"reply": "Got it. I have your inbox and calendar.", "refs": [], "draft": null}' }];
   for (const h of history) { messages.push({ role: "user", content: h.q }, { role: "assistant", content: JSON.stringify({ reply: h.a, refs: [], draft: null }) }); }
@@ -578,7 +579,15 @@ Rules:
   const reply = String(out.reply || "").replace(/\(?\b([EC])(\d+)\b\)?/g, (m, t, n) => refName(t, +n) || m).replace(/ {2,}/g, " ").trim();
   let draft = out.draft && typeof out.draft === "object" ? { to: String(out.draft.to || ""), cc: String(out.draft.cc || ""), subject: String(out.draft.subject || ""), body: String(out.draft.body || "") } : null;
   if (draft && !draft.subject && !draft.body) draft = null;
-  return json({ reply, emails, events, draft });
+  let open = null;
+  if (out.open && typeof out.open === "object" && /^(mail|calendar)$/.test(out.open.page)) {
+    const ref = String(out.open.ref || "");
+    open = { page: out.open.page, id: null, start: null, title: "" };
+    if (/^E\d+$/.test(ref)) { const m = mails.find(x => x.id === mailRef[+ref.slice(1) - 1]); if (m) Object.assign(open, { page: "mail", id: m.id, title: m.subject }); }
+    if (/^C\d+$/.test(ref)) { const e = evMap.get(evRef[+ref.slice(1) - 1]); if (e) Object.assign(open, { page: "calendar", id: e.id, start: e.start, title: e.subject }); }
+    if (!open.start && /^\d{4}-\d{2}-\d{2}$/.test(String(out.open.date || ""))) open.start = out.open.date + "T12:00:00Z";
+  }
+  return json({ reply, emails, events, draft, open });
 }
 
 export default {

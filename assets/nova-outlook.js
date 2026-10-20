@@ -72,16 +72,20 @@ O.compose = composeModal;
 const quoteOf = m => `\n\n\nFrom: ${m.from}\nSent: ${longDate(m.received)}\nSubject: ${m.subject}\n\n${(m.text || m.preview || '').split('\n').map(l => '> ' + l).join('\n')}`;
 
 /* ---------------------------------------------------------------- mail */
-O.openEmail = id => { O.pending = { email: id }; if (B.currentId() === 'mail' && O.selectEmail) O.selectEmail(id); else B.go('mail'); };
+O.openEmail = (id, caption) => {
+  if (B.currentId() === 'mail' && O.selectEmail) { O.selectEmail(id, true); return; }
+  O.pending = { email: id };
+  N.portal ? N.portal({ to: 'mail', caption: caption || '', then: () => B.go('mail') }) : B.go('mail');
+};
 B.registerView('mail', {
   title: () => 'Mail', icon: 'mail', cls: 'nv-view nv-view-ol',
   show(view) {
     let alive = true, msgs = [], filter = 'all', sel = null, query = '';
     view.innerHTML = `<div class="ol-page ol-mail">
       <header class="ol-head">
-        <div><div class="nv-kicker">Outlook</div><h1>Mail</h1></div>
+        <div><div class="nv-kicker">Outlook</div><h1>Mail <span class="ol-count"><span class="ol-n"></span><small>unread</small></span></h1></div>
         <div class="ol-search">${icon('search')}<input type="search" placeholder="Search mail" autocomplete="off"></div>
-        <div class="ol-head-acts"><button class="ol-btn ol-ask" title="Ask the assistant about your mail">${icon('sparkles')}<span>Ask</span></button><button class="ol-btn ol-btn-send ol-new">${icon('plus')}<span>New email</span></button></div>
+        <div class="ol-head-acts"><button class="ol-btn ol-btn-send ol-new">${icon('plus')}<span>New email</span></button></div>
       </header>
       <div class="ol-filters">${[['all', 'All'], ['unread', 'Unread'], ['today', 'Today'], ['blackboard', 'Blackboard'], ['uea', 'From UEA']].map(([k, l]) => `<button class="ol-chip${k === 'all' ? ' is-on' : ''}" data-f="${k}">${l}</button>`).join('')}<span class="ol-sync"></span></div>
       <div class="ol-split">
@@ -90,6 +94,7 @@ B.registerView('mail', {
       </div>
     </div>`;
     const list = $('.ol-list', view), reader = $('.ol-reader', view), page = $('.ol-mail', view);
+    const rays = ambient(page), unreadN = N.counter ? N.counter($('.ol-n', view), 0) : null;
     const match = m => {
       if (filter === 'unread' && !m.unread) return false;
       if (filter === 'today' && dayOf(m.received) !== localDay(new Date())) return false;
@@ -108,9 +113,10 @@ B.registerView('mail', {
         return `${head}<button class="ol-item${m.unread ? ' is-unread' : ''}${sel === m.id ? ' is-sel' : ''}" data-id="${esc(m.id)}" role="option"><span class="ol-item-top"><b>${esc(nameOf(m.from))}</b><time>${shortDate(m.received)}</time></span><span class="ol-item-sub">${m.attachments ? icon('paperclip') : ''}${esc(m.subject || '(no subject)')}</span><span class="ol-item-pre">${esc((m.preview || '').replace(/\s+/g, ' ').slice(0, 140))}</span></button>`;
       }).join('') : `<div class="ol-empty">${msgs.length ? 'Nothing matches.' : 'No mail synced yet.'}</div>`;
     };
-    async function select(id) {
+    async function select(id, arrived) {
       sel = id; O.current = { emailId: id };
       $$('.ol-item', list).forEach(b => b.classList.toggle('is-sel', b.dataset.id === id));
+      const it = $(`.ol-item[data-id="${CSS.escape(id)}"]`, list); if (it && arrived) { it.scrollIntoView({ block: 'center' }); it.classList.add('is-arrived'); setTimeout(() => it.classList.remove('is-arrived'), 1800); }
       page.classList.add('has-sel');
       reader.innerHTML = '<div class="ol-empty">Opening…</div>';
       const r = await get('/api/ms/mail?id=' + encodeURIComponent(id));
@@ -125,8 +131,6 @@ B.registerView('mail', {
           <div class="ol-read-acts">
             <button class="ol-btn" data-act="reply">${icon('reply')}<span>Reply</span></button>
             <button class="ol-btn" data-act="replyall">${icon('reply')}<span>Reply all</span></button>
-            <button class="ol-btn" data-act="sum">${icon('sparkles')}<span>Summarise</span></button>
-            <button class="ol-btn" data-act="draft">${icon('sparkles')}<span>Draft a reply</span></button>
             ${html ? `<button class="ol-btn" data-act="mode">${icon('file')}<span>Plain text</span></button>` : ''}
             <a class="ol-btn" href="https://outlook.office.com/mail/" target="_blank" rel="noopener">${icon('external')}<span>Outlook</span></a>
           </div>
@@ -150,8 +154,6 @@ B.registerView('mail', {
         const b = e.target.closest('[data-act]'); if (!b) return;
         const act = b.dataset.act;
         if (act === 'mode') { asHtml = !asHtml; $('span', b).textContent = asHtml ? 'Plain text' : 'Formatted'; paint(); return; }
-        if (act === 'sum') { N.assistant && N.assistant.askAbout ? N.assistant.askAbout('Summarise this email and tell me if I need to do anything.', { emailId: m.id }) : null; return; }
-        if (act === 'draft') { N.assistant && N.assistant.askAbout ? N.assistant.askAbout('Draft a reply to this email.', { emailId: m.id }) : null; return; }
         const all = act === 'replyall';
         const cc = all ? [m.to, m.cc].join(';').split(/[;,]/).map(s => s.trim()).filter(s => s && !mine.test(s) && s.toLowerCase() !== m.from.toLowerCase()).join('; ') : '';
         const slot = $('.ol-read-compose', reader);
@@ -165,23 +167,39 @@ B.registerView('mail', {
     $('.ol-filters', view).onclick = e => { const c = e.target.closest('[data-f]'); if (!c) return; filter = c.dataset.f; $$('.ol-chip', view).forEach(x => x.classList.toggle('is-on', x === c)); renderList(); };
     $('.ol-search input', view).oninput = e => { query = e.target.value.trim().toLowerCase(); renderList(); };
     $('.ol-new', view).onclick = () => composeModal({}, 'New email');
-    $('.ol-ask', view).onclick = () => N.assistant && N.assistant.open && N.assistant.open();
     (async () => {
       const [st, r] = await Promise.all([get('/api/ms/status'), get('/api/ms/mail?limit=400')]);
       if (!alive) return;
       if (st && st.lastSync) $('.ol-sync', view).textContent = 'Synced ' + new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
       msgs = (r && r.messages) || [];
+      if (unreadN) unreadN.set(msgs.filter(m => m.unread).length);
       renderList();
       const want = O.pending && O.pending.email; O.pending = null;
-      if (want) select(want);
+      if (want) select(want, true);
       else if (!B.isMobile() && msgs[0]) select(msgs[0].id);
     })();
-    return () => { alive = false; O.selectEmail = null; O.current = {}; };
+    return () => { alive = false; O.selectEmail = null; O.current = {}; rays && rays.destroy(); };
   },
 });
 
 /* ---------------------------------------------------------------- calendar */
-O.openEvent = (id, start) => { O.pending = { event: id, day: start ? dayOf(start) : null }; if (B.currentId() === 'calendar' && O.focusEvent) O.focusEvent(O.pending); else B.go('calendar'); };
+O.openEvent = (id, start, caption) => {
+  const p = { event: id || null, day: start ? dayOf(start) : null };
+  if (B.currentId() === 'calendar' && O.focusEvent) { O.focusEvent(p); return; }
+  O.pending = p;
+  N.portal ? N.portal({ to: 'calendar', caption: caption || '', then: () => B.go('calendar') }) : B.go('calendar');
+};
+O.counts = async () => {
+  const [m, c] = await Promise.all([get('/api/ms/mail?limit=120'), get('/api/ms/calendar?days=1')]);
+  const today = localDay(new Date());
+  return { unread: ((m && m.messages) || []).filter(x => x.unread).length, today: ((c && c.events) || []).filter(e => dayOf(e.start) === today).length };
+};
+// a soft SideRays wash behind the page header (follows the pointer a little)
+function ambient(page) {
+  if (!N.sideRays || !page) return null;
+  const host = h('<div class="ol-rays" aria-hidden="true"></div>'); page.prepend(host);
+  return N.sideRays(host, { rayColor1: '#A78BFA', rayColor2: '#67E8F9', origin: 'top-right', intensity: 1.9, spread: 2.4, density: 5, speed: 1, glow: 1, opacity: 0.9, mouseInfluence: 0.35, maxRatio: 1, budget: 4.5e5 });
+}
 B.registerView('calendar', {
   title: () => 'Calendar', icon: 'calendar', cls: 'nv-view nv-view-ol',
   show(view) {
@@ -190,13 +208,15 @@ B.registerView('calendar', {
     let cursor = new Date(today.getFullYear(), today.getMonth(), 1), selDay = localDay(today), selEv = null;
     view.innerHTML = `<div class="ol-page ol-cal">
       <header class="ol-head">
-        <div><div class="nv-kicker">Outlook</div><h1 class="ol-cal-title">Calendar</h1></div>
+        <div><div class="nv-kicker">Outlook <span class="ol-count ol-count-k"><span class="ol-n"></span><small class="ol-n-label">events this month</small></span></div><h1 class="ol-cal-title">Calendar</h1></div>
         <div class="ol-cal-nav"><button class="ol-btn ol-icon" data-nav="-1" title="Previous">${icon('chevron-left')}</button><button class="ol-btn" data-nav="0">Today</button><button class="ol-btn ol-icon" data-nav="1" title="Next">${icon('chevron-right')}</button></div>
         <div class="ol-seg">${['month', 'agenda', 'year'].map(m => `<button data-mode="${m}"${m === mode ? ' class="is-on"' : ''}>${m[0].toUpperCase() + m.slice(1)}</button>`).join('')}</div>
       </header>
       <div class="ol-cal-split"><div class="ol-cal-main"><div class="ol-empty">Loading…</div></div><aside class="ol-cal-side"></aside></div>
     </div>`;
     const main = $('.ol-cal-main', view), side = $('.ol-cal-side', view), title = $('.ol-cal-title', view);
+    const rays = ambient($('.ol-cal', view)), monthN = N.counter ? N.counter($('.ol-n', view), 0) : null;
+    const countMonth = () => { if (!monthN) return; const y = cursor.getFullYear(), m = cursor.getMonth(); monthN.set(evs.filter(e => { const d = new Date(e.start); return d.getFullYear() === y && d.getMonth() === m; }).length); $('.ol-n-label', view).textContent = mode === 'year' ? 'events this month' : 'events in ' + cursor.toLocaleDateString('en-GB', { month: 'long' }); };
     const evLine = e => `<button class="ol-ev" data-ev="${esc(e.id)}" style="--ev:${evColor(e.subject)}"><time>${e.allDay ? 'All day' : tm(e.start)}</time><b>${esc(e.subject || '(no title)')}</b></button>`;
     function renderMonth() {
       title.textContent = cursor.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
@@ -241,6 +261,7 @@ B.registerView('calendar', {
     }
     async function showEvent(id) {
       selEv = id;
+      if (arrive) { arrive = false; $$(`[data-ev="${CSS.escape(id)}"]`, view).forEach(b => { b.classList.add('is-arrived'); setTimeout(() => b.classList.remove('is-arrived'), 1800); }); }
       $$('.ol-ev', side).forEach(b => b.classList.toggle('is-sel', b.dataset.ev === id));
       const slot = $('.ol-ev-detail', side); if (!slot) return;
       const base = evs.find(e => e.id === id);
@@ -248,11 +269,11 @@ B.registerView('calendar', {
       const r = await get('/api/ms/calendar?id=' + encodeURIComponent(id));
       if (!alive || selEv !== id) return;
       const e = r && r.event, desc = $('.ol-evd-desc', slot); if (!desc) return;
-      desc.innerHTML = e ? `${e.organizer ? `<p class="ol-evd-org">Organiser: ${esc(e.organizer)}</p>` : ''}${e.description ? `<div class="ol-text">${esc(e.description)}</div>` : '<p class="ol-faint">No description.</p>'}<p class="ol-evd-acts"><button class="ol-btn" data-askev>${icon('sparkles')}<span>Ask about this</span></button>${e.link ? `<a class="ol-btn" href="${esc(e.link)}" target="_blank" rel="noopener">${icon('external')}<span>Outlook</span></a>` : ''}</p>` : '<p class="ol-faint">Details unavailable.</p>';
-      const ab = $('[data-askev]', desc); if (ab) ab.onclick = () => N.assistant && N.assistant.askAbout && N.assistant.askAbout(`Tell me about “${e.subject}” on ${longDate(e.start)}. Is there anything I should prepare?`, {});
+      desc.innerHTML = e ? `${e.organizer ? `<p class="ol-evd-org">Organiser: ${esc(e.organizer)}</p>` : ''}${e.description ? `<div class="ol-text">${esc(e.description)}</div>` : '<p class="ol-faint">No description.</p>'}<p class="ol-evd-acts">${e.link ? `<a class="ol-btn" href="${esc(e.link)}" target="_blank" rel="noopener">${icon('external')}<span>Outlook</span></a>` : ''}</p>` : '<p class="ol-faint">Details unavailable.</p>';
     }
-    const render = () => { (mode === 'month' ? renderMonth : mode === 'agenda' ? renderAgenda : renderYear)(); $$('.ol-seg button', view).forEach(b => b.classList.toggle('is-on', b.dataset.mode === mode)); };
-    O.focusEvent = p => { if (p.day) { selDay = p.day; const d = new Date(p.day + 'T12:00:00'); cursor = new Date(d.getFullYear(), d.getMonth(), 1); } selEv = p.event || null; if (mode === 'year') mode = 'month'; render(); renderSide(); };
+    const render = () => { (mode === 'month' ? renderMonth : mode === 'agenda' ? renderAgenda : renderYear)(); countMonth(); $$('.ol-seg button', view).forEach(b => b.classList.toggle('is-on', b.dataset.mode === mode)); };
+    let arrive = false;
+    O.focusEvent = p => { arrive = !!p.event; if (p.day) { selDay = p.day; const d = new Date(p.day + 'T12:00:00'); cursor = new Date(d.getFullYear(), d.getMonth(), 1); } selEv = p.event || null; if (mode === 'year') mode = 'month'; render(); renderSide(); };
     view.onclick = e => {
       const nav = e.target.closest('[data-nav]');
       if (nav) {
@@ -283,7 +304,7 @@ B.registerView('calendar', {
       const want = O.pending && (O.pending.event || O.pending.day) ? O.pending : null; O.pending = null;
       if (want) O.focusEvent(want); else { render(); renderSide(); }
     })();
-    return () => { alive = false; O.focusEvent = null; };
+    return () => { alive = false; O.focusEvent = null; rays && rays.destroy(); };
   },
 });
 })();
