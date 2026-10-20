@@ -121,8 +121,6 @@ const BENTO_SURFACES = [
   ['.fc-decks', '.fc-deck'],
   ['.exam-review-grid', ':scope > *'],
   ['.nv-timeline', '.nv-lec'],
-  ['.nv-tools', '.nv-tool'],
-  ['.nv-today', '.nv-today-cell'],
 ];
 const MB_LAYERS = ['magic-bento__light', 'magic-bento__rim', 'magic-bento__border'];
 

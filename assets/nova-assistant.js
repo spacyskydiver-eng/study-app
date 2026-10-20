@@ -22,8 +22,9 @@ function pageContext() {
   if (!view) return null;
   // lecture reader: the chapter nearest the top third of the screen
   const secs = $$('.nv-ch', view);
-  let el = null;
-  if (secs.length) {
+  let el = $('.nv-card:not(.is-leaving):not(.nv-measure) .nv-card-in[data-note]', view);
+  if (el) { /* deck: the page on screen */ }
+  else if (secs.length) {
     const mark = view.getBoundingClientRect().top + view.clientHeight * 0.3;
     secs.forEach(s => { if (s.getBoundingClientRect().top <= mark) el = s; });
     el = el || secs[0];

@@ -74,15 +74,6 @@ function summaryOf(id) {
   const m = n.html.match(/data-callout="abstract">[\s\S]*?<div class="callout-content"><p>([\s\S]*?)<\/p>/);
   return m ? m[1].replace(/<[^>]+>/g, '').trim() : '';
 }
-function firstImage(ids) {
-  for (const id of ids) {
-    const n = B.V.notes[id]; if (!n) continue;
-    const m = n.html.match(/<img[^>]+src="([^"]+)"/);
-    if (m && !/\.svg($|\?)/i.test(m[1])) return m[1].replace(/&amp;/g, '&');
-  }
-  return '';
-}
-const moduleImage = m => firstImage(Object.values(m.groups).flat().flatMap(hb => [hb.id, ...hb.topics]));
 const plainNum = n => String(n).padStart(2, '0');
 
 /* reading progress: furthest chapter reached per hub */
@@ -110,7 +101,6 @@ function navPane(root) {
   if (curMod) open.add(curMod.id);
   const tool = (id, ic, label) => B.exists(id) ? `<button class="nv-nav-item${cur === id ? ' is-active' : ''}" data-go="${esc(id)}">${icon(ic)}<span>${esc(label)}</span></button>` : '';
   root.innerHTML = `<nav class="nv-nav">
-    <button class="nv-nav-jump" data-act-switch>${icon('search')}<span>Jump to…</span><kbd>Ctrl O</kbd></button>
     ${tool(B.V.home, 'home', 'Home')}
     <div class="nv-nav-label">Modules</div>
     ${modules.map(m => {
@@ -152,8 +142,8 @@ function accordion(items, opts = {}) {
   const grow = count > 1 ? (ratio * (count - 1)) / (1 - ratio) : 1;
   const root = h(`<div class="accordion-gallery" role="list">${items.map((it, i) => `
     <a class="ag-panel" role="listitem" tabindex="0" href="${esc(B.hashFor(it.id))}" data-i="${i}" style="--mod:${it.color}" aria-label="${esc(it.label)}">
-      <span class="ag-panel__frame"><span class="ag-panel__media">${it.image ? `<img src="${esc(it.image)}" alt="" draggable="false" loading="lazy">` : `<span class="ag-panel__art">${esc(it.label.split(/\s+/).filter(w => w.length > 3).map(w => w[0]).join('').slice(0, 3))}</span>`}</span><span class="ag-panel__overlay"></span></span>
-      <span class="ag-panel__label"><span class="ag-panel__bar"></span><span class="ag-panel__text"><b>${esc(it.label)}</b><small>${esc(it.meta || '')}</small></span></span>
+      <span class="ag-panel__frame"><span class="ag-panel__glow"></span><span class="ag-panel__num">${plainNum(i + 1)}</span></span>
+      <span class="ag-panel__label"><span class="ag-panel__bar"></span><span class="ag-panel__text"><b>${esc(it.label)}</b>${it.tagline ? `<em>${esc(it.tagline)}</em>` : ''}<small>${esc(it.meta || '')}</small></span></span>
     </a>`).join('')}</div>`);
   const panels = $$('.ag-panel', root);
   let active = Math.min(opts.defaultIndex || 0, count - 1);
@@ -161,8 +151,6 @@ function accordion(items, opts = {}) {
     const on = i === active;
     p.classList.toggle('ag-panel--active', on);
     p.style.flexGrow = on ? grow : 1;
-    p.style.setProperty('--ag-rot', on ? '0deg' : (i < active ? 8 : -8) + 'deg');
-    p.style.setProperty('--ag-shift', (Math.max(-1.5, Math.min(1.5, active - i)) * 14) + 'px');
     if (on) p.setAttribute('aria-current', 'true'); else p.removeAttribute('aria-current');
   });
   panels.forEach((p, i) => {
@@ -212,38 +200,27 @@ function showHome(view) {
   const last = lastLecture();
   const lastHub = last && model().hubs[last];
   const days = fc.plan ? Math.max(0, Math.ceil((fc.plan.due - Date.now()) / 864e5)) : 0;
-  const totalLecs = modules.reduce((n, m) => n + (m.groups.lecture || []).length, 0);
-  const totalTerms = Object.keys(B.V.notes).filter(k => k.startsWith('02 Key Terms/')).length;
+    const cont = lastHub || (modules[0] && (modules[0].groups.lecture || [])[0]);
   view.innerHTML = `<div class="nv-page nv-home">
     <section class="nv-hero">
       <div class="nv-laser" aria-hidden="true"></div>
-      <div class="nv-hero-copy">
-        <div class="nv-kicker">${esc(B.V.title || 'Study vault')} · Year 1</div>
-        <h1>${greet}${fc.name ? ', ' + esc(fc.name) : ''}</h1>
-        <p>${totalLecs} lectures across ${modules.length} modules, ${totalTerms} key terms.</p>
-      </div>
+      <div class="nv-hero-copy"><h1>${greet}${fc.name ? ', ' + esc(fc.name) : ''}</h1></div>
       <div class="nv-today" id="nv-today">
-        <button class="nv-today-cell" data-go="flashcards"><span class="nv-today-k">Cards due</span><b>${fc.due}</b><small>${fc.streak ? fc.streak + ' day streak' : 'Start a streak today'}</small></button>
-        <button class="nv-today-cell" data-go="flashcards"><span class="nv-today-k">Next deadline</span><b>${fc.plan ? (days === 0 ? 'Today' : days + 'd') : '—'}</b><small>${fc.plan ? esc(fc.plan.name) : 'No exam plan set'}</small></button>
-        <button class="nv-today-cell nv-today-wide" data-go="${esc(lastHub ? lastHub.id : (modules[0] ? modules[0].id : B.V.home))}"><span class="nv-today-k">${lastHub ? 'Continue reading' : 'Start here'}</span><b class="nv-today-title">${esc(lastHub ? lastHub.title : (modules[0] ? modules[0].title : ''))}</b><small>${lastHub ? esc(lastHub.module.title) + ' · ' + Math.round(readOf(lastHub.id) * 100) + '% read' : 'Open a module'}</small></button>
-        <button class="nv-today-ask" data-ask-open title="Ask the assistant">${icon('sparkles')}<span>Ask</span></button>
+        ${cont ? `<button class="nv-today-cell nv-today-wide" data-go="${esc(cont.id)}"><span class="nv-today-k">${lastHub ? 'Continue reading' : 'Start here'}</span><b class="nv-today-title">${esc(cont.title)}</b><small>${esc(cont.module.title)}${lastHub ? ' · ' + Math.round(readOf(cont.id) * 100) + '% read' : ''}</small></button>` : ''}
+        <button class="nv-today-cell" data-go="flashcards"><span class="nv-today-k">Cards due</span><b>${fc.due}</b><small>${fc.plan ? esc(fc.plan.name) + ' in ' + (days === 0 ? 'under a day' : days + 'd') : fc.streak ? fc.streak + ' day streak' : 'Flashcards'}</small></button>
       </div>
     </section>
-    <section class="nv-sec"><div class="nv-sec-head"><h2>Modules</h2><span>Hover to open, click to enter</span></div><div class="nv-acc"></div></section>
-    <section class="nv-sec"><div class="nv-sec-head"><h2>Study</h2></div>
-      <div class="nv-tools">
-        ${[['flashcards', 'cards', 'Flashcards', 'Spaced repetition, sprints and exam plans'], ['exam', 'clipboard-list', 'Exam practice', 'Full papers marked against the scheme'], ['glossary', 'book-open', 'Key terms', totalTerms + ' terms, A to Z'], ['books', 'library', 'Book library', 'Search your textbooks'], ['graph', 'graph', 'Graph', 'Every note and how it links']].filter(t => B.exists(t[0])).map(t => `<button class="nv-tool" data-go="${t[0]}"><span class="nv-tool-ic">${icon(t[1])}</span><b>${t[2]}</b><small>${esc(t[3])}</small></button>`).join('')}
-      </div></section>
+    <section class="nv-sec"><div class="nv-sec-head"><h2>Modules</h2></div><div class="nv-acc"></div></section>
   </div>`;
   $('.nv-acc', view).appendChild(accordion(modules.map(m => {
-    const lec = (m.groups.lecture || []).length, other = Object.entries(m.groups).filter(([k]) => k !== 'lecture').reduce((n, [, v]) => n + v.length, 0);
-    return { id: m.id, label: m.title, color: m.color, image: moduleImage(m), meta: [m.semester, lec ? lec + ' lectures' : '', other ? other + ' more' : ''].filter(Boolean).join(' · ') };
+    const lec = (m.groups.lecture || []).length;
+    return { id: m.id, label: m.title, color: m.color, tagline: summaryOf(m.id), meta: [m.semester, lec ? lec + ' lectures' : 'No lectures yet'].filter(Boolean).join(' · ') };
   }), { defaultIndex: Math.max(0, modules.indexOf(lastHub ? lastHub.module : modules[0])), expandRatio: 0.46 }));
   view.onclick = e => {
     if (e.target.closest('[data-ask-open]')) { N.assistant && N.assistant.open(); return; }
     const g = e.target.closest('[data-go]'); if (g) B.go(g.dataset.go);
   };
-  mountGL($('.nv-laser', view), 'laserFlow', { surfaceRef: { current: $('#nv-today', view) }, beamPosition: 0.7, color: '#8B5CF6', intensity: 1.6, fog: 0.25, dust: 1.2, speed: 1.1 }, bag);
+  mountGL($('.nv-laser', view), 'laserFlow', { surfaceRef: { current: $('#nv-today', view) }, beamPosition: 0.72, color: '#8B5CF6', intensity: 1.3, fog: 0, dust: 0.8, speed: 0.9, spread: 1, spill: 0.6 }, bag);
   return destroyAll(bag);
 }
 
@@ -254,15 +231,13 @@ function showModule(view, id) {
   const n = B.V.notes[id];
   const tagline = summaryOf(id);
   const lecs = m.groups.lecture || [];
-  const topics = Object.values(m.groups).flat().reduce((k, hb) => k + hb.topics.length, 0);
-  const examLinks = id => [...(B.V.notes[id] || { html: '' }).html.matchAll(/data-note="(exam\/[^"]+)"/g)].map(x => x[1]);
   const lecCard = hb => {
-    const pr = readOf(hb.id), st = stats(hb.id), ex = examLinks(hb.id)[0];
+    const pr = readOf(hb.id);
     return `<a class="nv-lec" href="${esc(B.hashFor(hb.id))}" data-go="${esc(hb.id)}">
       <span class="nv-lec-n">${hb.number ? plainNum(hb.number) : '·'}</span>
-      <span class="nv-lec-body"><b>${esc(hb.title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, ''))}</b><small>${esc(st || hb.topics.length + ' topics')}</small>
-        <span class="nv-lec-bar"><i style="width:${Math.round(pr * 100)}%"></i></span></span>
-      <span class="nv-lec-side">${pr >= 0.98 ? `<span class="nv-pill ok">${icon('check')} Read</span>` : pr ? `<span class="nv-pill">${Math.round(pr * 100)}%</span>` : ''}${ex ? `<button class="nv-pill nv-pill-btn" data-go="${esc(ex)}">${icon('clipboard-list')} Paper</button>` : ''}</span>
+      <span class="nv-lec-body"><b>${esc(hb.title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, ''))}</b><small>${hb.topics.length} topics</small></span>
+      <span class="nv-lec-side">${pr >= 0.98 ? `<span class="nv-lec-done">${icon('check')}</span>` : ''}</span>
+      ${pr > 0 && pr < 0.98 ? `<span class="nv-lec-bar"><i style="width:${Math.round(pr * 100)}%"></i></span>` : ''}
     </a>`;
   };
   const raw = document.createElement('div'); raw.innerHTML = n.html;
@@ -275,11 +250,9 @@ function showModule(view, id) {
         <div class="nv-kicker">${esc(m.semester ? m.semester + ' module' : 'Module')}</div>
         <h1>${esc(m.title)}</h1>
         ${tagline ? `<p class="nv-lede">${esc(tagline)}</p>` : ''}
-        <div class="nv-stats"><span><b>${lecs.length}</b> lectures</span><span><b>${topics}</b> topics</span>${Object.entries(m.groups).filter(([k]) => k !== 'lecture').map(([k, v]) => `<span><b>${v.length}</b> ${KIND[k].toLowerCase()}</span>`).join('')}</div>
       </div>
-      <div class="nv-mod-cover" aria-hidden="true"></div>
     </header>
-    ${Object.keys(KIND).filter(k => (m.groups[k] || []).length).map(k => `<section class="nv-sec"><div class="nv-sec-head"><h2>${KIND[k]}</h2><span>${m.groups[k].length}</span></div><div class="nv-timeline">${m.groups[k].map(lecCard).join('')}</div></section>`).join('') || '<section class="nv-sec"><div class="nv-empty">Nothing in this module yet.</div></section>'}
+    ${Object.keys(KIND).filter(k => (m.groups[k] || []).length).map(k => `<section class="nv-sec"><div class="nv-sec-head"><h2>${KIND[k]}</h2></div><div class="nv-timeline">${m.groups[k].map(lecCard).join('')}</div></section>`).join('') || '<section class="nv-sec"><div class="nv-empty">Nothing in this module yet.</div></section>'}
     <details class="nv-raw"><summary>${icon('file')} Full module note</summary><div class="markdown-preview-view markdown-rendered ${esc((n.css || []).join(' '))}"><div class="markdown-preview-sizer markdown-preview-section">${raw.innerHTML}</div></div></details>
   </div>`;
   B.hydrate($('.nv-raw', view), id);
@@ -287,14 +260,41 @@ function showModule(view, id) {
     const g = e.target.closest('[data-go]');
     if (g && !e.target.closest('.nv-raw')) { e.preventDefault(); e.stopPropagation(); B.go(g.dataset.go); }
   };
-  const img = moduleImage(m);
-  const cover = $('.nv-mod-cover', view);
-  if (img) mountGL(cover, 'ditherVeil', { src: img, fit: 'contain', pattern: 'bayer', pixelSize: 2, inkColor: '#07080F', paperColor: '#3A2F78', contrast: 1.2, revealRadius: 120, rimColor: m.color, rim: 0.25, wander: true }, bag);
-  else cover.classList.add('is-blank');
   return destroyAll(bag);
 }
 
 /* ---------------------------------------------------------------- lecture reader */
+/* ---------------------------------------------------------------- deck reader
+   No scrolling: a note (or a whole lecture, every topic stitched in as a chapter) is cut into pages
+   that each fit the screen. Blocks are packed into pages by measuring them at the real page size;
+   long lists and tables are split between pages, headings never end a page, and a block that is
+   still too tall gets a page of its own. Flip with the arrow keys, space, the mouse wheel, a swipe
+   or the buttons; the topic list on the left jumps straight to a chapter. */
+const stripTitle = t => String(t || '').replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, '').replace(/^\d+\s+/, '');
+function deckModel(id) {
+  const { hubs, topicHub } = model();
+  const hubId = hubs[id] ? id : topicHub[id];
+  if (hubId) {
+    const hb = hubs[hubId], m = hb.module;
+    const siblings = Object.keys(KIND).flatMap(k => m.groups[k] || []);
+    const at = siblings.indexOf(hb);
+    const chapters = [{ id: hubId, title: 'Overview', n: '00', hub: true }, ...hb.topics.map((t, i) => ({ id: t, title: stripTitle(B.V.notes[t].title), n: plainNum(i + 1) }))];
+    return { hubId, color: m.color, kicker: `${KIND_ONE[hb.kind] || ''} ${hb.number || ''}`.trim(), title: stripTitle(hb.title), back: { id: m.id, label: m.title },
+      chapters, next: siblings[at + 1], prev: siblings[at - 1], module: m, terms: termsUsed(chapters.map(c => c.id)), kind: KIND_ONE[hb.kind] || 'Lecture' };
+  }
+  const n = B.V.notes[id], p = n.props || {};
+  const subj = p.subject || (p.subjects || [])[0] || '';
+  const m = model().byTitle[subj] || moduleOfId(id);
+  const isTerm = id.startsWith('02 Key Terms/');
+  return { hubId: null, color: m ? m.color : (isTerm ? '#FDE68A' : '#8B5CF6'), kicker: isTerm ? 'Key term' : (p.type || ''), title: stripTitle(n.title),
+    back: isTerm ? { id: 'glossary', label: 'Key terms' } : m ? { id: m.id, label: m.title } : { id: B.V.home, label: 'Home' },
+    chapters: [{ id, title: stripTitle(n.title), n: '' }], single: true, isTerm };
+}
+function termsUsed(ids) {
+  const seen = new Map();
+  for (const id of ids) for (const l of (B.V.notes[id] || {}).links || []) if (l.startsWith('02 Key Terms/')) seen.set(l, (seen.get(l) || 0) + 1);
+  return [...seen.entries()].sort((a, b) => b[1] - a[1] || B.collator.compare(a[0], b[0])).map(x => x[0]);
+}
 function cleanBody(html, opts = {}) {
   const box = document.createElement('div'); box.innerHTML = html;
   box.querySelector(':scope > .el-h1')?.remove();
@@ -303,109 +303,257 @@ function cleanBody(html, opts = {}) {
     box.querySelector('.callout[data-callout="abstract"]')?.closest('.el-div')?.remove();
     const t = box.querySelector('h2#topics');
     if (t) { const blk = t.closest('.el-h2'); const nx = blk.nextElementSibling; if (nx && /el-(ol|ul)/.test(nx.className)) nx.remove(); blk.remove(); }
+    // the key-term list is on the finish page instead
+    const kt = box.querySelector('h2#key-terms');
+    if (kt) { let blk = kt.closest('.el-h2'); while (blk) { const nx = blk.nextElementSibling; blk.remove(); blk = nx && !/^el-h[12]\b/.test(nx.className) ? nx : null; } }
   }
-  return box.innerHTML;
+  // drop empty trailing sections (a heading with nothing under it)
+  [...box.children].forEach(el => { if (!el.textContent.trim() && !el.querySelector('img, svg, iframe, .markdown-embed, .canvas-embed')) el.remove(); });
+  return box;
 }
-function termsUsed(ids) {
-  const seen = new Map();
-  for (const id of ids) for (const l of (B.V.notes[id] || {}).links || []) if (l.startsWith('02 Key Terms/')) seen.set(l, (seen.get(l) || 0) + 1);
-  return [...seen.entries()].sort((a, b) => b[1] - a[1] || B.collator.compare(a[0], b[0])).map(x => x[0]);
-}
-function showReader(view, id, heading) {
-  const bag = [];
-  const { hubs, topicHub } = model();
-  const hubId = hubs[id] ? id : topicHub[id];
-  const hb = hubs[hubId], m = hb.module;
-  const hubNote = B.V.notes[hubId];
-  const chapters = [{ id: hubId, title: 'Overview', n: '00' }, ...hb.topics.map((t, i) => ({ id: t, title: B.V.notes[t].title.replace(/^\d+\s+/, ''), n: plainNum(i + 1) }))];
-  const siblings = Object.keys(KIND).flatMap(k => m.groups[k] || []);
-  const at = siblings.indexOf(hb);
-  const prev = siblings[at - 1], next = siblings[at + 1];
-  const terms = termsUsed(chapters.map(c => c.id));
-  const img = firstImage([hubId, ...hb.topics]);
-  const cls = n => esc(['markdown-preview-view', 'markdown-rendered', ...(n.css || [])].join(' '));
-  view.innerHTML = `<div class="nv-reader" style="--mod:${m.color}">
-    <aside class="nv-rail">
-      <button class="nv-back" data-go="${esc(m.id)}">${icon('arrow-left')} ${esc(m.title)}</button>
-      <div class="nv-rail-kicker">${esc(KIND_ONE[hb.kind] || 'Notes')} ${hb.number || ''}</div>
-      <div class="nv-rail-title">${esc(hb.title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, ''))}</div>
-      <div class="nv-rail-progress"><i></i></div>
-      <ol class="nv-chapters">${chapters.map((c, i) => `<li><button data-ch="${i}"><span>${c.n}</span>${esc(c.title)}</button></li>`).join('')}</ol>
-    </aside>
-    <div class="nv-read">
-      <header class="nv-read-hero">
-        <div class="nv-read-cover" aria-hidden="true"></div>
-        <div class="nv-read-copy">
-          <div class="nv-kicker">${esc(m.title)} · ${esc(KIND_ONE[hb.kind] || '')} ${hb.number || ''}</div>
-          <h1>${esc(hb.title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, ''))}</h1>
-          <p class="nv-stats">${esc(stats(hubId) || hb.topics.length + ' topics')}</p>
-          <button class="nv-pill nv-pill-btn" data-ask-open>${icon('sparkles')} Ask about this lecture</button>
-        </div>
-      </header>
-      ${chapters.map((c, i) => {
-        const n = B.V.notes[c.id];
-        const sum = i ? summaryOf(c.id) : '';
-        return `<section class="nv-ch" data-ch="${i}" data-note="${esc(c.id)}">
-          ${i ? `<div class="nv-ch-head"><span class="nv-ch-n">${c.n}</span><div><h2>${esc(c.title)}</h2>${sum ? `<p>${esc(sum)}</p>` : ''}</div></div>` : ''}
-          <div class="${cls(n)}"><div class="markdown-preview-sizer markdown-preview-section">${cleanBody(n.html, { hub: !i })}</div></div>
-        </section>`;
-      }).join('')}
-      <footer class="nv-read-foot">
-        ${prev ? `<button class="nv-next" data-go="${esc(prev.id)}"><small>${icon('arrow-left')} Previous</small><b>${esc(prev.title)}</b></button>` : '<span></span>'}
-        ${next ? `<button class="nv-next is-next" data-go="${esc(next.id)}"><small>Next ${icon('arrow-right')}</small><b>${esc(next.title)}</b></button>` : `<button class="nv-next is-next" data-go="${esc(m.id)}"><small>Done ${icon('check')}</small><b>Back to ${esc(m.title)}</b></button>`}
-      </footer>
-    </div>
-    <aside class="nv-side">
-      ${terms.length ? `<div class="nv-side-h">Key terms in this ${esc((KIND_ONE[hb.kind] || 'lecture').toLowerCase())}</div><div class="nv-terms">${terms.slice(0, 40).map(t => `<a class="internal-link nv-term" data-note="${esc(t)}" href="${esc(B.hashFor(t))}">${esc(B.V.notes[t].title)}</a>`).join('')}</div>` : ''}
-    </aside>
-  </div>`;
-  $$('.nv-ch', view).forEach(sec => B.hydrate(sec, sec.dataset.note));
-  B.wireLinks(view);
+const isHeading = el => /^el-h[2-6]\b/.test(el.className);
+const waitImages = (root, ms) => Promise.race([
+  Promise.all([...root.querySelectorAll('img')].map(img => img.complete ? null : new Promise(r => { img.onload = img.onerror = r; }))),
+  new Promise(r => setTimeout(r, ms)),
+]);
 
-  // chapters: rail clicks, links to topics in this lecture scroll instead of reloading
-  const secs = $$('.nv-ch', view), btns = $$('.nv-chapters button', view);
-  const byNote = new Map(secs.map(s => [s.dataset.note, s]));
-  const scrollTo = (el, smooth) => { const top = el.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop - 14; view.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' }); };
+function showDeck(view, id, heading) {
+  const bag = [];
+  const D = deckModel(id);
+  const chs = D.chapters;
+  const startCh = Math.max(0, chs.findIndex(c => c.id === id));
+  const hasEnd = !!D.hubId;
+  view.innerHTML = `<div class="nv-deck" style="--mod:${D.color}">
+    <header class="nv-deck-top">
+      <button class="nv-back" data-go="${esc(D.back.id)}">${icon('arrow-left')}<span>${esc(D.back.label)}</span></button>
+      <div class="nv-deck-name"><span class="nv-kicker">${esc(D.kicker)}</span><b>${esc(D.title)}</b></div>
+      <div class="nv-deck-count"></div>
+    </header>
+    <div class="nv-deck-body${D.single ? ' is-single' : ''}">
+      ${D.single ? '' : `<nav class="nv-toc"><ol>${chs.map((c, i) => `<li><button data-ch="${i}"><span>${c.n}</span><em>${esc(c.title)}</em></button></li>`).join('')}${hasEnd ? `<li><button data-ch="end"><span>${icon('check')}</span><em>Finish</em></button></li>` : ''}</ol></nav>`}
+      <div class="nv-stage">
+        <div class="nv-measure nv-card"><div class="nv-card-in markdown-preview-view markdown-rendered"><div class="markdown-preview-sizer"></div></div></div>
+      </div>
+    </div>
+    <footer class="nv-deck-foot">
+      <button class="nv-flip" data-dir="-1" title="Previous page (←)">${icon('arrow-left')}</button>
+      <div class="nv-segs">${chs.map((c, i) => `<button class="nv-seg" data-ch="${i}" title="${esc(c.title)}"><b></b></button>`).join('')}</div>
+      <button class="nv-flip" data-dir="1" title="Next page (→)">${icon('arrow-right')}</button>
+    </footer>
+  </div>`;
+  const stage = $('.nv-stage', view), measure = $('.nv-measure', view), msizer = $('.markdown-preview-sizer', measure);
+  const pages = new Map();        // chapter -> [{ blocks: [html], first: blockIndex }]
+  let cur = { ch: startCh, pg: 0 }, card = null, busy = false, alive = true;
+
+  const chapterHead = (c, first) => c.hub ? '' : D.single ? (first ? `<div class="nv-card-head"><h1>${esc(c.title)}</h1></div>` : '') : first
+    ? `<div class="nv-card-head"><span class="nv-card-n">${c.n}</span><h1>${esc(c.title)}</h1></div>`
+    : `<div class="nv-card-run"><span>${c.n}</span>${esc(c.title)}</div>`;
+
+  async function paginate(ch) {
+    if (pages.has(ch)) return pages.get(ch);
+    const c = chs[ch], n = B.V.notes[c.id];
+    const box = cleanBody(n.html, { hub: c.hub });
+    measure.querySelector('.nv-card-in').className = `nv-card-in markdown-preview-view markdown-rendered ${(n.css || []).join(' ')}`;
+    msizer.innerHTML = box.innerHTML;
+    msizer.querySelectorAll('img').forEach(img => { img.loading = 'eager'; });
+    await waitImages(msizer, 4000);
+    if (!alive) return [];
+    const blocks = [...msizer.children].map(el => el.outerHTML);
+    const inner = measure.querySelector('.nv-card-in'), cs = getComputedStyle(inner);
+    const limit = inner.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 16;
+    const out = [];
+    let pageBlocks = [], firstIdx = 0;
+    const startPage = () => { msizer.innerHTML = chapterHead(c, out.length === 0); pageBlocks = []; };
+    const fits = () => msizer.scrollHeight <= limit;
+    const close = () => { out.push({ blocks: pageBlocks, first: firstIdx }); };
+    startPage();
+    for (let bi = 0; bi < blocks.length; bi++) {
+      const tmp = document.createElement('div'); tmp.innerHTML = blocks[bi]; const el = tmp.firstElementChild;
+      msizer.appendChild(el);
+      if (fits()) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(blocks[bi]); continue; }
+      // shrink a figure into the space left rather than leaving half a page empty
+      const imgs = el.querySelectorAll('img');
+      if (imgs.length === 1) {
+        const over = msizer.scrollHeight - limit, ih = imgs[0].offsetHeight;
+        if (ih - over >= 200) {
+          imgs[0].style.maxHeight = (ih - over - 4) + 'px';
+          if (fits()) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(el.outerHTML); continue; }
+          imgs[0].style.maxHeight = '';
+        }
+      }
+      el.remove();
+      // split a long list or table across pages
+      const list = el.querySelector(':scope > ul, :scope > ol'), table = el.querySelector('table');
+      if ((list && list.children.length > 1) || (table && table.tBodies[0] && table.tBodies[0].rows.length > 1)) {
+        const items = list ? [...list.children] : [...table.tBodies[0].rows];
+        const shell = () => { const s = el.cloneNode(true); const l = list ? s.querySelector(':scope > ul, :scope > ol') : s.querySelector('table').tBodies[0]; l.innerHTML = ''; return [s, l]; };
+        let [part, holder] = shell(); msizer.appendChild(part);
+        let start = 0;
+        for (let k = 0; k < items.length; k++) {
+          holder.appendChild(items[k].cloneNode(true));
+          if (fits()) continue;
+          holder.lastElementChild.remove();
+          if (holder.children.length) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(part.outerHTML); }
+          if (pageBlocks.length) close();
+          startPage();
+          [part, holder] = shell();
+          if (list && list.tagName === 'OL') holder.setAttribute('start', String((+list.getAttribute('start') || 1) + k));
+          msizer.appendChild(part); holder.appendChild(items[k].cloneNode(true)); firstIdx = bi; start = k;
+        }
+        if (holder.children.length) { if (!pageBlocks.length) firstIdx = bi; pageBlocks.push(part.outerHTML); }
+        continue;
+      }
+      // move a dangling heading onto the next page with its content
+      const carry = [];
+      while (pageBlocks.length > 1) { const t = document.createElement('div'); t.innerHTML = pageBlocks[pageBlocks.length - 1]; if (!isHeading(t.firstElementChild)) break; carry.unshift(pageBlocks.pop()); }
+      if (pageBlocks.length) close();
+      startPage();
+      firstIdx = carry.length ? bi - carry.length : bi;
+      for (const hb of carry) { const t = document.createElement('div'); t.innerHTML = hb; msizer.appendChild(t.firstElementChild); pageBlocks.push(hb); }
+      msizer.appendChild(el); pageBlocks.push(blocks[bi]);
+      if (!fits() && pageBlocks.length === 1) { close(); startPage(); }   // a single tall block keeps its own page
+    }
+    if (pageBlocks.length || !out.length) close();
+    msizer.innerHTML = '';
+    pages.set(ch, out);
+    return out;
+  }
+
+  function endPage() {
+    const nx = D.next;
+    return `<div class="nv-end">
+      <div class="nv-end-ring">${icon('check')}</div>
+      <div class="nv-kicker">Finished</div>
+      <h1>${esc(D.title)}</h1>
+      <p>${chs.length - 1} topics read.</p>
+      <div class="nv-end-actions">
+        ${nx ? `<button class="nv-end-btn is-main" data-go="${esc(nx.id)}"><small>Next</small><b>${esc(stripTitle(nx.title))}</b></button>` : `<button class="nv-end-btn is-main" data-go="${esc(D.back.id)}"><small>Done</small><b>Back to ${esc(D.back.label)}</b></button>`}
+        ${B.exists('flashcards') ? `<button class="nv-end-btn" data-go="flashcards"><small>Practise</small><b>Flashcards</b></button>` : ''}
+      </div>
+      ${D.terms.length ? `<div class="nv-end-terms"><div class="nv-kicker">Key terms in this ${esc(D.kind.toLowerCase())}</div><div class="nv-terms">${D.terms.slice(0, 24).map(t => `<a class="internal-link nv-term" data-note="${esc(t)}" href="${esc(B.hashFor(t))}">${esc(B.V.notes[t].title)}</a>`).join('')}</div></div>` : ''}
+    </div>`;
+  }
+
+  function paint(dir) {
+    const isEnd = cur.ch === 'end';
+    const c = isEnd ? null : chs[cur.ch];
+    const list = isEnd ? null : pages.get(cur.ch);
+    const pg = isEnd ? null : list[cur.pg];
+    const n = c && B.V.notes[c.id];
+    const el = h(`<div class="nv-card is-entering${dir ? (dir > 0 ? ' from-right' : ' from-left') : ''}">
+      ${isEnd ? `<div class="nv-card-in">${endPage()}</div>` : `<div class="nv-card-in markdown-preview-view markdown-rendered ${esc((n.css || []).join(' '))}"><div class="markdown-preview-sizer">${chapterHead(c, cur.pg === 0)}${pg.blocks.join('')}</div></div>`}
+    </div>`);
+    if (!isEnd) el.querySelector('.nv-card-in').dataset.note = c.id;
+    stage.appendChild(el);
+    if (!isEnd) B.hydrate(el.querySelector('.nv-card-in'), c.id);
+    const old = card; card = el;
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-entering')));
+    if (old) { old.classList.add(dir < 0 ? 'to-right' : 'to-left', 'is-leaving'); setTimeout(() => old.remove(), 450); }
+    // chrome: counter, toc, segments, progress
+    const total = list ? list.length : 1;
+    $('.nv-deck-count', view).innerHTML = isEnd ? 'Finished' : D.single ? (total > 1 ? `${cur.pg + 1} / ${total}` : '') : `<span>${c.hub ? 'Overview' : 'Topic ' + c.n}</span> · ${cur.pg + 1} / ${total}`;
+    $$('.nv-toc button', view).forEach(b => {
+      const k = b.dataset.ch === 'end' ? chs.length : +b.dataset.ch, at = isEnd ? chs.length : cur.ch;
+      b.classList.toggle('is-active', k === at); b.classList.toggle('is-done', k < at);
+      if (k === at) b.scrollIntoView({ block: 'nearest' });
+    });
+    $$('.nv-seg', view).forEach((s, i) => {
+      const f = isEnd || i < cur.ch ? 1 : i > cur.ch ? 0 : (cur.pg + 1) / total;
+      s.querySelector('b').style.width = Math.round(f * 100) + '%';
+      s.classList.toggle('is-active', !isEnd && i === cur.ch);
+    });
+    $('.nv-flip[data-dir="-1"]', view).disabled = !isEnd && cur.ch === 0 && cur.pg === 0;
+    $('.nv-flip[data-dir="1"]', view).disabled = isEnd || (!hasEnd && cur.ch === chs.length - 1 && cur.pg === total - 1);
+    if (D.hubId) markRead(D.hubId, isEnd ? 1 : (cur.ch + (cur.pg + 1) / total) / chs.length);
+    // a page that is still too tall scrolls inside itself
+    const inner = el.querySelector('.nv-card-in');
+    const tall = () => el.classList.toggle('is-tall', inner.scrollHeight > inner.clientHeight + 4);
+    tall(); inner.querySelectorAll('img').forEach(img => { img.loading = 'eager'; if (!img.complete) img.addEventListener('load', tall, { once: true }); });
+    if (glow) glow.refresh();
+  }
+
+  async function goTo(ch, pg, dir, headingId) {
+    if (busy || !alive) return;
+    busy = true;
+    try {
+      if (ch !== 'end') {
+        const list = await paginate(ch);
+        if (!alive) return;
+        if (headingId) { const k = list.findIndex(p => p.blocks.some(b => b.includes(`id="${headingId}"`))); if (k >= 0) pg = k; }
+        pg = pg === 'last' ? list.length - 1 : Math.max(0, Math.min(pg, list.length - 1));
+      }
+      cur = { ch, pg };
+      paint(dir);
+    } finally { busy = false; }
+  }
+  function step(dir) {
+    if (cur.ch === 'end') { if (dir < 0) goTo(chs.length - 1, 'last', -1); return; }
+    const list = pages.get(cur.ch) || [];
+    if (dir > 0) {
+      if (cur.pg < list.length - 1) goTo(cur.ch, cur.pg + 1, 1);
+      else if (cur.ch < chs.length - 1) goTo(cur.ch + 1, 0, 1);
+      else if (hasEnd) goTo('end', 0, 1);
+    } else {
+      if (cur.pg > 0) goTo(cur.ch, cur.pg - 1, -1);
+      else if (cur.ch > 0) goTo(cur.ch - 1, 'last', -1);
+    }
+  }
+
+  // input: keys, wheel, swipe, buttons
+  const onKey = e => {
+    if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable], .na-sheet, .menu, .modal-container')) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (['ArrowRight', 'PageDown', ' ', 'l'].includes(e.key) && !e.shiftKey) { e.preventDefault(); step(1); }
+    else if (['ArrowLeft', 'PageUp', 'h'].includes(e.key) || (e.key === ' ' && e.shiftKey)) { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowDown' && !D.single) { e.preventDefault(); if (cur.ch !== 'end' && cur.ch < chs.length - 1) goTo(cur.ch + 1, 0, 1); else if (hasEnd) goTo('end', 0, 1); }
+    else if (e.key === 'ArrowUp' && !D.single) { e.preventDefault(); goTo(cur.ch === 'end' ? chs.length - 1 : Math.max(0, cur.ch - 1), 0, -1); }
+  };
+  document.addEventListener('keydown', onKey);
+  let wheelAcc = 0, wheelLock = 0;
+  view.addEventListener('wheel', e => {
+    const tall = e.target.closest('.nv-card.is-tall .nv-card-in, .nv-toc');
+    if (tall) { const t = tall; const atEnd = e.deltaY > 0 ? t.scrollTop + t.clientHeight >= t.scrollHeight - 2 : t.scrollTop <= 0; if (!atEnd || t.classList.contains('nv-toc')) return; }
+    e.preventDefault();
+    const now = performance.now(); if (now < wheelLock) return;
+    wheelAcc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    if (Math.abs(wheelAcc) > 50) { step(Math.sign(wheelAcc)); wheelAcc = 0; wheelLock = now + 520; }
+  }, { passive: false });
+  let sx = null, sy = 0;
+  stage.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') { sx = e.clientX; sy = e.clientY; } });
+  stage.addEventListener('pointerup', e => {
+    if (sx == null) return; const dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) step(dx < 0 ? 1 : -1);
+  });
   view.addEventListener('click', e => {
     const a = e.target.closest('a.internal-link[data-note]');
-    if (a && byNote.has(a.dataset.note) && !(e.ctrlKey || e.metaKey)) {
-      e.preventDefault(); e.stopPropagation();
-      const sec = byNote.get(a.dataset.note);
-      const tgt = a.dataset.heading ? sec.querySelector(`[id="${CSS.escape(a.dataset.heading)}"]`) : null;
-      scrollTo(tgt || sec, true); return;
+    if (a && !(e.ctrlKey || e.metaKey)) {
+      const k = chs.findIndex(c => c.id === a.dataset.note);
+      if (k >= 0) { e.preventDefault(); e.stopPropagation(); goTo(k, 0, k > cur.ch ? 1 : -1, a.dataset.heading || null); return; }
     }
-    if (e.target.closest('[data-ask-open]')) { N.assistant && N.assistant.open(); return; }
-    const c = e.target.closest('[data-ch]'); if (c && c.tagName === 'BUTTON') { scrollTo(secs[+c.dataset.ch], true); return; }
-    const g = e.target.closest('[data-go]'); if (g) { e.stopPropagation(); B.go(g.dataset.go); }
+    const f = e.target.closest('.nv-flip'); if (f) { step(+f.dataset.dir); return; }
+    const t = e.target.closest('[data-ch]');
+    if (t && t.tagName === 'BUTTON') { const k = t.dataset.ch === 'end' ? 'end' : +t.dataset.ch; goTo(k, 0, k === 'end' || k > cur.ch ? 1 : -1); return; }
+    const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); e.stopPropagation(); B.go(g.dataset.go); }
   }, true);
-
-  // scroll spy and reading progress
-  const bar = $('.nv-rail-progress i', view);
-  let ticking = false;
-  const spy = () => {
-    ticking = false;
-    const vt = view.getBoundingClientRect().top, mark = vt + view.clientHeight * 0.3;
-    let idx = 0;
-    secs.forEach((s, i) => { if (s.getBoundingClientRect().top <= mark) idx = i; });
-    btns.forEach((b, i) => { b.classList.toggle('is-active', i === idx); b.classList.toggle('is-done', i < idx); });
-    const frac = view.scrollHeight <= view.clientHeight ? 1 : view.scrollTop / (view.scrollHeight - view.clientHeight);
-    bar.style.width = Math.round(frac * 100) + '%';
-    markRead(hubId, frac);
-    const ab = btns[idx]; if (ab) { const r = ab.closest('.nv-chapters'); if (r && (ab.offsetTop < r.scrollTop || ab.offsetTop > r.scrollTop + r.clientHeight - 30)) r.scrollTop = ab.offsetTop - 40; }
-  };
-  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(spy); } };
-  view.addEventListener('scroll', onScroll, { passive: true });
-
-  // open at the topic (or heading) asked for
-  requestAnimationFrame(() => {
-    const sec = byNote.get(id);
-    const tgt = heading && sec ? sec.querySelector(`[id="${CSS.escape(heading)}"]`) : null;
-    if (tgt) scrollTo(tgt, false); else if (sec && id !== hubId) scrollTo(sec, false);
-    spy();
+  // re-cut the pages when the stage changes size, staying on the same block
+  let lastSize = '';
+  const ro = new ResizeObserver(() => {
+    const sz = stage.clientWidth + 'x' + stage.clientHeight;
+    if (sz === lastSize) return; const first = !lastSize; lastSize = sz; setH();
+    if (first) return;
+    const at = cur.ch !== 'end' && pages.get(cur.ch) ? pages.get(cur.ch)[cur.pg].first : 0;
+    pages.clear();
+    if (cur.ch === 'end') { paint(0); return; }
+    paginate(cur.ch).then(list => { if (!alive) return; let k = 0; list.forEach((p, i) => { if (p.first <= at) k = i; }); cur.pg = k; paint(0); });
   });
-  if (img) mountGL($('.nv-read-cover', view), 'ditherVeil', { src: img, fit: 'cover', pattern: 'bayer', pixelSize: 2, inkColor: '#07080F', paperColor: '#3A2F78', contrast: 1.2, revealRadius: 110, rimColor: m.color, rim: 0.3, wander: true }, bag);
-  else $('.nv-read-cover', view).classList.add('is-blank');
-  return () => { view.removeEventListener('scroll', onScroll); destroyAll(bag)(); };
+  ro.observe(stage);
+  // magic bento spotlight on the page card
+  let glow = null;
+  if (N.bento) { glow = N.bento(stage, { cards: '.nv-card:not(.nv-measure)', spotlightRadius: 420, clickEffect: false }); bag.push(glow); }
+  const setH = () => stage.style.setProperty('--page-h', stage.clientHeight + 'px');
+  setH();
+  requestAnimationFrame(() => goTo(startCh, 0, 0, heading || null));
+  return () => { alive = false; ro.disconnect(); document.removeEventListener('keydown', onKey); destroyAll(bag)(); };
 }
 
 /* ---------------------------------------------------------------- glossary (key terms A to Z) */
@@ -440,16 +588,15 @@ B.registerView('glossary', {
 const DEFS = {
   home: { title: () => 'Home', icon: 'home', cls: 'nv-view', show: v => showHome(v) },
   module: { title: id => (B.V.notes[id] || {}).title || 'Module', icon: 'layers', cls: 'nv-view', show: (v, id) => showModule(v, id) },
-  reader: { title: id => { const { hubs, topicHub } = model(); const hb = hubs[id] || hubs[topicHub[id]]; return hb ? hb.title : B.V.notes[id].title; }, icon: 'book-open', cls: 'nv-view nv-view-reader', show: (v, id, hd) => showReader(v, id, hd) },
+  deck: { title: id => { const { hubs, topicHub } = model(); const hb = hubs[id] || hubs[topicHub[id]]; return stripTitle(hb ? hb.title : B.V.notes[id].title); }, icon: 'book-open', cls: 'nv-view nv-view-deck', show: (v, id, hd) => showDeck(v, id, hd) },
 };
 N.route = id => {
   if (!B.V || !B.V.notes[id]) return null;
   if (id === B.V.home) return DEFS.home;
   const p = B.V.notes[id].props || {};
   if (p.type === 'subject hub') return DEFS.module;
-  const { hubs, topicHub } = model();
-  if (hubs[id] || topicHub[id]) return DEFS.reader;
-  return null;
+  if (model().hubs[id] || model().topicHub[id]) return DEFS.deck;
+  return DEFS.deck;        // every other note is read as pages too
 };
 N.navigator = navPane;
 N.model = model;
