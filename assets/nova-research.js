@@ -194,17 +194,38 @@ function close() {
   document.removeEventListener('keydown', onKey, true);
   window.removeEventListener('pointermove', o.onMove);
   if (o.decay) o.decay.destroy();
+  if (o.chip) { const c = o.chip; c.classList.add('is-out'); setTimeout(() => c.remove(), 260); }
   o.el.classList.add('is-closing'); setTimeout(() => o.el.remove(), 280);
 }
+// tuck the deck away into a small stack in the corner; nothing is lost until you close it
+function minimise() {
+  const o = open; if (!o || o.min) return;
+  o.min = true; o.el.classList.add('is-min');
+  if (!o.chip) {
+    o.chip = h(`<div class="rs-chip" role="button" tabindex="0" title="Show the sections again"><span class="rs-chip-pile"></span><span class="rs-chip-t"><b>${esc(o.topic)}</b><small></small></span><button class="rs-chip-x" title="Close all">${icon('x')}</button></div>`);
+    const pile = $('.rs-chip-pile', o.chip);
+    (o.faces || []).slice(0, 3).forEach((f, i) => { const c = document.createElement('canvas'); c.width = 60; c.height = 75; c.getContext('2d').drawImage(f, 0, 0, 60, 75); c.style.setProperty('--k', i); pile.appendChild(c); });
+    o.chip.addEventListener('click', e => { if (e.target.closest('.rs-chip-x')) { e.stopPropagation(); close(); return; } restore(); });
+    o.chip.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); restore(); } });
+    document.body.appendChild(o.chip);
+  }
+  $('small', o.chip).textContent = o.count ? `${o.count} section${o.count > 1 ? 's' : ''}` : 'Searching…';
+  o.chip.classList.remove('is-out'); requestAnimationFrame(() => o.chip.classList.add('is-in'));
+}
+function restore() {
+  const o = open; if (!o || !o.min) return;
+  o.min = false; o.el.classList.remove('is-min');
+  if (o.chip) o.chip.classList.remove('is-in');
+}
 function onKey(e) {
-  if (!open) return;
-  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+  if (!open || open.min || e.target.closest && e.target.closest('input, textarea, [contenteditable="true"]')) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); open.go ? minimise() : close(); }
   else if (e.key === 'ArrowRight' && open.go) { e.preventDefault(); open.go(1); }
   else if (e.key === 'ArrowLeft' && open.go) { e.preventDefault(); open.go(-1); }
 }
 
 const deckCard = (r, i, topic) => `<article class="rs-card" data-i="${i}">
-  <header><b>${String(i + 1).padStart(2, '0')}</b><span>${esc(B.books.cite(r))}</span></header>
+  <header><b>${String(i + 1).padStart(2, '0')}</b><span>${esc(B.books.cite(r))}</span><button class="rs-card-x" title="Remove this one">${icon('x')}</button></header>
   ${r.section || r.chapter ? `<h3>${esc(r.section || r.chapter)}</h3>` : ''}
   <div class="rs-text">${B.books.hl(r.plain || r.text, topic)}</div>
   ${r.figures && r.figures.length ? `<div class="rs-figs">${r.figures.slice(0, 3).map(f => `<img src="${esc(f.url)}" alt="" loading="lazy" data-full="${esc(f.full || f.url)}">`).join('')}</div>` : ''}
@@ -218,44 +239,40 @@ async function research(topic) {
   const terms = topic.toLowerCase().split(/[^a-z0-9-]+/).filter(w => w.length > 3).map(w => w.replace(/(es|s)$/, ''));
   const el = h(`<div class="rs" role="dialog" aria-label="Research: ${esc(topic)}">
     <div class="rs-bar"><span class="rs-q">${icon('search')}<span class="rs-typed"></span><i class="rs-caret"></i></span><span class="rs-status"></span></div>
-    <button class="rs-x" title="Close (Esc)">${icon('x')}</button>
+    <div class="rs-ctl"><button class="rs-min" title="Minimise (Esc)">${icon('minus')}</button><button class="rs-x" title="Close all">${icon('x')}</button></div>
     <div class="rs-reel"><div class="rs-reel-in"></div></div>
     <div class="rs-pile"></div>
-    <section class="rs-read" hidden><div class="rs-read-inner"></div></section>
+    <p class="rs-msg" hidden></p>
     <section class="rs-deck" hidden><div class="rs-deck-cards"></div><div class="rs-deck-bar"><button class="rs-prev" title="Previous (←)">${icon('chevron-left')}</button><span class="rs-count"></span><button class="rs-next" title="Next (→)">${icon('chevron-right')}</button></div></section>
   </div>`);
   document.body.appendChild(el);
-  const me = open = { el, topic, alive: true, go: null, decay: null, onMove: null };
+  const me = open = { el, topic, alive: true, go: null, decay: null, onMove: null, chip: null, min: false, faces: [], count: 0 };
   document.addEventListener('keydown', onKey, true);
   $('.rs-x', el).onclick = close;
+  $('.rs-min', el).onclick = minimise;
   requestAnimationFrame(() => el.classList.add('is-in'));
   const status = t => { const s = $('.rs-status', el); if (s) s.textContent = t; };
+  const message = html => { const m = $('.rs-msg', el); m.innerHTML = html; m.hidden = false; el.classList.add('is-done'); };
   const fast = reduced();
 
   // 1. the search types itself in while the engine is already being asked
   const searchP = B.books.search(topic, { limit: 14 }).then(r => ({ r }), e => ({ e }));
   const typed = $('.rs-typed', el);
-  for (let i = 1; i <= topic.length && me.alive; i++) { typed.textContent = topic.slice(0, i); if (!fast) await wait(clamp(900 / topic.length, 18, 55)); }
+  for (let i = 1; i <= topic.length && me.alive; i++) { typed.textContent = topic.slice(0, i); if (!fast) await wait(clamp(500 / topic.length, 10, 30)); }
   status('Searching your textbooks');
   const got = await searchP;
   if (!me.alive) return;
   $('.rs-caret', el).remove();
   if (got.e) {
     status('');
-    const rd = $('.rs-read', el); rd.hidden = false; el.classList.add('is-done');
-    $('.rs-read-inner', rd).innerHTML = `<p class="rs-err">${esc(got.e.message || 'The book library did not answer.')}${B.ask && B.ask.apiBase() ? ` <a href="${esc(B.ask.apiBase())}" target="_blank" rel="noopener">Sign in to the book library</a>, then ask again.` : ''}</p>`;
+    message(`<span class="rs-err">${esc(got.e.message || 'The book library did not answer.')}</span>${B.ask && B.ask.apiBase() ? ` <a href="${esc(B.ask.apiBase())}" target="_blank" rel="noopener">Sign in to the book library</a>, then ask again.` : ''}`);
     return;
   }
   const seen = new Set();
   const hits = got.r.filter(r => { const k = r.book + r.page; if (seen.has(k) || !(r.plain || r.text)) return false; seen.add(k); return true; }).slice(0, 10);
-  if (!hits.length) { status('Nothing in the textbooks on that'); el.classList.add('is-done'); return; }
+  if (!hits.length) { status(''); message('Nothing in the textbooks on that.'); return; }
   const books = [...new Set(hits.map(r => r.book))];
-  // start writing the explanation now, so it's ready by the time the cards have landed
-  const passages = hits.map(r => `[${B.books.cite(r)}] ${(r.plain || r.text).replace(/<[^>]+>/g, '')}`).join('\n\n').slice(0, 3600);
-  const explainP = B.ask.explain({
-    question: `Give me a clear, well-structured explanation of "${topic}" for a first-year biomedicine student, using the textbook passages: the key idea first, then the mechanism or details step by step, the key terms, and why it matters. Cite the books where you use them.`,
-    selection: topic, note: { id: '', title: 'Research: ' + topic, subject: '', lecture: '', summary: '' }, section: { heading: topic, text: passages }, block: '', history: [],
-  }).then(r => r, e => ({ answer: `I found the sections but couldn't write the summary: ${e.message || 'the book engine did not answer'}. The cards have everything.`, sources: [] }));
+  me.count = hits.length;
 
   // 2. results scroll past
   status(`${hits.length} sections in ${books.join(', ')}`);
@@ -263,25 +280,25 @@ async function research(topic) {
   reel.innerHTML = hits.map((r, i) => `<div class="rs-row" data-i="${i}"><b>${esc(B.books.cite(r))}</b><span>${esc((r.section || r.chapter || '') && (r.section || r.chapter) + ' · ')}${esc((r.plain || r.text).replace(/<[^>]+>/g, '').slice(0, 150))}</span></div>`).join('');
   const rows = $$('.rs-row', reel);
   el.classList.add('is-scanning');
+  const faces = me.faces = hits.map((r, i) => paintCard(r, i, terms));
   if (!fast) {
     const box = reel.parentElement, travel = Math.max(0, reel.scrollHeight - box.clientHeight);
-    const t0 = performance.now(), dur = 1500;
+    const t0 = performance.now(), dur = 850;
     await new Promise(done => { const step = now => { if (!me.alive) return done(); const t = clamp((now - t0) / dur, 0, 1), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       reel.style.transform = `translate3d(0, ${-travel * e}px, 0)`; const at = Math.floor(t * rows.length); rows.forEach((r, i) => r.classList.toggle('is-scan', i === at));
       if (t < 1) requestAnimationFrame(step); else done(); }; requestAnimationFrame(step); });
-    reel.style.transition = 'transform .5s cubic-bezier(.23,1,.32,1)'; reel.style.transform = 'translate3d(0,0,0)'; rows.forEach(r => r.classList.remove('is-scan'));
-    await wait(450);
+    reel.style.transition = 'transform .35s cubic-bezier(.23,1,.32,1)'; reel.style.transform = 'translate3d(0,0,0)'; rows.forEach(r => r.classList.remove('is-scan'));
+    await wait(260);
   }
   if (!me.alive) return;
 
   // 3. the best ones tear out and whip across into the pile
   const pick = hits.slice(0, Math.min(6, hits.length));
-  const faces = hits.map((r, i) => paintCard(r, i, terms));
   me.decay = fast ? null : makeDecay();
   const pile = $('.rs-pile', el);
   const vw = innerWidth, vh = innerHeight, mobile = vw < 760;
   const W = Math.round(clamp(vw * (mobile ? 0.62 : 0.2), 220, 300)), H = Math.round(W * 1.25);
-  const mid = { x: mobile ? vw / 2 : vw * 0.5, y: vh * 0.52, s: 1, r: 0 };
+  const mid = { x: vw * 0.5, y: vh * 0.52, s: 1, r: 0 };
   const slot = i => mobile ? { x: vw / 2 + (i - 2.5) * 8, y: vh - 90, s: 0.36, r: (i - 2.5) * 3 } : { x: vw - 180 + (i % 2 ? 6 : -6), y: vh * 0.5 + i * 6 - 16, s: 0.62, r: (i % 2 ? 1 : -1) * (2 + i) };
   rows.forEach((r, i) => r.classList.toggle('is-pick', i < pick.length));
   el.classList.add('is-ripping');
@@ -292,9 +309,9 @@ async function research(topic) {
     status(`Pulling ${i + 1} of ${pick.length} · ${B.books.cite(pick[i])}`);
     const card = h(`<div class="rs-fly" style="width:${W}px;height:${H}px"></div>`); el.appendChild(card);
     const to = slot(i);
-    if (me.decay) {
+    if (me.decay && !me.min) {
       me.decay.attach(card, faces[i]); me.decay.burst(1);
-      await flight(card, me, [[from, mid, 520, easeOut], [mid, mid, 260, t => t], [mid, to, 480, easeIn]], W, H);
+      await flight(card, me, [[from, mid, 330, easeOut], [mid, mid, 110, t => t], [mid, to, 290, easeIn]], W, H);
       me.decay.detach();
     }
     if (!me.alive) return;
@@ -303,20 +320,16 @@ async function research(topic) {
     st.appendChild(faces[i]); pile.appendChild(st);
   }
   if (!me.alive) return;
+  if (me.decay) { me.decay.destroy(); me.decay = null; }
 
-  // 4. one explanation, typed out, beside a deck of every section
-  status('Combining them into one explanation');
-  el.classList.add('is-combining');
-  const { answer, sources = [] } = await explainP;
-  if (!me.alive) return;
-  el.classList.remove('is-scanning', 'is-ripping', 'is-combining'); el.classList.add('is-done');
+  // 4. the deck: every section, flick through, remove any, minimise, open in the book
+  el.classList.remove('is-scanning', 'is-ripping'); el.classList.add('is-done');
   status(`${hits.length} sections · ${books.length} book${books.length > 1 ? 's' : ''}`);
-  const rd = $('.rs-read', el), deckS = $('.rs-deck', el), deck = $('.rs-deck-cards', el);
+  const deckS = $('.rs-deck', el), deck = $('.rs-deck-cards', el);
   deck.innerHTML = hits.map((r, i) => deckCard(r, i, topic)).join('');
-  rd.hidden = false; deckS.hidden = false;
-  setTimeout(() => pile.remove(), 500);
-  let cur = 0;
-  const cards = $$('.rs-card', deck);
+  deckS.hidden = false;
+  setTimeout(() => pile.remove(), 400);
+  let cur = 0, cards = $$('.rs-card', deck);
   const lay = () => {
     cards.forEach((c, i) => {
       const d = i - cur;
@@ -324,37 +337,41 @@ async function research(topic) {
       c.classList.toggle('is-current', d === 0); c.classList.toggle('is-gone', d < 0); c.classList.toggle('is-far', d > 3);
       c.inert = d !== 0;
     });
+    me.count = cards.length;
     $('.rs-count', el).textContent = `${cur + 1} / ${cards.length}`;
+    status(`${cards.length} section${cards.length > 1 ? 's' : ''} · ${books.length} book${books.length > 1 ? 's' : ''}`);
   };
   me.go = d => { const n = clamp(cur + d, 0, cards.length - 1); if (n !== cur) { cur = n; lay(); } };
   lay();
   $('.rs-prev', el).onclick = () => me.go(-1); $('.rs-next', el).onclick = () => me.go(1);
+  const removeCard = c => {
+    const i = cards.indexOf(c); if (i < 0) return;
+    c.classList.add('is-removing'); c.inert = true;
+    cards.splice(i, 1);
+    if (!cards.length) { setTimeout(close, 220); return; }
+    if (cur >= cards.length) cur = cards.length - 1;
+    setTimeout(() => c.remove(), 320);
+    lay();
+  };
   // DecayCard's drift and tilt toward the pointer, on the card you're reading
   let tx = 0, ty = 0, trot = 0, px = 0, py = 0, tilting = 0;
   const follow = () => {
-    tilting = 0; tx += (px * 24 - tx) * 0.14; ty += (py * 16 - ty) * 0.14; trot += (px * 4 - trot) * 0.14;
+    tilting = 0; tx += (px * 18 - tx) * 0.16; ty += (py * 12 - ty) * 0.16; trot += (px * 1.2 - trot) * 0.16;
     deck.style.setProperty('--tx', tx.toFixed(2) + 'px'); deck.style.setProperty('--ty', ty.toFixed(2) + 'px'); deck.style.setProperty('--tr', trot.toFixed(2) + 'deg');
-    if (Math.abs(px * 24 - tx) + Math.abs(py * 16 - ty) > 0.2) tilting = requestAnimationFrame(follow);
+    if (Math.abs(px * 18 - tx) + Math.abs(py * 12 - ty) > 0.2) tilting = requestAnimationFrame(follow);
   };
-  me.onMove = e => { if (fast) return; px = clamp(e.clientX / innerWidth * 2 - 1, -1, 1); py = clamp(e.clientY / innerHeight * 2 - 1, -1, 1); if (!tilting) tilting = requestAnimationFrame(follow); };
+  me.onMove = e => { if (fast || me.min) return; px = clamp(e.clientX / innerWidth * 2 - 1, -1, 1); py = clamp(e.clientY / innerHeight * 2 - 1, -1, 1); if (!tilting) tilting = requestAnimationFrame(follow); };
   window.addEventListener('pointermove', me.onMove, { passive: true });
   let sx = null;
   deck.addEventListener('pointerdown', e => { if (e.target.closest('button, img, a')) return; sx = e.clientX; });
   deck.addEventListener('pointerup', e => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) me.go(dx < 0 ? 1 : -1); });
   el.addEventListener('click', e => {
-    const op = e.target.closest('.rs-open'); if (op) { const r = hits[+op.closest('.rs-card').dataset.i]; close(); B.books.open(r); return; }
-    const src = e.target.closest('.rs-src'); if (src) { const i = hits.findIndex(r => B.books.cite(r) === src.dataset.cite); if (i >= 0) { cur = i; lay(); } return; }
-    const img = e.target.closest('.rs-card img[data-full]'); if (img) { const lb = h(`<div class="lightbox"><img src="${esc(img.dataset.full)}" alt=""></div>`); lb.onclick = () => lb.remove(); document.body.appendChild(lb); }
+    const x = e.target.closest('.rs-card-x'); if (x) { removeCard(x.closest('.rs-card')); return; }
+    const op = e.target.closest('.rs-open'); if (op) { const r = hits[+op.closest('.rs-card').dataset.i]; minimise(); B.books.open(r); return; }
+    const img = e.target.closest('.rs-card img[data-full]'); if (img) { const lb = h(`<div class="lightbox"><img src="${esc(img.dataset.full)}" alt=""></div>`); lb.onclick = () => lb.remove(); document.body.appendChild(lb); return; }
+    // clicking the dimmed page around the deck tucks it away
+    if (e.target === el) minimise();
   });
-  const read = $('.rs-read-inner', el);
-  read.innerHTML = `<h2>${esc(topic)}</h2>` + B.ask.md(answer);
-  if (!fast) {
-    const walker = document.createTreeWalker(read, NodeFilter.SHOW_TEXT); const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
-    const full = nodes.map(n => n.nodeValue); nodes.forEach(n => { n.nodeValue = ''; });
-    const total = full.reduce((k, t) => k + t.length, 0), cps = Math.max(260, total / 3.5), t0 = performance.now();
-    await new Promise(done => { const step = now => { if (!me.alive) return done(); let left = Math.floor((now - t0) / 1000 * cps); nodes.forEach((n, i) => { n.nodeValue = full[i].slice(0, Math.max(0, left)); left -= full[i].length; }); if ((now - t0) / 1000 * cps < total) requestAnimationFrame(step); else done(); }; requestAnimationFrame(step); });
-  }
-  if (me.alive && sources.length) read.insertAdjacentHTML('beforeend', `<div class="rs-srcs">${sources.slice(0, 6).map(s => `<button class="rs-src" data-cite="${esc(s.citation)}">${icon('book-open')}${esc(s.citation)}</button>`).join('')}</div>`);
 }
 
 // move a card through a path of legs [from, to, ms, ease]; the tear follows how fast it's going
