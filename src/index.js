@@ -58,14 +58,78 @@ function loginPage(error) {
   button { width:100%; margin-top:14px; padding:11px; border:none; border-radius:10px; background:#8b9cff; color:#0b0e1a; font-weight:650; font-size:.95rem; cursor:pointer; }
   button:hover { filter:brightness(1.08); }
   .err { color:#f87171; font-size:.82rem; text-align:center; margin-top:10px; }
+
+  /* Nova mode: CodeSlots, shown instead of the plain input when this device's last choice
+     (localStorage "bv:uiMode", same key the main app uses) was Nova. Self-contained — this
+     page is served before authentication, so it can't fetch assets/nova.css or nova-components.js. */
+  body.pin-nova form { background:linear-gradient(165deg, rgba(139,92,246,.08), transparent 55%), #141829; border-color:rgba(151,125,255,.3); }
+  body.pin-nova .classic-input { display:none; }
+  .codeslots { display:none; gap:8px; justify-content:center; position:relative; }
+  body.pin-nova .codeslots { display:inline-flex; }
+  .codeslots__slot {
+    position:relative; width:38px; height:48px; border-radius:10px;
+    border:1px solid #2c3350; background:#1b2036; display:grid; place-items:center;
+    font-size:20px; font-weight:650; color:#e6e8f0; font-variant-numeric:tabular-nums;
+    transition:transform 220ms cubic-bezier(.34,1.56,.64,1), border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .codeslots__slot[data-filled] { transform:translateY(-2px); border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.18); }
+  .codeslots__slot[data-active] { border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.22); }
+  .codeslots[data-status='error'] .codeslots__slot { border-color:#ef4444; background:rgba(239,68,68,.08); animation:codeslots-shake 360ms ease; }
+  @keyframes codeslots-shake { 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} 100%{transform:translateX(0)} }
+  .codeslots__hidden { position:absolute; inset:0; opacity:0; border:0; padding:0; margin:0; font-size:20px; letter-spacing:1em; }
+  body.pin-nova button { background:linear-gradient(135deg,#8b5cf6,#22d3ee); color:#050611; }
 </style></head>
 <body>
-<form method="POST" action="/pin">
+<form method="POST" action="/pin" id="pinForm">
   <h1>Enter the PIN</h1>
-  <input name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autofocus autocomplete="off">
+  <input class="classic-input" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off">
+  <div class="codeslots" id="codeslots" data-status="${error ? "error" : "idle"}">
+    <div class="codeslots__slot" data-i="0"></div>
+    <div class="codeslots__slot" data-i="1"></div>
+    <div class="codeslots__slot" data-i="2"></div>
+    <div class="codeslots__slot" data-i="3"></div>
+    <div class="codeslots__slot" data-i="4"></div>
+    <div class="codeslots__slot" data-i="5"></div>
+    <input class="codeslots__hidden" id="codeslotsInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" aria-label="PIN">
+  </div>
   <button type="submit">Unlock</button>
   ${error ? `<div class="err">${error}</div>` : ""}
 </form>
+<script>
+(function () {
+  try {
+    var mode = JSON.parse(localStorage.getItem('bv:uiMode') || '"classic"');
+    if (mode === 'nova') document.body.classList.add('pin-nova');
+  } catch (e) {}
+
+  var classic = document.querySelector('.classic-input');
+  var group = document.getElementById('codeslots');
+  var hidden = document.getElementById('codeslotsInput');
+  var slots = Array.prototype.slice.call(group.querySelectorAll('.codeslots__slot'));
+  var form = document.getElementById('pinForm');
+
+  function render() {
+    var v = hidden.value.replace(/[^0-9]/g, '');
+    slots.forEach(function (slot, i) {
+      var ch = v[i];
+      slot.textContent = ch || '';
+      slot.toggleAttribute('data-filled', !!ch);
+      slot.toggleAttribute('data-active', i === v.length);
+    });
+    classic.value = v;
+  }
+  hidden.addEventListener('input', function () {
+    hidden.value = hidden.value.replace(/[^0-9]/g, '').slice(0, 6);
+    render();
+    group.dataset.status = 'idle';
+    if (hidden.value.length === 6) form.requestSubmit ? form.requestSubmit() : form.submit();
+  });
+  group.addEventListener('click', function () { hidden.focus(); });
+  render();
+  if (document.body.classList.contains('pin-nova')) { hidden.focus(); }
+  else { classic.focus(); }
+})();
+</script>
 </body></html>`;
 }
 

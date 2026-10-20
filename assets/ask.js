@@ -235,6 +235,7 @@ function openPanel(info) {
     const item = h(`<div class="ask-turn"><div class="ask-q">${esc(q)}</div><div class="ask-a"><span class="books-spinner"></span> Thinking…</div></div>`);
     thread.appendChild(item); item.scrollIntoView({ block: 'nearest' });
     const a = $('.ask-a', item);
+    B.upgradeSpinner($('.books-spinner', a), 'Thinking');
     try {
       const r = await explain({ question: q, selection: info.text, ...ctx, history: history.slice(-4) });
       history.push({ q, a: r.answer });

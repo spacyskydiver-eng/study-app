@@ -395,6 +395,7 @@ async function runAiDraw(prompt) {
   prompt = (prompt || '').trim(); if (!prompt || !API) return;
   const btn = $('.ann-draw-go', toolbar); const input = $('.ann-draw-input', toolbar);
   btn.disabled = true; btn.innerHTML = '<span class="books-spinner"></span>';
+  B.upgradeSpinner($('.books-spinner', btn), '');
   try {
     const res = await fetch(API + '/annotate-draw', { method: 'POST', credentials: 'include', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: activeId, prompt, scene: sceneOf(activeId).scene }) });
     const d = await res.json().catch(() => ({}));

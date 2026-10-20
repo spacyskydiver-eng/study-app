@@ -136,6 +136,7 @@ function shell() {
     <button class="clickable-icon" data-act="home" title="Home">${icon('home')}</button>
     <button class="clickable-icon" data-act="random" title="Random note">${icon('shuffle')}</button>
     <div class="spacer"></div>
+    <button class="clickable-icon" data-act="ui-mode" title="Interface style">${icon('zap')}</button>
     <button class="clickable-icon" data-act="theme" title="Light or dark">${icon('moon')}</button>
   </div>
   <div class="workspace">
@@ -233,6 +234,7 @@ function wireShell() {
     else if (a === 'back') history.back();
     else if (a === 'forward') history.forward();
     else if (a === 'theme') toggleTheme();
+    else if (a === 'ui-mode') openUiModeMenu(b);
     else if (a === 'switcher') openSwitcher();
     else if (a === 'local-graph') { setSide('right', true); setRightPane('localgraph'); }
     else if (a === 'close-tab') closeTab(state.active);
@@ -281,6 +283,33 @@ function toggleTheme() {
   if (graphInst) graphInst.restyle();
   if (localGraphInst) localGraphInst.restyle();
   document.dispatchEvent(new CustomEvent('bv-theme'));
+}
+
+/* ------------------------------------------------------------------ interface mode (Classic / Nova) */
+function setUiMode(mode) {
+  document.body.classList.toggle('ui-classic', mode === 'classic');
+  document.body.classList.toggle('ui-nova', mode === 'nova');
+  store.set('uiMode', mode);
+  document.dispatchEvent(new CustomEvent('bv-uimode', { detail: { mode } }));
+  if (mode === 'nova') loadNovaComponents();
+}
+let novaLoading = null;
+function loadNovaComponents() {
+  if (novaLoading) return novaLoading;
+  novaLoading = new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = 'assets/nova-components.js?v=20261020';
+    s.onload = resolve; s.onerror = resolve;
+    document.head.appendChild(s);
+  });
+  return novaLoading;
+}
+function openUiModeMenu(anchorEl) {
+  const current = document.body.classList.contains('ui-nova') ? 'nova' : 'classic';
+  showMenu(anchorEl, [
+    { icon: 'panel-left', title: current === 'classic' ? 'Classic (current)' : 'Classic', run: () => setUiMode('classic') },
+    { icon: 'zap', title: current === 'nova' ? 'Nova (current)' : 'Nova', run: () => setUiMode('nova') },
+  ]);
 }
 
 /* ------------------------------------------------------------------ file explorer */
@@ -1373,12 +1402,25 @@ window.BV = {
   onHydrate(f) { hooks.hydrate.push(f); },
   onBoot(f) { hooks.boot.push(f); },
   refreshTabs() { renderTabs(); if (current.id) setCrumbs(current.id); },
+  isNova: () => document.body.classList.contains('ui-nova'),
+  // Swaps a plain `<span class="books-spinner"></span> Label…` for the Nova Lattice Loader,
+  // once it's loaded. A no-op in Classic mode, and a safe no-op if Nova's JS hasn't finished
+  // its lazy load yet (the spinner just stays the plain dot, which is a fine fallback).
+  upgradeSpinner(spinnerEl, label) {
+    if (!spinnerEl || !document.body.classList.contains('ui-nova') || !window.NovaUI || !window.NovaUI.lattice) return;
+    const next = spinnerEl.nextSibling;
+    if (next && next.nodeType === 3) next.remove();
+    spinnerEl.replaceWith(window.NovaUI.lattice.spinner(label));
+  },
 };
 
 /* ------------------------------------------------------------------ boot */
 async function boot() {
   const theme = store.get('theme', 'dark');
   document.body.classList.toggle('theme-dark', theme === 'dark'); document.body.classList.toggle('theme-light', theme === 'light');
+  const uiMode = store.get('uiMode', 'classic');
+  document.body.classList.toggle('ui-classic', uiMode === 'classic'); document.body.classList.toggle('ui-nova', uiMode === 'nova');
+  if (uiMode === 'nova') loadNovaComponents();
   try {
     const res = await fetch('data/vault.json', { cache: 'no-cache' });
     V = await res.json();

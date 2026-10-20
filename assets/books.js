@@ -117,6 +117,7 @@ B.registerView('books', {
       if (!q) { results.innerHTML = ''; status.textContent = ''; return; }
       const my = ++seq;
       status.innerHTML = `<span class="books-spinner"></span> Searching…`; results.classList.add('is-loading');
+      B.upgradeSpinner($('.books-spinner', status), 'Searching');
       const book = ($('.books-book', view) || {}).value || '';
       try {
         const d = await call(`/search?q=${encodeURIComponent(q)}&type=${type}&limit=30${book ? '&book=' + encodeURIComponent(book) : ''}`);
@@ -178,6 +179,7 @@ B.registerView('book', {
     const body = $('.book-page-body', view);
     const load = async () => {
       body.innerHTML = `<div class="book-page-loading"><span class="books-spinner"></span> Loading page…</div>`;
+      B.upgradeSpinner($('.books-spinner', body), 'Loading page');
       try {
         const d = normPage(await call(`/page/${encodeURIComponent(bookId(book))}/${page}`));
         const norm = s => s.replace(/\s+/g, ' ').trim();

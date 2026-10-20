@@ -1,0 +1,203 @@
+/* =====================================================================
+   NOVA  ·  the electric / kinetic alternate interface, built from the
+   React Bits templates. Scoped entirely under body.ui-nova so Classic
+   mode (the default) is completely unaffected by anything in this file.
+   ===================================================================== */
+
+/* ---------- 1. tokens — override neural.css's palette while in Nova -- */
+body.ui-nova {
+  --bg0: #05060D;  --bg1: #090B16;  --bg2: #10132199;  --bg3: #171B2E;
+  --ink: #EDEFFF;  --ink2: #A6ACD6; --ink3: #666C96;
+  --background-primary: var(--bg1);
+  --background-primary-alt: var(--bg2);
+  --background-secondary: var(--bg0);
+  --background-secondary-alt: #040509;
+  --background-modifier-border: rgba(151,125,255,.18);
+  --background-modifier-border-hover: rgba(151,125,255,.4);
+  --background-modifier-hover: rgba(151,125,255,.1);
+  --background-modifier-active-hover: rgba(151,125,255,.18);
+  --text-normal: var(--ink); --text-muted: var(--ink2); --text-faint: var(--ink3);
+  --interactive-accent: #8B5CF6; --interactive-accent-hover: #A78BFA;
+  --text-selection: rgba(139,92,246,.35);
+  --scrollbar-thumb-bg: rgba(151,125,255,.2);
+  --scrollbar-active-thumb-bg: rgba(151,125,255,.38);
+  --code-background: rgba(151,125,255,.1);
+  --table-border-color: rgba(151,125,255,.18);
+  --graph-line: rgba(139,92,246,.22);
+  --graph-node: #A78BFA;
+  --graph-node-unresolved: #4A4F73;
+  --graph-node-focused: #FFFFFF;
+  --graph-text: #D7D9FF;
+
+  --nova-violet: #8B5CF6;
+  --nova-cyan: #22D3EE;
+  --nova-pink: #F472B6;
+  --nova-gradient: linear-gradient(135deg, var(--nova-violet), var(--nova-cyan));
+  --nova-glow: 0 0 0 1px rgba(151,125,255,.3), 0 0 24px -6px rgba(139,92,246,.55);
+  --nova-glow-soft: 0 0 0 1px rgba(151,125,255,.16), 0 0 16px -8px rgba(139,92,246,.4);
+  --nova-radius: 12px;
+  --nova-ease: cubic-bezier(.23,1,.32,1);
+}
+
+/* ---------- 2. shell & panels ----------------------------------------- */
+body.ui-nova { background: var(--bg0); }
+body.ui-nova .workspace-ribbon,
+body.ui-nova .view-header,
+body.ui-nova .workspace-tab-header-container,
+body.ui-nova .mobile-header {
+  background: linear-gradient(180deg, rgba(151,125,255,.06), transparent 40%), var(--bg1);
+  border-color: var(--background-modifier-border);
+}
+body.ui-nova .workspace-split.mod-left-split,
+body.ui-nova .workspace-split.mod-right-split {
+  background: var(--bg0);
+  border-color: var(--background-modifier-border);
+}
+body.ui-nova .sidebar-pane, body.ui-nova .graph-controls,
+body.ui-nova .ask-panel, body.ui-nova .ann-toolbar,
+body.ui-nova .books-auth, body.ui-nova .fc-hero, body.ui-nova .fc-cabinet,
+body.ui-nova .occl, body.ui-nova .graph-3d-help, body.ui-nova .graph-3d-selection {
+  background: linear-gradient(165deg, rgba(139,92,246,.06), transparent 55%), var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+}
+body.ui-nova .nav-file-title.is-active, body.ui-nova .tree-item:hover,
+body.ui-nova .workspace-tab-header.is-active {
+  box-shadow: inset 2px 0 0 var(--nova-violet);
+}
+body.ui-nova ::selection { background: var(--text-selection); }
+body.ui-nova ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb-bg); border-radius: 8px; }
+
+/* ---------- 3. buttons everywhere -------------------------------------- */
+body.ui-nova button {
+  transition: transform 140ms var(--nova-ease), box-shadow 180ms var(--nova-ease), border-color 180ms var(--nova-ease), filter 180ms ease;
+}
+body.ui-nova .clickable-icon {
+  border-radius: 9px;
+  border: 1px solid transparent;
+}
+body.ui-nova .clickable-icon:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--background-modifier-border-hover);
+  box-shadow: var(--nova-glow-soft);
+  transform: translateY(-1px);
+}
+body.ui-nova .clickable-icon:active { transform: translateY(0) scale(.94); }
+body.ui-nova .clickable-icon.is-active {
+  background: rgba(139,92,246,.16);
+  border-color: rgba(151,125,255,.5);
+  color: var(--nova-violet);
+  box-shadow: var(--nova-glow-soft);
+}
+
+body.ui-nova .mod-cta,
+body.ui-nova button.mod-cta,
+body.ui-nova a.mod-cta,
+body.ui-nova .fc-big.mod-cta {
+  background: var(--nova-gradient);
+  color: #050611;
+  border: none;
+  box-shadow: 0 10px 30px -12px rgba(139,92,246,.7);
+  position: relative;
+  overflow: hidden;
+}
+body.ui-nova .mod-cta::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 500ms var(--nova-ease);
+}
+body.ui-nova .mod-cta:hover::before { transform: translateX(120%); }
+body.ui-nova .mod-cta:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 14px 34px -10px rgba(139,92,246,.85); }
+body.ui-nova .mod-cta:active { transform: translateY(0) scale(.98); }
+body.ui-nova .mod-cta:disabled, body.ui-nova .mod-cta[disabled] { opacity: .35; filter: grayscale(.4); box-shadow: none; }
+
+body.ui-nova .mod-muted,
+body.ui-nova button.mod-muted {
+  background: var(--background-modifier-hover);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+}
+body.ui-nova .mod-muted:hover { border-color: var(--background-modifier-border-hover); box-shadow: var(--nova-glow-soft); }
+
+body.ui-nova .fc-big, body.ui-nova .fc-mini,
+body.ui-nova .ann-tool, body.ui-nova .books-open-reader,
+body.ui-nova .segmented button, body.ui-nova .fc-deck,
+body.ui-nova .graph-controls-header {
+  border-radius: var(--nova-radius);
+}
+body.ui-nova .segmented { border: 1px solid var(--background-modifier-border); border-radius: calc(var(--nova-radius) + 4px); overflow: hidden; }
+body.ui-nova .segmented button.is-active {
+  background: rgba(139,92,246,.2);
+  color: var(--nova-cyan);
+  box-shadow: inset 0 0 0 1px rgba(151,125,255,.4);
+}
+body.ui-nova .ann-tool.is-active {
+  background: rgba(139,92,246,.2);
+  border-color: var(--nova-violet);
+  color: var(--nova-cyan);
+  box-shadow: var(--nova-glow-soft);
+}
+
+body.ui-nova input[type="text"], body.ui-nova input[type="search"], body.ui-nova input[type="number"],
+body.ui-nova input[type="password"], body.ui-nova textarea, body.ui-nova .search-input,
+body.ui-nova .ann-draw-input, body.ui-nova .ask-input {
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+body.ui-nova input:focus, body.ui-nova textarea:focus {
+  border-color: var(--nova-violet);
+  box-shadow: 0 0 0 3px rgba(139,92,246,.18);
+  outline: none;
+}
+
+/* ---------- 4. typography touch ---------------------------------------- */
+body.ui-nova .sidebar-item-title, body.ui-nova h1, body.ui-nova h2, body.ui-nova h3 {
+  letter-spacing: -0.01em;
+}
+body.ui-nova .fc-kicker, body.ui-nova .graph-3d-kicker, body.ui-nova .ask-title,
+body.ui-nova .books-kicker {
+  background: linear-gradient(90deg, var(--nova-violet), var(--nova-cyan));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* ---------- 5. Lattice Loader (ported from React Bits; "Thinking…" everywhere) ---- */
+.lattice-loader {
+  --ll-n: 3; --ll-cell: 6px; --ll-gap: 2px; --ll-font: 13px;
+  --ll-color: var(--nova-violet); --ll-mark: #22c55e; --ll-idle: 0.18;
+  --ll-glow: var(--nova-violet); --ll-mark-glow: #22c55e; --ll-peak: 1;
+  --ll-cycle: 864ms; --ll-ease-out: cubic-bezier(.23,1,.32,1); --ll-ease-in-out: cubic-bezier(.77,0,.175,1);
+  position: relative; display: inline-flex; align-items: center;
+  gap: calc(var(--ll-font) * .55); font-family: inherit; font-size: var(--ll-font); line-height: 1;
+  color: var(--text-muted);
+}
+.lattice-loader__grid { display: grid; flex: none; }
+.lattice-loader__layer { grid-area: 1 / 1; display: grid; grid-template-columns: repeat(var(--ll-n), var(--ll-cell)); gap: var(--ll-gap); }
+.lattice-loader__cell { width: var(--ll-cell); height: var(--ll-cell); border-radius: max(1px, calc(var(--ll-cell) * .25)); background: var(--ll-color); opacity: var(--ll-idle); }
+.lattice-loader[data-shape='round'] .lattice-loader__cell { border-radius: 50%; }
+.lattice-loader[data-glow] .lattice-loader__run .lattice-loader__cell:not([data-hole]) { box-shadow: 0 0 calc(var(--ll-cell) * 1.2) calc(var(--ll-cell) * .12) var(--ll-glow); }
+.lattice-loader[data-glow] .lattice-loader__mark .lattice-loader__cell[data-on] { box-shadow: 0 0 calc(var(--ll-cell) * 1.2) calc(var(--ll-cell) * .12) var(--ll-mark-glow); }
+.lattice-loader__run { transition: opacity 200ms ease; }
+.lattice-loader__run .lattice-loader__cell { animation: lattice-on var(--ll-cycle) var(--ll-ease-in-out) infinite; }
+.lattice-loader__run .lattice-loader__cell[data-hole] { animation: none; opacity: calc(var(--ll-idle) * .47); }
+.lattice-loader__mark { opacity: 0; transform: scale(.9); transform-origin: center; transition: opacity 160ms var(--ll-ease-out), transform 160ms var(--ll-ease-out); }
+.lattice-loader__mark .lattice-loader__cell { transition: opacity 200ms ease, background-color 200ms ease; }
+.lattice-loader__mark .lattice-loader__cell[data-on] { background: var(--ll-mark); opacity: var(--ll-peak); }
+.lattice-loader:not([data-status='working']) .lattice-loader__run { opacity: 0; }
+.lattice-loader:not([data-status='working']) .lattice-loader__run .lattice-loader__cell { animation-play-state: paused; }
+.lattice-loader:not([data-status='working']) .lattice-loader__mark { opacity: 1; transform: none; transition: opacity 200ms ease, transform 200ms var(--ll-ease-out); }
+.lattice-loader__label { position: relative; display: inline-block; font-weight: 500; }
+.lattice-loader__text { position: absolute; top: 0; left: 0; white-space: nowrap; opacity: 0; filter: blur(2px); transition: opacity 200ms ease, filter 200ms ease; }
+.lattice-loader__text[data-active] { position: static; opacity: 1; filter: blur(0); }
+.lattice-loader__timer { font-family: var(--font-monospace-theme, monospace); font-size: calc(var(--ll-font) * .85); font-variant-numeric: tabular-nums; opacity: .6; }
+@keyframes lattice-on { 0%, 100% { opacity: var(--ll-idle); } 18%, 42% { opacity: var(--ll-peak); } 62% { opacity: var(--ll-idle); } }
+@media (prefers-reduced-motion: reduce) {
+  .lattice-loader__run .lattice-loader__cell { animation-delay: 0ms !important; animation-duration: 1400ms !important; }
+  .lattice-loader .lattice-loader__mark { transform: none; }
+  .lattice-loader .lattice-loader__text { filter: none; }
+}
+
+/* Note: CodeSlots is only used on the PIN login page (study-app/src/index.js), which is served
+   before authentication and can't load this file — it has its own self-contained inline copy
+   of this component's CSS/JS. Nothing in the main SPA creates a .codeslots element (yet). */
