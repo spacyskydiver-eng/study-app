@@ -83,6 +83,37 @@ const READ_KEY = 'novaRead';
 const readOf = id => (store.get(READ_KEY, {})[id] || 0);
 function markRead(id, frac) { const r = store.get(READ_KEY, {}); if (frac > (r[id] || 0) + 0.01) { r[id] = Math.min(1, frac); store.set(READ_KEY, r); } }
 
+/* "gone through it" ticks: one per lecture / seminar / practical. Kept on the server so every device
+   agrees; a local copy makes them show instantly and survive a dropped connection. */
+const DONE_KEY = 'novaDone';
+const doneMap = () => store.get(DONE_KEY, {});
+const isDone = id => !!doneMap()[id];
+const checkBtn = (id, label) => `<button class="nv-check${isDone(id) ? ' is-on' : ''}" data-check="${esc(id)}" role="checkbox" aria-checked="${isDone(id)}" title="${isDone(id) ? 'Gone through. Click to untick' : 'Tick when you have gone through it'}">${icon('check')}${label ? `<span>${esc(label)}</span>` : ''}</button>`;
+function paintChecks(root = document) {
+  const d = doneMap();
+  root.querySelectorAll('[data-check]').forEach(b => { const on = !!d[b.dataset.check]; b.classList.toggle('is-on', on); b.setAttribute('aria-checked', on); b.title = on ? 'Gone through. Click to untick' : 'Tick when you have gone through it'; });
+  root.querySelectorAll('[data-done-count]').forEach(el => { const ids = el.dataset.doneCount.split('|').filter(Boolean); const n = ids.filter(i => d[i]).length; el.textContent = ids.length ? `${n}/${ids.length}` : ''; el.classList.toggle('is-all', ids.length > 0 && n === ids.length); });
+}
+async function setDone(id, on) {
+  const d = doneMap(); if (on) d[id] = Date.now(); else delete d[id]; store.set(DONE_KEY, d); paintChecks();
+  try {
+    const r = await fetch('/api/progress', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, done: on }) });
+    const j = await r.json(); if (j && j.done) { store.set(DONE_KEY, j.done); paintChecks(); }
+  } catch (e) { /* kept locally; the next load re-sends nothing, so retry on next tick */ }
+}
+let doneLoaded = false;
+async function loadDone() {
+  if (doneLoaded) return; doneLoaded = true;
+  try { const r = await fetch('/api/progress', { credentials: 'same-origin' }); const j = await r.json(); if (j && j.done) { store.set(DONE_KEY, j.done); paintChecks(); } }
+  catch (e) { doneLoaded = false; }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-check]'); if (!b || !B.isNova()) return;
+  e.preventDefault(); e.stopPropagation();
+  setDone(b.dataset.check, !isDone(b.dataset.check));
+}, true);
+N.progress = { isDone, set: setDone, load: loadDone, all: doneMap };
+
 /* ---------------------------------------------------------------- GL helpers: mount once the bundle is in */
 function mountGL(el, kind, props, bag) {
   N.loadGL().then(() => {
@@ -112,11 +143,10 @@ function navPane(root) {
       const lecs = Object.keys(KIND).flatMap(k => (m.groups[k] || []).map(hb => ({ hb, k })));
       const isOpen = open.has(m.id);
       return `<div class="nv-nav-mod${isOpen ? ' is-open' : ''}" style="--mod:${m.color}" data-mod="${esc(m.id)}">
-        <div class="nv-nav-modrow${cur === m.id ? ' is-active' : ''}"><button class="nv-nav-caret" data-toggle="${esc(m.id)}" aria-label="Expand">${icon('chevron-right')}</button><button class="nv-nav-modname" data-go="${esc(m.id)}"><i></i><span>${esc(m.title)}</span></button></div>
+        <div class="nv-nav-modrow${cur === m.id ? ' is-active' : ''}"><button class="nv-nav-caret" data-toggle="${esc(m.id)}" aria-label="Expand">${icon('chevron-right')}</button><button class="nv-nav-modname" data-go="${esc(m.id)}"><i></i><span>${esc(m.title)}</span><em class="nv-done-n" data-done-count="${esc(lecs.map(x => x.hb.id).join('|'))}"></em></button></div>
         <div class="nv-nav-lecs">${lecs.length ? lecs.map(({ hb, k }, i) => {
           const head = k !== 'lecture' && (i === 0 || lecs[i - 1].k !== k) ? `<div class="nv-nav-sub">${KIND[k]}</div>` : '';
-          const pr = readOf(hb.id);
-          return `${head}<button class="nv-nav-lec${curHub === hb.id ? ' is-active' : ''}" data-go="${esc(hb.id)}" title="${esc(hb.title)}"><b>${hb.number ? plainNum(hb.number) : '·'}</b><span>${esc(hb.title.replace(/\s*\((Lecture|Seminar) \d+\)$/, ''))}</span>${pr ? `<em style="--p:${Math.round(pr * 100)}%"></em>` : ''}</button>`;
+          return `${head}<div class="nv-nav-lecrow"><button class="nv-nav-lec${curHub === hb.id ? ' is-active' : ''}" data-go="${esc(hb.id)}" title="${esc(hb.title)}"><b>${hb.number ? plainNum(hb.number) : '·'}</b><span>${esc(hb.title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, ''))}</span></button>${checkBtn(hb.id)}</div>`;
         }).join('') : '<div class="nv-nav-empty">No lectures yet</div>'}</div></div>`;
     }).join('')}
     <div class="nv-nav-label nv-docked">Library</div>
@@ -126,6 +156,7 @@ function navPane(root) {
     ${tool('books', 'library', 'Book library')}
     <button class="nv-nav-item nv-docked" data-navmap>${icon('graph')}<span>Neural map</span></button>
   </nav>`;
+  paintChecks(root); loadDone();
   root.onclick = e => {
     const t = e.target.closest('[data-toggle]');
     if (t) {
@@ -352,13 +383,11 @@ function showModule(view, id) {
   const tagline = summaryOf(id);
   const lecs = m.groups.lecture || [];
   const lecCard = hb => {
-    const pr = readOf(hb.id);
-    return `<a class="nv-lec" href="${esc(B.hashFor(hb.id))}" data-go="${esc(hb.id)}">
+    return `<div class="nv-lec-wrap"><a class="nv-lec" href="${esc(B.hashFor(hb.id))}" data-go="${esc(hb.id)}">
       <span class="nv-lec-n">${hb.number ? plainNum(hb.number) : '·'}</span>
       <span class="nv-lec-body"><b>${esc(hb.title.replace(/\s*\((Lecture|Seminar|Practical) \d+\)$/, ''))}</b><small>${hb.topics.length} topics</small></span>
-      <span class="nv-lec-side">${pr >= 0.98 ? `<span class="nv-lec-done">${icon('check')}</span>` : ''}</span>
-      ${pr > 0 && pr < 0.98 ? `<span class="nv-lec-bar"><i style="width:${Math.round(pr * 100)}%"></i></span>` : ''}
-    </a>`;
+      <span class="nv-lec-side"></span>
+    </a>${checkBtn(hb.id)}</div>`;
   };
   const raw = document.createElement('div'); raw.innerHTML = n.html;
   raw.querySelector('.el-h1')?.remove();
@@ -372,10 +401,11 @@ function showModule(view, id) {
         ${tagline ? `<p class="nv-lede">${esc(tagline)}</p>` : ''}
       </div>
     </header>
-    ${Object.keys(KIND).filter(k => (m.groups[k] || []).length).map(k => `<section class="nv-sec"><div class="nv-sec-head"><h2>${KIND[k]}</h2></div><div class="nv-timeline">${m.groups[k].map(lecCard).join('')}</div></section>`).join('') || '<section class="nv-sec"><div class="nv-empty">Nothing in this module yet.</div></section>'}
+    ${Object.keys(KIND).filter(k => (m.groups[k] || []).length).map(k => `<section class="nv-sec"><div class="nv-sec-head"><h2>${KIND[k]}</h2><span class="nv-done-n is-big" data-done-count="${esc(m.groups[k].map(x => x.id).join('|'))}"></span></div><div class="nv-timeline">${m.groups[k].map(lecCard).join('')}</div></section>`).join('') || '<section class="nv-sec"><div class="nv-empty">Nothing in this module yet.</div></section>'}
     <details class="nv-raw"><summary>${icon('file')} Full module note</summary><div class="markdown-preview-view markdown-rendered ${esc((n.css || []).join(' '))}"><div class="markdown-preview-sizer markdown-preview-section">${raw.innerHTML}</div></div></details>
   </div>`;
   B.hydrate($('.nv-raw', view), id);
+  paintChecks(view); loadDone();
   view.onclick = e => {
     if (e.target.closest('[data-map]')) { N.map && N.map.open(id); return; }
     const g = e.target.closest('[data-go]');
@@ -454,6 +484,7 @@ function showLens(view, id, heading) {
         <button class="nv-back" data-go="${esc(D.back.id)}" title="${esc(D.back.label)}">${icon('arrow-left')}<span>${esc(D.back.label)}</span></button>
         <div class="nv-lens-name"><span class="nv-kicker">${esc(D.kicker)}</span><b>${esc(D.title)}</b></div>
         <div class="nv-lens-hint">${D.single ? '' : '<kbd>←</kbd><kbd>→</kbd> topics · '}click a link to peek</div>
+        ${D.hubId ? checkBtn(D.hubId, 'Gone through') : ''}
         <button class="nv-mapbtn" data-map title="See this on the neural map (M)">${icon('graph')}<span>Map</span></button>
       </div>
       ${D.single ? '' : `<nav class="nv-tabs">${chs.map((c, i) => `<button class="nv-tab" data-ch="${i}" title="${esc(c.title)}"><span>${c.n}</span><em>${esc(c.title)}</em></button>`).join('')}</nav>`}
@@ -469,6 +500,7 @@ function showLens(view, id, heading) {
     </div>
   </div>`;
   const focus = $('.nv-focus', view), peek = $('.nv-peek', view), lens = $('.nv-lens', view);
+  paintChecks(view); loadDone();
 
   const cols = (noteId, extraHead, extraTail) => {
     const n = B.V.notes[noteId];

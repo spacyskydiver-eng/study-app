@@ -326,7 +326,23 @@ body.ui-nova .nv-nav-sub { margin: 8px 6px 3px; font-size: 10.5px; color: var(--
 body.ui-nova .nv-nav-lec { position: relative; width: 100%; display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 7px; color: var(--text-muted) !important; }
 body.ui-nova .nv-nav-lec b { font: 600 10.5px var(--font-monospace-theme, monospace); color: var(--mod); opacity: .85; width: 18px; flex: none; }
 body.ui-nova .nv-nav-lec span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-body.ui-nova .nv-nav-lec em { flex: none; width: 16px; height: 16px; border-radius: 50%; background: conic-gradient(var(--mod) var(--p), rgba(151,125,255,.16) 0); -webkit-mask: radial-gradient(circle, transparent 4.5px, #000 5px); mask: radial-gradient(circle, transparent 4.5px, #000 5px); }
+body.ui-nova .nv-nav-lecrow { display: flex; align-items: center; gap: 2px; }
+body.ui-nova .nv-nav-lecrow .nv-nav-lec { flex: 1; min-width: 0; }
+/* the "gone through it" checkbox */
+body.ui-nova .nv-check { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: none; color: var(--text-muted); cursor: pointer; font: 600 12.5px var(--nv-font, inherit); }
+body.ui-nova .nv-check .svg-icon { width: 16px; height: 16px; box-sizing: border-box; padding: 2px; border-radius: 5px; border: 1.5px solid color-mix(in srgb, var(--mod, #8B5CF6) 55%, rgba(166,172,214,.5)); color: transparent; stroke-width: 3.2; transition: background .15s, border-color .15s, color .15s; }
+body.ui-nova .nv-check:hover .svg-icon { border-color: var(--mod, #8B5CF6); }
+body.ui-nova .nv-check.is-on .svg-icon { background: var(--mod, #8B5CF6); border-color: var(--mod, #8B5CF6); color: #0A0B16; }
+body.ui-nova .nv-check:focus-visible { outline: 2px solid var(--mod, #8B5CF6); outline-offset: 2px; border-radius: 6px; }
+body.ui-nova .nv-nav-lecrow .nv-check { width: 26px; height: 26px; justify-content: center; }
+body.ui-nova .nv-done-n { margin-left: auto; font: 600 10.5px var(--font-monospace-theme, monospace); font-style: normal; color: var(--text-faint); }
+body.ui-nova .nv-done-n.is-all { color: var(--mod, #34d399); }
+body.ui-nova .nv-sec-head .nv-done-n.is-big { margin-left: 12px; font-size: 13px; }
+body.ui-nova .nv-lec-wrap { position: relative; }
+body.ui-nova .nv-lec-wrap > .nv-check { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; justify-content: center; }
+body.ui-nova .nv-lec-wrap > .nv-check .svg-icon { width: 20px; height: 20px; border-radius: 6px; }
+body.ui-nova .nv-lens-id > .nv-check { padding: 6px 12px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--mod) 30%, transparent); }
+body.ui-nova .nv-lens-id > .nv-check.is-on { color: var(--text-normal); border-color: color-mix(in srgb, var(--mod) 60%, transparent); background: color-mix(in srgb, var(--mod) 12%, transparent); }
 body.ui-nova .nv-nav-lec.is-active { background: color-mix(in srgb, var(--mod) 15%, transparent) !important; color: var(--text-normal) !important; box-shadow: inset 2px 0 0 var(--mod); }
 body.ui-nova .nv-nav-empty { padding: 4px 8px; color: var(--text-faint); font-size: 12px; }
 
@@ -672,7 +688,13 @@ body.ui-nova .nv-cols .callout-icon .svg-icon { width: 14px; height: 14px; }
 body.ui-nova .nv-cols .callout-content { padding: 0; font-size: 14.5px; }
 body.ui-nova .nv-cols .callout-content > :last-child { margin-bottom: 0; }
 body.ui-nova .nv-cols table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13.5px; border: 1px solid rgba(151,125,255,.16); border-radius: 10px; overflow: hidden; margin: 0 0 1em; }
-body.ui-nova .nv-cols th { background: color-mix(in srgb, var(--mod) 10%, transparent); color: #fff; text-align: left; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+body.ui-nova .nv-cols th { background: color-mix(in srgb, var(--mod) 10%, transparent); color: #fff; text-align: left; font-size: 12px; font-weight: 650; letter-spacing: .01em; text-transform: none; line-height: 1.35; overflow-wrap: anywhere; hyphens: auto; }
+/* nothing may be wider than its column: wide tables scroll inside their own box instead of running under the next column */
+body.ui-nova .nv-cols .markdown-preview-sizer > * { max-width: 100%; min-width: 0; box-sizing: border-box; }
+body.ui-nova .nv-cols .el-table, body.ui-nova .nv-cols .callout-content { max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
+body.ui-nova .nv-cols td { overflow-wrap: break-word; hyphens: auto; }
+body.ui-nova .nv-cols pre, body.ui-nova .nv-cols code { white-space: pre-wrap; overflow-wrap: anywhere; }
+body.ui-nova .nv-cols .markdown-preview-sizer p, body.ui-nova .nv-cols li { overflow-wrap: break-word; }
 body.ui-nova .nv-cols th, body.ui-nova .nv-cols td { padding: 7px 11px; border: 0; border-bottom: 1px solid rgba(151,125,255,.1); vertical-align: top; }
 body.ui-nova .nv-cols tr:last-child td { border-bottom: 0; }
 body.ui-nova .nv-cols code { background: rgba(151,125,255,.12); border-radius: 5px; padding: 1px 5px; }
@@ -1204,3 +1226,4 @@ body.nova-map-on .nmap-mark.is-target b { color: #fff; border-color: rgba(167,13
 body.nova-map-on .nmap-mark b em { display: block; font-style: normal; font-size: 10px; letter-spacing: .08em; color: #67E8F9; }
 body.nova-map-on .nmap-mark.is-here i { width: 16px; height: 16px; left: -8px; top: -8px; border: 1.5px solid #67E8F9; border-radius: 50%; box-shadow: 0 0 12px #67E8F9; }
 body.nova-map-on .nmap-mark:not(.is-target):not(.is-here):not(.is-main) i { width: 8px; height: 8px; left: -4px; top: -4px; border: 1.5px solid rgba(167,139,250,.8); border-radius: 50%; }
+body.ui-nova .nv-lec-wrap .nv-lec-side { width: 34px; }

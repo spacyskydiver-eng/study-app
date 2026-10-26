@@ -355,6 +355,7 @@ async function syncTables(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS todos (id TEXT PRIMARY KEY, kind TEXT, title TEXT, detail TEXT, due TEXT, ref TEXT, course TEXT, state TEXT, created INTEGER, updated INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS mail_flags (id TEXT PRIMARY KEY, state TEXT, at INTEGER)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS mail_scan (id TEXT PRIMARY KEY, at INTEGER)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS progress (id TEXT PRIMARY KEY, done INTEGER, at INTEGER)"),
   ]);
 }
 // email / event HTML to readable text (for the assistant, search and previews)
@@ -456,6 +457,7 @@ async function syncedApi(env, url, request, ctx) {
     return json({ items: rows.results || [] });
   }
   if (p === "/api/todos") return todosApi(env, request, ctx);
+  if (p === "/api/progress") return progressApi(env, request);
   if (p === "/api/vision" && request.method === "POST") return vision(env, request);
   if (!last) return json({ notConnected: true });
   if (p === "/api/ms/mail") {
@@ -511,6 +513,18 @@ async function ensureLectureTodos(env) {
     .bind("lec:" + e.start + ":" + e.subject, "Write up notes: " + e.subject, londonDate(e.start) + (e.location ? " · " + String(e.location).split(" - ").pop() : ""), e.id, (String(e.subject).match(/BIO-?\d{4}\w?/i) || [""])[0].toUpperCase(), t, t)));
 }
 const todoOut = r => ({ id: r.id, kind: r.kind, title: r.title, detail: r.detail, due: r.due, ref: r.ref, course: r.course, state: r.state, created: r.created });
+// "gone through it" ticks next to each lecture, kept here so every device sees the same ones
+async function progressApi(env, request) {
+  if (request.method === "POST") {
+    const d = await request.json().catch(() => ({}));
+    const id = String(d.id || "").slice(0, 300);
+    if (!id) return json({ error: "No id." }, 400);
+    if (d.done) await env.DB.prepare("INSERT INTO progress (id, done, at) VALUES (?, 1, ?) ON CONFLICT(id) DO UPDATE SET done = 1, at = excluded.at").bind(id, Date.now()).run();
+    else await env.DB.prepare("DELETE FROM progress WHERE id = ?").bind(id).run();
+  }
+  const rows = (await env.DB.prepare("SELECT id, at FROM progress WHERE done = 1").all()).results || [];
+  return json({ done: Object.fromEntries(rows.map(r => [r.id, r.at])) });
+}
 async function todosApi(env, request, ctx) {
   await syncTables(env);
   if (request.method === "POST") {
@@ -761,7 +775,7 @@ export default {
     const tok = String(env.SYNC_TOKEN || "").trim();
     if (tok && url.pathname === `/outbox/${tok}.rss`) return outboxFeed(env, url);
     if (await validSession(request, env)) {
-      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
+      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision|progress)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
       // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
       const res = await env.ASSETS.fetch(request);
       if (!(res.headers.get("content-type") || "").includes("text/html")) return res;
