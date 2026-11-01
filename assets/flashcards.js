@@ -1,6 +1,7 @@
 /* Flashcards: spaced repetition over every question and key term in the vault, with XP, levels,
    streaks, badges, a 60-second sprint, and a specimen that evolves as you level up.
-   Cards come from data/cards.json (built by tools/build_site.py). Progress is kept in this browser. */
+   Cards come from data/cards.json (built by tools/build_site.py). Progress is kept in this browser
+   and, once signed in, merged with a copy on the server so it follows to other devices. */
 (() => {
 'use strict';
 const B = window.BV;
@@ -13,11 +14,123 @@ const GRADE_XP = [2, 6, 10, 12];  // again, hard, good, easy
 /* ---------------------------------------------------------------- state */
 let D = null;           // { decks, cards, byId, deckById }
 let S = load();
-function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
+function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, optional: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
 function load() { const s = store.get(KEY, null); return s && s.v === 1 ? Object.assign(blank(), s) : blank(); }
-function save() { store.set(KEY, S); }
+function save() { store.set(KEY, S); dirty = true; schedulePush(); }
 const today = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const dayRec = () => (S.days[today()] = S.days[today()] || { n: 0, xp: 0, ok: 0, fresh: 0 });
+
+/* ---------------------------------------------------------------- sign-in and sync
+   Signed in, progress is merged with a server copy (never overwritten either way) and every save is
+   pushed. Offline pushes fail quietly and the next save tries again. Signing out keeps local progress. */
+const account = { user: store.get('fcUser', null), lastSync: 0 };
+let dirty = false, pushTimer = null, syncing = null;
+const maxFields = (a = {}, b = {}) => { const o = {}; for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) o[k] = Math.max(a[k] || 0, b[k] || 0); return o; };
+function mergeProgress(local, remote) {
+  const out = Object.assign({}, local);
+  out.cards = {};
+  for (const id of new Set([...Object.keys(local.cards), ...Object.keys(remote.cards)])) {
+    const l = local.cards[id], r = remote.cards[id];
+    out.cards[id] = !l ? r : !r ? l : l.reps !== r.reps ? (l.reps > r.reps ? l : r) : (r.due > l.due ? r : l);
+  }
+  out.days = {};
+  for (const d of new Set([...Object.keys(local.days), ...Object.keys(remote.days)])) out.days[d] = maxFields(local.days[d], remote.days[d]);
+  out.xp = Math.max(local.xp || 0, remote.xp || 0);
+  out.best = maxFields(local.best, remote.best);
+  out.badges = Object.assign({}, remote.badges, local.badges);
+  // plans: local objects are kept (an open plan session holds a reference); their logs take the max per day
+  const localIds = new Set(local.plans.map(p => p.id));
+  for (const p of local.plans) {
+    const r = remote.plans.find(x => x.id === p.id);
+    if (r) for (const d of new Set([...Object.keys(p.log || {}), ...Object.keys(r.log || {})])) (p.log = p.log || {})[d] = maxFields(p.log[d], (r.log || {})[d]);
+  }
+  out.plans = local.plans.concat(remote.plans.filter(p => !localIds.has(p.id)));
+  out.optional = Object.assign({}, remote.optional, local.optional);
+  return out;   // newPerDay, goal, name, created come from local
+}
+async function api(path, opts = {}) {
+  const res = await fetch(path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts));
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+// fetch the server copy, merge it in, save locally, upload the result
+function sync() {
+  if (!account.user) return Promise.resolve();
+  if (syncing) return syncing;
+  syncing = (async () => {
+    try {
+      const got = await api('/api/fc/progress');
+      if (got.status === 401) { account.user = null; store.set('fcUser', null); refreshAccountBar(); return; }
+      if (!got.ok) return;
+      let remote = null;
+      try { remote = got.data.data ? JSON.parse(got.data.data) : null; } catch (e) { remote = null; }
+      if (remote && remote.v === 1) { S = mergeProgress(S, Object.assign(blank(), remote)); store.set(KEY, S); }
+      dirty = false;
+      const put = await api('/api/fc/progress', { method: 'PUT', body: JSON.stringify({ data: JSON.stringify(S) }) });
+      if (put.ok) { account.lastSync = put.data.updated || Date.now(); refreshAccountBar(); }
+      else dirty = true;
+    } catch (e) { dirty = true; }   // offline: keep working locally
+    finally { syncing = null; }
+  })();
+  return syncing;
+}
+function schedulePush() {
+  if (!account.user) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(sync, 2000);
+}
+// the page is going away: no time to merge, so send what's here (only if it changed).
+// keepalive bodies are capped at 64 KB; bigger ones go as a plain request that may be cut off,
+// which loses nothing (local progress stays, the next load merges)
+function pushNow() {
+  if (!account.user || !dirty) return;
+  clearTimeout(pushTimer);
+  const body = JSON.stringify({ data: JSON.stringify(S) });
+  const keepalive = body.length < 63000;
+  fetch('/api/fc/progress', { method: 'PUT', credentials: 'same-origin', keepalive, headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});
+  if (keepalive) dirty = false;
+}
+window.addEventListener('pagehide', pushNow);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') pushNow(); });
+
+const hhmm = t => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+function accountBarHtml() {
+  if (account.user) return `<div class="fc-account is-in"><span>Signed in as ${esc(account.user)}${account.lastSync ? ` · synced ${hhmm(account.lastSync)}` : ' · syncing…'}</span><button class="fc-mini" data-signout>Sign out</button></div>`;
+  return `<form class="fc-account" data-signin><span>Sign in to sync</span><input class="fc-account-input" name="username" placeholder="Username" autocomplete="username"><input class="fc-account-input" name="password" type="password" placeholder="Password" autocomplete="current-password"><button class="fc-mini mod-cta" type="submit">Sign in</button><span class="fc-account-err"></span></form>`;
+}
+function refreshAccountBar() {
+  const bar = root && $('.fc-account', root);
+  if (!bar) return;
+  bar.outerHTML = accountBarHtml();
+  wireAccountBar();
+}
+function wireAccountBar() {
+  const form = $('[data-signin]', root);
+  if (form) form.onsubmit = async e => {
+    e.preventDefault();
+    const err = $('.fc-account-err', form), btn = $('button', form);
+    const username = form.username.value.trim(), password = form.password.value;
+    if (!username || !password) { err.textContent = 'Enter a username and password.'; return; }
+    btn.disabled = true; err.textContent = '';
+    try {
+      const r = await api('/api/fc/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+      if (!r.ok) { err.textContent = r.data.error || 'Sign-in failed.'; return; }
+      account.user = r.data.user || username; account.lastSync = 0; store.set('fcUser', account.user);
+      refreshAccountBar();
+      await sync();
+      if (root && $('.fc-account', root)) dashboard();
+    } catch (ex) { err.textContent = 'Could not reach the server.'; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  };
+  const out = $('[data-signout]', root);
+  if (out) out.onclick = async () => {
+    if (dirty) await sync();
+    await api('/api/fc/logout', { method: 'POST' }).catch(() => {});
+    clearTimeout(pushTimer);
+    account.user = null; account.lastSync = 0; store.set('fcUser', null);
+    refreshAccountBar();
+  };
+}
 
 async function loadCards() {
   if (D) return D;
@@ -48,6 +161,8 @@ function cs(id) { return S.cards[id]; }
 function isNew(id) { return !S.cards[id]; }
 function isDue(id, now = Date.now()) { const c = S.cards[id]; return c && c.due <= now; }
 const mastered = id => { const c = S.cards[id]; return c && c.step < 0 && c.ivl >= 21; };
+const isOptional = id => !!S.optional[id];
+function setOptional(id, v) { if (v) S.optional[id] = true; else delete S.optional[id]; save(); }
 function fmtIvl(ms) {
   if (ms < 60 * MIN) return Math.max(1, Math.round(ms / MIN)) + 'm';
   if (ms < DAY) return Math.round(ms / 36e5) + 'h';
@@ -99,7 +214,7 @@ const BADGES = [
   { id: 'sprint15', name: 'Quick study', desc: '15 in one sprint', test: () => S.best.sprint >= 15 },
   { id: 'sprint30', name: 'Lightning', desc: '30 in one sprint', test: () => S.best.sprint >= 30 },
   { id: 'deck', name: 'Deck cleared', desc: 'Master every card in a deck', test: () => D && D.decks.some(d => deckCards(d.id).every(mastered)) },
-  { id: 'seenall', name: 'Full survey', desc: 'See every card once', test: () => D && D.cards.every(c => S.cards[c.id]) },
+  { id: 'seenall', name: 'Full survey', desc: 'See every card once', test: () => D && D.cards.filter(c => !S.optional[c.id]).every(c => S.cards[c.id]) },
   { id: 'lv10', name: 'Colonist', desc: 'Reach level 10', test: () => levelOf(S.xp).L >= 10 },
   { id: 'lv21', name: 'Deep water', desc: 'Reach level 21', test: () => levelOf(S.xp).L >= 21 },
 ];
@@ -111,11 +226,12 @@ function checkBadges() {
 }
 
 /* ---------------------------------------------------------------- decks */
-const deckCards = deckId => D.cards.filter(c => c.deck === deckId).map(c => c.id);
+const deckCards = deckId => D.cards.filter(c => c.deck === deckId && !S.optional[c.id]).map(c => c.id);
 function scopeCards(scope) {
-  if (!scope || scope === 'all') return D.cards.map(c => c.id);
+  if (!scope || scope === 'all') return D.cards.filter(c => !S.optional[c.id]).map(c => c.id);
+  if (scope === 'optional') return D.cards.filter(c => S.optional[c.id]).map(c => c.id);
   if (scope.startsWith('plan:') || scope.startsWith('cram:')) { const p = S.plans.find(x => x.id === scope.slice(5)); return p ? planCardIds(p) : []; }
-  if (scope.startsWith('subject:')) { const s = scope.slice(8); return D.cards.filter(c => (D.deckById.get(c.deck) || {}).subject === s).map(c => c.id); }
+  if (scope.startsWith('subject:')) { const s = scope.slice(8); return D.cards.filter(c => (D.deckById.get(c.deck) || {}).subject === s && !S.optional[c.id]).map(c => c.id); }
   return deckCards(scope);
 }
 function counts(ids) {
@@ -147,10 +263,10 @@ function planCardIds(p) {             // in study order: each deck's cards, then
   const terms = p.terms ? D.cards.filter(c => c.type === 'term') : [];
   for (const did of p.decks) {
     const d = D.deckById.get(did); if (!d) continue;
-    for (const c of D.cards) if (c.deck === did && !seen.has(c.id)) { seen.add(c.id); out.push(c.id); out.owner.set(c.id, did); }
+    for (const c of D.cards) if (c.deck === did && !S.optional[c.id] && !seen.has(c.id)) { seen.add(c.id); out.push(c.id); out.owner.set(c.id, did); }
     if (tl && d.hub) {
       const f = folderOf(d.hub);
-      for (const c of terms) if (!seen.has(c.id) && (tl.get(c.note) || []).some(n => n.startsWith(f))) { seen.add(c.id); out.push(c.id); out.owner.set(c.id, did); }
+      for (const c of terms) if (!seen.has(c.id) && !S.optional[c.id] && (tl.get(c.note) || []).some(n => n.startsWith(f))) { seen.add(c.id); out.push(c.id); out.owner.set(c.id, did); }
     }
   }
   return out;
@@ -548,6 +664,7 @@ function dashboard() {
   const lv = levelOf(S.xp), st = stageOf(lv.L), stage = STAGES[st], next = STAGES[st + 1];
   const day = dayRec(), stk = streak();
   const all = counts(scopeCards('all'));
+  const opt = counts(scopeCards('optional'));
   const newToday = Math.min(all.fresh, newLeftToday());
   const subjects = [...new Set(D.decks.map(d => d.subject))];
   const newBadges = checkBadges();
@@ -581,7 +698,10 @@ function dashboard() {
           return `<div class="fc-deck" data-study="${esc(d.id)}"><div class="fc-deck-name">${esc(d.name)}<span>${c.total} cards</span></div>
             <div class="fc-deck-bar" title="${Math.round(seen)}% seen, ${Math.round(pct)}% mastered"><i style="width:${seen}%"></i><b style="width:${pct}%"></b></div>
             <div class="fc-deck-due">${c.due ? `<span class="due">${c.due} due</span>` : ''}${c.fresh ? `<span class="new">${c.fresh} new</span>` : ''}${!c.due && !c.fresh ? `<span class="done">${icon('check')}</span>` : ''}</div></div>`; }).join('')}</div>`;
-    }).join('')}</section>
+    }).join('')}${opt.total ? `<div class="fc-subject"><div class="fc-subject-head"><span>Optional</span></div>
+        <div class="fc-deck" data-study="optional"><div class="fc-deck-name">Optional<span>${opt.total} cards</span></div>
+          <div class="fc-deck-bar" title="${Math.round((opt.total - opt.fresh) / opt.total * 100)}% seen, ${Math.round(opt.mast / opt.total * 100)}% mastered"><i style="width:${(opt.total - opt.fresh) / opt.total * 100}%"></i><b style="width:${opt.mast / opt.total * 100}%"></b></div>
+          <div class="fc-deck-due"><span class="new">${opt.total} optional</span></div></div></div>` : ''}</section>
     <section class="fc-cabinet"><div class="fc-section-title">Evolution</div><div class="fc-evo">${STAGES.map((s, i) => `<div class="fc-evo-item${i <= st ? ' is-unlocked' : ''}${i === st ? ' is-current' : ''}"><canvas data-stage="${i}"></canvas><b>${i <= st ? esc(s.name) : '???'}</b><span>Level ${s.at}</span></div>`).join('')}</div></section>
     <section class="fc-cabinet"><div class="fc-section-title">Badges <span>${Object.keys(S.badges).length} of ${BADGES.length}</span></div><div class="fc-badges">${BADGES.map(b => `<div class="fc-badge${S.badges[b.id] ? ' is-earned' : ''}" title="${esc(b.desc)}">${icon(S.badges[b.id] ? 'trophy' : 'lock')}<b>${esc(b.name)}</b><span>${esc(b.desc)}</span></div>`).join('')}</div></section>
     <section class="fc-footer">
@@ -592,7 +712,7 @@ function dashboard() {
       <label class="fc-mini fc-import">${icon('upload')} Import<input type="file" accept="application/json" hidden></label>
       <button class="fc-mini fc-danger" data-reset>Reset</button>
     </section>
-    <div class="fc-note">Progress is saved in this browser. Export it to move it to another device.</div>
+    ${accountBarHtml()}
   </div>`;
   const spec = mountSpec($('.fc-spec-canvas', root), { stage: st });
   $$('.fc-evo canvas', root).forEach(cv => { const i = +cv.dataset.stage; mountSpec(cv, { stage: i, locked: i > st, still: i !== st }); });
@@ -624,6 +744,7 @@ function dashboard() {
     try { const d = JSON.parse(await f.text()); if (d.v !== 1 || typeof d.cards !== 'object') throw new Error(); S = Object.assign(blank(), d); save(); dashboard(); B.toast('Progress imported'); }
     catch (e) { B.toast('That file is not a progress export'); }
   };
+  wireAccountBar();
   return spec;
 }
 
@@ -632,7 +753,7 @@ function buildQueue(scope) {
   if (scope.startsWith('plan:') || scope.startsWith('cram:')) { const p = S.plans.find(x => x.id === scope.slice(5)); return p ? planQueue(p, scope.startsWith('cram:')) : []; }
   const ids = scopeCards(scope), now = Date.now();
   const due = ids.filter(id => !isNew(id) && S.cards[id].due <= now).sort((a, b) => S.cards[a].due - S.cards[b].due).slice(0, 200);
-  const fresh = ids.filter(isNew).slice(0, newLeftToday());
+  const fresh = ids.filter(isNew).slice(0, scope === 'optional' ? Infinity : newLeftToday());
   // interleave: one new card every three reviews
   const q = []; let i = 0, j = 0;
   while (i < due.length || j < fresh.length) { for (let k = 0; k < 3 && i < due.length; k++) q.push(due[i++]); if (j < fresh.length) q.push(fresh[j++]); }
@@ -683,7 +804,9 @@ function nextCard() {
   const deck = D.deckById.get(card.deck) || { name: '', subject: '' };
   const fresh = isNew(id);
   const area = $('.fc-stage-area', root), ctr = $('.fc-controls', root);
-  const meta = `<div class="fc-card-meta"><span>${esc(deck.subject)} › ${esc(deck.name)}</span>${fresh ? '<span class="fc-tag-new">New</span>' : ''}</div>`;
+  const optional = isOptional(id);
+  const tag = optional ? '<span class="fc-tag-new">Optional</span>' : fresh ? '<span class="fc-tag-new">New</span>' : '';
+  const meta = `<div class="fc-card-meta"><span>${esc(deck.subject)} › ${esc(deck.name)}</span><span class="fc-meta-right">${tag}<button class="fc-mini fc-opt-toggle" data-optional="${esc(id)}">${optional ? 'Make core' : 'Make optional'}</button></span></div>`;
   const source = `<a class="fc-source" data-note="${esc(card.note)}">${icon('file')} ${esc(B.titleOf(card.note))}</a>`;
   if (card.type === 'mcq') {
     const letters = 'ABCDEFGH';
@@ -699,7 +822,7 @@ function nextCard() {
       $('.fc-continue', ctr).onclick = advance;
       keyHandler = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advance(); } };
     };
-    area.onclick = e => { const b = e.target.closest('.fc-opt'); if (b) choose(+b.dataset.o); clickSource(e); };
+    area.onclick = e => { const ob = e.target.closest('[data-optional]'); if (ob) return toggleOptionalMidSession(id); const b = e.target.closest('.fc-opt'); if (b) choose(+b.dataset.o); clickSource(e); };
     keyHandler = e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= card.options.length) choose(n - 1); };
   } else {
     const front = card.type === 'term' ? `<div class="fc-term">${card.front}</div><div class="fc-prompt">Define this term</div>` : `<div class="fc-front">${card.front}</div>`;
@@ -713,11 +836,19 @@ function nextCard() {
       ctr.onclick = e => { const b = e.target.closest('[data-g]'); if (b) { grade(id, +b.dataset.g, fresh); advance(); } };
       keyHandler = e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) { grade(id, n - 1, fresh); advance(); } };
     };
-    flipEl.onclick = e => { if (clickSource(e)) return; reveal(); };
+    flipEl.onclick = e => { if (e.target.closest('[data-optional]')) return toggleOptionalMidSession(id); if (clickSource(e)) return; reveal(); };
     ctr.innerHTML = `<button class="fc-continue mod-cta">Show answer <kbd>Space</kbd></button>`; ctr.onclick = null;
     $('.fc-continue', ctr).onclick = reveal;
     keyHandler = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); reveal(); } };
   }
+}
+// leaves the session without a grade: no schedule change, no XP, no day/plan counts
+function toggleOptionalMidSession(id) {
+  setOptional(id, !isOptional(id));
+  if (!sess) return;
+  keyHandler = null;
+  sess.queue = sess.queue.filter(x => x !== id);
+  nextCard();
 }
 function clickSource(e) {
   const s = e.target.closest('.fc-source, a.internal-link');
@@ -729,7 +860,7 @@ function clickSource(e) {
 function grade(id, g, fresh) {
   const ok = g >= 2;
   S.cards[id] = schedule(S.cards[id], g);
-  const d = dayRec(); d.n++; if (ok) d.ok++; if (fresh && !sess.seen.has(id)) d.fresh++;
+  const d = dayRec(); d.n++; if (ok) d.ok++; if (fresh && !isOptional(id) && !sess.seen.has(id)) d.fresh++;
   if (sess.plan) { const r = plog(sess.plan); r.n++; if (fresh && !sess.seen.has(id)) r.fresh++; }
   sess.seen.add(id);
   sess.done++; if (ok) sess.right++;
@@ -771,8 +902,8 @@ function finishSession() {
 /* ---------------------------------------------------------------- sprint */
 let sprintTimer = null;
 function sprintPool() {
-  const terms = D.cards.filter(c => c.type === 'term');
-  const mcqs = D.cards.filter(c => c.type === 'mcq');
+  const terms = D.cards.filter(c => c.type === 'term' && !S.optional[c.id]);
+  const mcqs = D.cards.filter(c => c.type === 'mcq' && !S.optional[c.id]);
   return { terms, mcqs };
 }
 function sprintQuestion(pool) {
@@ -844,4 +975,7 @@ function startSprint() {
   }, 100);
   show();
 }
+
+// every page load while signed in: pull the server copy in
+if (account.user) sync().then(() => { if (D && root && $('.fc-account', root)) dashboard(); });
 })();

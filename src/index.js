@@ -173,6 +173,81 @@ async function handlePinPost(request, env) {
   return res;
 }
 
+/* ------------------------------------------------------------------ Flashcards sign-in + cross-device sync
+   A second, separate login (not the site PIN) so flashcard progress can follow Alex to another
+   device. The password is env.FC_PASSWORD (a secret); the username is env.FC_USER (default "Alex").
+   fc_auth is its own signed cookie ("user.expiry.hmac", reusing the same hmac()/SESSION_SECRET as the
+   site session) lasting a year. Progress itself is an opaque JSON blob the client merges; the worker
+   never looks inside it. These routes sit behind the site PIN (validSession), same as everything else. */
+const FC_COOKIE = "fc_auth";
+const FC_DAYS = 365;
+const fcJson = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "private, no-store" } });
+async function makeFcCookie(env, user) {
+  const expiry = Date.now() + FC_DAYS * 86400000;
+  const sig = await hmac(env.SESSION_SECRET, `${user}.${expiry}`);
+  return `${FC_COOKIE}=${user}.${expiry}.${sig}; Max-Age=${FC_DAYS * 86400}; Path=/; Secure; HttpOnly; SameSite=Lax`;
+}
+async function fcUserFromRequest(request, env) {
+  const value = getCookie(request, FC_COOKIE);
+  if (!value) return null;
+  const parts = value.split(".");
+  if (parts.length < 3) return null;
+  const sig = parts.pop(), expiry = parts.pop(), user = parts.join(".");
+  if (!user || !expiry || !sig) return null;
+  if (Number(expiry) < Date.now()) return null;
+  const expected = await hmac(env.SESSION_SECRET, `${user}.${expiry}`);
+  if (expected.length !== sig.length) return null;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+  return diff === 0 ? user : null;
+}
+async function fcTable(env) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS fc_progress (user TEXT PRIMARY KEY, data TEXT, updated INTEGER)").run(); }
+async function fcLoginRoute(request, env) {
+  const d = await request.json().catch(() => null);
+  const given = String((d && d.username) || "");
+  const password = String((d && d.password) || "");
+  const wantUser = String(env.FC_USER || "Alex");
+  const wantPass = String(env.FC_PASSWORD || "");
+  const userOk = given.toLowerCase() === wantUser.toLowerCase();
+  const passOk = !!wantPass && password.length === wantPass.length &&
+    password.split("").reduce((diff, c, i) => diff | (c.charCodeAt(0) ^ wantPass.charCodeAt(i)), 0) === 0;
+  if (!userOk || !passOk) return fcJson({ error: "Wrong username or password." }, 401);
+  const res = fcJson({ ok: true, user: wantUser });
+  res.headers.append("Set-Cookie", await makeFcCookie(env, wantUser));
+  return res;
+}
+function fcLogoutRoute() {
+  const res = fcJson({ ok: true });
+  res.headers.append("Set-Cookie", `${FC_COOKIE}=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax`);
+  return res;
+}
+async function fcGetProgress(request, env) {
+  const user = await fcUserFromRequest(request, env);
+  if (!user) return fcJson({ error: "Not signed in." }, 401);
+  await fcTable(env);
+  const row = await env.DB.prepare("SELECT data, updated FROM fc_progress WHERE user = ?").bind(user).first();
+  return fcJson({ user, data: row ? row.data : null, updated: row ? row.updated : 0 });
+}
+async function fcPutProgress(request, env) {
+  const user = await fcUserFromRequest(request, env);
+  if (!user) return fcJson({ error: "Not signed in." }, 401);
+  const d = await request.json().catch(() => null);
+  if (!d || d.data == null) return fcJson({ error: "bad request" }, 400);
+  const dataStr = typeof d.data === "string" ? d.data : JSON.stringify(d.data);
+  await fcTable(env);
+  const updated = Date.now();
+  await env.DB.prepare("INSERT INTO fc_progress (user, data, updated) VALUES (?, ?, ?) ON CONFLICT(user) DO UPDATE SET data = excluded.data, updated = excluded.updated").bind(user, dataStr, updated).run();
+  return fcJson({ updated });
+}
+async function handleFc(request, env, url) {
+  const p = url.pathname;
+  if (p === "/api/fc/login" && request.method === "POST") return fcLoginRoute(request, env);
+  if (p === "/api/fc/logout" && request.method === "POST") return fcLogoutRoute();
+  if (p === "/api/fc/progress" && request.method === "GET") return fcGetProgress(request, env);
+  if (p === "/api/fc/progress" && request.method === "PUT") return fcPutProgress(request, env);
+  return fcJson({ error: "not found" }, 404);
+}
+
 
 /* ------------------------------------------------------------------ Microsoft (Outlook mail + calendar)
    Delegated OAuth against Microsoft Graph, read-only: Mail.Read, Calendars.Read, User.Read,
@@ -775,6 +850,7 @@ export default {
     const tok = String(env.SYNC_TOKEN || "").trim();
     if (tok && url.pathname === `/outbox/${tok}.rss`) return outboxFeed(env, url);
     if (await validSession(request, env)) {
+      if (url.pathname.startsWith("/api/fc/")) return handleFc(request, env, url);
       if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision|progress)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
       // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
       const res = await env.ASSETS.fetch(request);

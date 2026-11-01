@@ -199,6 +199,10 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
 .fc-import { cursor: pointer; }
 .fc-danger:hover { color: var(--fc-red) !important; border-color: rgba(251,113,133,.5) !important; }
 .fc-note { font-size: 11.5px; color: var(--text-faint); margin-top: 10px; }
+.fc-account { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+.fc-account-input { width: 130px; background: var(--background-modifier-hover); border: 1px solid var(--background-modifier-border); color: var(--text-normal); border-radius: 7px; padding: 5px 8px; font: inherit; }
+.fc-account-err { color: var(--fc-red); }
+.fc-account.is-in .fc-mini { margin-left: 4px; }
 
 /* session */
 .fc-session { max-width: 760px; margin: 0 auto; padding: 16px 20px 40px; min-height: 100%; display: flex; flex-direction: column; }
@@ -220,6 +224,8 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
 .fc-face-back { transform: rotateY(180deg); }
 .fc-card-meta { display: flex; justify-content: space-between; gap: 10px; font-size: 11.5px; color: var(--text-faint); letter-spacing: .04em; margin-bottom: 18px; }
 .fc-tag-new { color: var(--fc-violet); font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+.fc-meta-right { display: flex; align-items: center; gap: 10px; flex: none; }
+.fc-opt-toggle { padding: 2px 8px; font-size: 11px; letter-spacing: 0; }
 .fc-front { font-size: 21px; line-height: 1.45; font-weight: 550; color: var(--text-normal); }
 .fc-front.small, .fc-term.small { font-size: 14px; color: var(--text-muted); font-weight: 500; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--fc-line); }
 .fc-term { font-family: var(--serif, Georgia, serif); font-size: 38px; font-weight: 650; text-align: center; margin: auto 0 6px; }
