@@ -206,8 +206,8 @@ async function fcLoginRoute(request, env) {
   const d = await request.json().catch(() => null);
   const given = String((d && d.username) || "");
   const password = String((d && d.password) || "");
-  const wantUser = String(env.FC_USER || "Alex");
-  const wantPass = String(env.FC_PASSWORD || "");
+  const wantUser = String(env.FC_USER || "Alex").trim();
+  const wantPass = String(env.FC_PASSWORD || "").trim();   // a secret set with `echo` carries a trailing newline
   const userOk = given.toLowerCase() === wantUser.toLowerCase();
   const passOk = !!wantPass && password.length === wantPass.length &&
     password.split("").reduce((diff, c, i) => diff | (c.charCodeAt(0) ^ wantPass.charCodeAt(i)), 0) === 0;
