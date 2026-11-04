@@ -87,7 +87,12 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('bv:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('bv:' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
 };
-const isMobile = () => window.matchMedia('(max-width: 900px)').matches;
+// a touch screen of phone size in either direction. Desktop windows never match, however narrow.
+const PHONE_QUERY = '(pointer: coarse) and (max-width: 932px), (pointer: coarse) and (max-height: 500px)';
+const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
+const isMobile = () => isPhone() || window.matchMedia('(max-width: 900px)').matches;
+const syncPhone = () => document.body.classList.toggle('is-phone', isPhone());
+syncPhone(); window.matchMedia(PHONE_QUERY).addEventListener('change', syncPhone);
 const canHover = () => window.matchMedia('(hover: hover)').matches;
 const CANVAS_COLORS = { '1': '#fb464c', '2': '#e9973f', '3': '#e0de71', '4': '#44cf6e', '5': '#53dfdd', '6': '#a882ff' };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -109,6 +114,8 @@ const titleOf = id => {
   const sv = viewFor(id); if (sv) return sv.title(id);
   return V.notes[id] ? V.notes[id].title : id.endsWith('.canvas') ? id.split('/').pop().replace(/\.canvas$/, '') : id.split('/').pop();
 };
+// a note's own title. titleOf gives the page it opens in, which in Nova is the whole lecture.
+const noteTitle = id => { const n = V.notes[id]; return n ? (n.props && n.props.title) || n.title : titleOf(id); };
 const iconOf = id => { const sv = viewFor(id); return sv ? sv.icon : id.endsWith('.canvas') ? 'canvas' : 'file'; };
 const exists = id => !!(V.notes[id] || V.canvases[id] || viewFor(id));
 
@@ -225,12 +232,14 @@ function setRightPane(p) {
   $$('#right .sidebar-pane').forEach(b => b.classList.toggle('is-active', b.dataset.rpane === p));
   renderRight();
 }
+// on a phone the left pane is a full page, not a drawer over the note, so only the right one dims
+function showScrim() { $('#scrim').classList.toggle('is-visible', isMobile() && (state.rightOpen || (state.leftOpen && !isPhone()))); }
 function setSide(side, open) {
   if (side === 'left') { state.leftOpen = open; if (!isMobile()) store.set('leftOpen', open); }
   else { state.rightOpen = open; if (!isMobile()) store.set('rightOpen', open); }
   $('#left').classList.toggle('is-collapsed', !state.leftOpen);
   $('#right').classList.toggle('is-collapsed', !state.rightOpen);
-  $('#scrim').classList.toggle('is-visible', isMobile() && (state.leftOpen || state.rightOpen));
+  showScrim();
   if (side === 'right' && open) renderRight();
 }
 
@@ -287,7 +296,7 @@ function wireShell() {
     else if (mod && e.key.toLowerCase() === 'w' && !typing) { e.preventDefault(); closeTab(state.active); }
     else if (e.key === 'Escape') { closePopover(); const m = $('.modal-container'); if (m) m.remove(); const l = $('.lightbox'); if (l) l.remove(); $$('.menu').forEach(x => x.remove()); }
   });
-  window.addEventListener('resize', () => { if (isMobile()) { $('#scrim').classList.toggle('is-visible', state.leftOpen || state.rightOpen); } });
+  window.addEventListener('resize', () => { if (isMobile()) showScrim(); });
 }
 
 function toggleTheme() {
@@ -314,7 +323,7 @@ let novaLoading = null;
 function loadNovaComponents() {
   if (novaLoading) return novaLoading;
   const add = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261055')).then(() => add('assets/nova-map.js?v=20261055')).then(() => add('assets/nova-outlook.js?v=20261055')).then(() => add('assets/nova-bits.js?v=20261055')).then(() => add('assets/nova-research.js?v=20261055')).then(() => add('assets/nova-assistant.js?v=20261055')).then(relayout);
+  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261055')).then(() => isPhone() ? null : add('assets/nova-map.js?v=20261055')).then(() => add('assets/nova-outlook.js?v=20261055')).then(() => add('assets/nova-bits.js?v=20261055')).then(() => add('assets/nova-research.js?v=20261055')).then(() => add('assets/nova-assistant.js?v=20261055')).then(relayout);
   return novaLoading;
 }
 function openUiModeMenu(anchorEl) {
@@ -463,6 +472,7 @@ function route() {
     if (hit) { location.replace(hashFor(hit, heading)); return; }
     id = V.home;
   }
+  if (id === 'graph' && isPhone()) id = 'linked';     // the graph needs a big screen; phones get a list
   state.tabs[state.active] = id; saveTabs(); renderTabs();
   closePopover(); $$('.menu').forEach(x => x.remove());
   teardown();
@@ -1295,8 +1305,18 @@ function anchor(n, side) {
   }
 }
 function dir(side) { return { top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0] }[side] || [0, 0]; }
+// a phone reads a canvas top to bottom as one list instead of panning around a board
+function renderCanvasList(host, c) {
+  const rows = c.nodes.filter(n => n.type !== 'group').sort((a, b) => (a.y - b.y) || (a.x - b.x));
+  host.innerHTML = `<div class="canvas-list">${rows.map(n => {
+    if (n.type === 'file' && V.notes[n.file]) return `<a class="internal-link canvas-list-item" data-note="${esc(n.file)}">${icon('file')} ${esc(titleOf(n.file))}</a>`;
+    return n.html ? `<div class="canvas-list-item markdown-rendered">${n.html}</div>` : '';
+  }).join('')}</div>`;
+  wireLinks(host);
+}
 function renderCanvas(host, path) {
   const c = V.canvases[path];
+  if (isPhone()) { renderCanvasList(host, c); return () => {}; }
   host.innerHTML = '';
   const wrap = h(`<div class="canvas-wrapper"><div class="canvas"></div><div class="canvas-zoom-controls">
     <button class="clickable-icon" data-z="in" title="Zoom in">${icon('plus')}</button><button class="clickable-icon" data-z="out" title="Zoom out">${icon('minus')}</button><button class="clickable-icon" data-z="fit" title="Zoom to fit">${icon('maximize')}</button></div></div>`);
@@ -1438,8 +1458,9 @@ function showCanvas(path) {
 
 /* ------------------------------------------------------------------ public API for the other views */
 window.BV = {
-  get V() { return V; }, icon, esc, $, $$, h, store, isMobile, clamp, ease, collator,
-  go, hashFor, titleOf, exists, hydrate, wireLinks, showMenu, toast, closePopover, noteHtml,
+  get V() { return V; }, icon, esc, $, $$, h, store, isMobile, isPhone, clamp, ease, collator,
+  setSide, setLeftPane, setRightPane, toggleTheme, openUiModeMenu,
+  go, hashFor, titleOf, noteTitle, exists, hydrate, wireLinks, showMenu, toast, closePopover, noteHtml,
   registerView(id, def) { if (def.prefix) PREFIXED.push(def); else SPECIAL[id] = def; },
   onHydrate(f) { hooks.hydrate.push(f); },
   onBoot(f) { hooks.boot.push(f); },
@@ -1461,17 +1482,25 @@ window.BV = {
 
 /* ------------------------------------------------------------------ hourly PIN
    The worker gives each PIN entry one hour and sets site_exp to when it ends. When that time
-   passes the page reloads, which brings the PIN screen back. Checked on a timer and whenever
-   the tab wakes up, so a sleeping laptop still locks. */
+   passes the page asks the server, and reloads into the PIN screen if the server says so. With no
+   answer the phone is offline and this is the saved copy: it stays open, so a card session isn't
+   thrown out every 30 seconds, and the PIN comes back as soon as the server can be reached.
+   Checked on a timer and whenever the tab wakes up, so a sleeping laptop still locks. */
 function watchSession() {
-  const exp = +(((document.cookie.match(/(?:^|;\s*)site_exp=(\d+)/) || [])[1]) || 0);
-  // no session cookie means this is a saved copy of the page: reload once so the server asks for the PIN
-  if (!exp) { try { if (!sessionStorage.getItem('bv-pin-reload')) { sessionStorage.setItem('bv-pin-reload', '1'); location.reload(); } } catch (e) { /* storage blocked */ } return; }
-  try { sessionStorage.removeItem('bv-pin-reload'); } catch (e) { /* storage blocked */ }
-  const check = () => { if (Date.now() >= exp) location.reload(); };
-  setTimeout(check, Math.max(1000, exp - Date.now() + 1000));
+  const expiry = () => +(((document.cookie.match(/(?:^|;\s*)site_exp=(\d+)/) || [])[1]) || 0);
+  let asking = false;
+  const check = async () => {
+    if (Date.now() < expiry() || asking) return;
+    asking = true;
+    try { const r = await fetch('/api/ping', { cache: 'no-store', credentials: 'same-origin' }); if (r.status === 401) location.reload(); }
+    catch (e) { /* offline */ }
+    asking = false;
+  };
+  check();
+  setTimeout(check, Math.max(1000, expiry() - Date.now() + 1000));
   setInterval(check, 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+  window.addEventListener('online', check);
 }
 
 /* ------------------------------------------------------------------ boot */
@@ -1479,7 +1508,7 @@ async function boot() {
   watchSession();
   const theme = store.get('theme', 'dark');
   document.body.classList.toggle('theme-dark', theme === 'dark'); document.body.classList.toggle('theme-light', theme === 'light');
-  const uiMode = store.get('uiMode', 'classic');
+  const uiMode = store.get('uiMode', isPhone() ? 'nova' : 'classic');
   document.body.classList.toggle('ui-classic', uiMode === 'classic'); document.body.classList.toggle('ui-nova', uiMode === 'nova');
   if (uiMode === 'nova') loadNovaComponents();
   try {

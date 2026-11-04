@@ -237,7 +237,7 @@ button { font: inherit; color: inherit; }
 /* mobile */
 .mobile-header { display: none; }
 .sidebar-scrim { display: none; }
-@media (max-width: 900px) {
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) {
   .workspace-ribbon { display: none; }
   .workspace-tab-header-container { display: none; }
   .mobile-header { display: flex; }

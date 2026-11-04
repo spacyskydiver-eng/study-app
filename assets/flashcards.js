@@ -14,7 +14,7 @@ const GRADE_XP = [2, 6, 10, 12];  // again, hard, good, easy
 /* ---------------------------------------------------------------- state */
 let D = null;           // { decks, cards, byId, deckById }
 let S = load();
-function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, optional: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
+function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, optional: {}, optionalAt: {}, undone: {}, plansGone: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
 function load() { const s = store.get(KEY, null); return s && s.v === 1 ? Object.assign(blank(), s) : blank(); }
 function save() { store.set(KEY, S); dirty = true; schedulePush(); }
 const today = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -23,15 +23,18 @@ const dayRec = () => (S.days[today()] = S.days[today()] || { n: 0, xp: 0, ok: 0,
 /* ---------------------------------------------------------------- sign-in and sync
    Signed in, progress is merged with a server copy (never overwritten either way) and every save is
    pushed. Offline pushes fail quietly and the next save tries again. Signing out keeps local progress. */
-const account = { user: store.get('fcUser', null), lastSync: 0 };
+const account = { user: store.get('fcUser', null), lastSync: 0, base: null };   // base: the server copy last merged with
 let dirty = false, pushTimer = null, syncing = null;
 const maxFields = (a = {}, b = {}) => { const o = {}; for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) o[k] = Math.max(a[k] || 0, b[k] || 0); return o; };
+const PLAN_EDITS = ['name', 'decks', 'prio', 'terms', 'due', 'edited'];
 function mergeProgress(local, remote) {
   const out = Object.assign({}, local);
+  out.undone = maxFields(local.undone, remote.undone);
   out.cards = {};
   for (const id of new Set([...Object.keys(local.cards), ...Object.keys(remote.cards)])) {
     const l = local.cards[id], r = remote.cards[id];
-    out.cards[id] = !l ? r : !r ? l : l.reps !== r.reps ? (l.reps > r.reps ? l : r) : (r.due > l.due ? r : l);
+    const c = !l ? r : !r ? l : l.reps !== r.reps ? (l.reps > r.reps ? l : r) : (r.due > l.due ? r : l);
+    if (!(c.reps <= (out.undone[id] || 0))) out.cards[id] = c;    // an undone first rating stays undone
   }
   out.days = {};
   for (const d of new Set([...Object.keys(local.days), ...Object.keys(remote.days)])) out.days[d] = maxFields(local.days[d], remote.days[d]);
@@ -42,16 +45,24 @@ function mergeProgress(local, remote) {
   const localIds = new Set(local.plans.map(p => p.id));
   for (const p of local.plans) {
     const r = remote.plans.find(x => x.id === p.id);
-    if (r) for (const d of new Set([...Object.keys(p.log || {}), ...Object.keys(r.log || {})])) (p.log = p.log || {})[d] = maxFields(p.log[d], (r.log || {})[d]);
+    if (!r) continue;
+    for (const d of new Set([...Object.keys(p.log || {}), ...Object.keys(r.log || {})])) (p.log = p.log || {})[d] = maxFields(p.log[d], (r.log || {})[d]);
+    if ((r.edited || 0) > (p.edited || 0)) for (const k of PLAN_EDITS) { if (k in r) p[k] = r[k]; else delete p[k]; }    // the latest edit wins
   }
-  out.plans = local.plans.concat(remote.plans.filter(p => !localIds.has(p.id)));
-  out.optional = Object.assign({}, remote.optional, local.optional);
+  out.plansGone = maxFields(local.plansGone, remote.plansGone);
+  out.plans = local.plans.concat(remote.plans.filter(p => !localIds.has(p.id))).filter(p => !out.plansGone[p.id]);
+  // optional: the newest change to a card wins; cards with no time yet (older data) stay optional
+  out.optional = {}; out.optionalAt = maxFields(local.optionalAt, remote.optionalAt);
+  for (const id of new Set([...Object.keys(local.optional), ...Object.keys(remote.optional), ...Object.keys(out.optionalAt)])) {
+    const lt = (local.optionalAt || {})[id] || 0, rt = (remote.optionalAt || {})[id] || 0;
+    if (lt === rt ? local.optional[id] || remote.optional[id] : (lt > rt ? local : remote).optional[id]) out.optional[id] = true;
+  }
   return out;   // newPerDay, goal, name, created come from local
 }
 async function api(path, opts = {}) {
   const res = await fetch(path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts));
   const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
+  return { ok: res.ok, status: res.status, data, gate: res.headers.get('X-Site-Gate') === 'pin' };
 }
 // fetch the server copy, merge it in, save locally, upload the result
 function sync() {
@@ -59,17 +70,23 @@ function sync() {
   if (syncing) return syncing;
   syncing = (async () => {
     try {
-      const got = await api('/api/fc/progress');
-      if (got.status === 401) { account.user = null; store.set('fcUser', null); refreshAccountBar(); return; }
-      if (!got.ok) return;
-      let remote = null;
-      try { remote = got.data.data ? JSON.parse(got.data.data) : null; } catch (e) { remote = null; }
-      if (remote && remote.v === 1) { S = mergeProgress(S, Object.assign(blank(), remote)); store.set(KEY, S); }
-      dirty = false;
-      const put = await api('/api/fc/progress', { method: 'PUT', body: JSON.stringify({ data: JSON.stringify(S) }) });
-      if (put.ok) { account.lastSync = put.data.updated || Date.now(); refreshAccountBar(); }
-      else dirty = true;
-    } catch (e) { dirty = true; }   // offline: keep working locally
+      for (let tries = 0; tries < 3; tries++) {     // 409: another device saved in between, so merge that too
+        const got = await api('/api/fc/progress');
+        if (got.gate) { dirty = true; return; }     // the PIN has run out; the flashcard sign-in is still good
+        if (got.status === 401) { account.user = null; store.set('fcUser', null); refreshAccountBar(); return; }
+        if (!got.ok) { dirty = true; return; }
+        let remote = null;
+        try { remote = got.data.data ? JSON.parse(got.data.data) : null; } catch (e) { remote = null; }
+        if (remote && remote.v === 1) { S = mergeProgress(S, Object.assign(blank(), remote)); store.set(KEY, S); }
+        account.base = got.data.updated || 0;
+        dirty = false;
+        const put = await api('/api/fc/progress', { method: 'PUT', body: JSON.stringify({ data: JSON.stringify(S), base: account.base }) });
+        if (put.status === 409) { dirty = true; continue; }
+        if (put.ok) { account.base = put.data.updated; account.lastSync = put.data.updated || Date.now(); refreshAccountBar(); }
+        else dirty = true;
+        return;
+      }
+    } catch (e) { dirty = true; refreshAccountBar(); }   // offline: keep working locally
     finally { syncing = null; }
   })();
   return syncing;
@@ -79,23 +96,24 @@ function schedulePush() {
   clearTimeout(pushTimer);
   pushTimer = setTimeout(sync, 2000);
 }
-// the page is going away: no time to merge, so send what's here (only if it changed).
+// the page is going away: no time to merge, so send what's here (only if it changed), marked with the
+// server copy it was merged with. If the server has moved on it refuses, and the next sync merges.
 // keepalive bodies are capped at 64 KB; bigger ones go as a plain request that may be cut off,
 // which loses nothing (local progress stays, the next load merges)
 function pushNow() {
-  if (!account.user || !dirty) return;
+  if (!account.user || !dirty || account.base == null) return;
   clearTimeout(pushTimer);
-  const body = JSON.stringify({ data: JSON.stringify(S) });
-  const keepalive = body.length < 63000;
-  fetch('/api/fc/progress', { method: 'PUT', credentials: 'same-origin', keepalive, headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});
-  if (keepalive) dirty = false;
+  const body = JSON.stringify({ data: JSON.stringify(S), base: account.base });
+  fetch('/api/fc/progress', { method: 'PUT', credentials: 'same-origin', keepalive: body.length < 63000, headers: { 'Content-Type': 'application/json' }, body })
+    .then(r => (r.ok ? r.json() : null)).then(d => { if (d && d.updated) { account.base = d.updated; dirty = false; } }).catch(() => {});
 }
 window.addEventListener('pagehide', pushNow);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') pushNow(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') pushNow(); else if (account.user) sync(); });
+window.addEventListener('online', () => sync());
 
 const hhmm = t => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 function accountBarHtml() {
-  if (account.user) return `<div class="fc-account is-in"><span>Signed in as ${esc(account.user)}${account.lastSync ? ` · synced ${hhmm(account.lastSync)}` : ' · syncing…'}</span><button class="fc-mini" data-signout>Sign out</button></div>`;
+  if (account.user) return `<div class="fc-account is-in"><span>Signed in as ${esc(account.user)}${dirty && !navigator.onLine ? ' · offline, saved on this device' : account.lastSync ? ` · synced ${hhmm(account.lastSync)}` : ' · syncing…'}</span><button class="fc-mini" data-signout>Sign out</button></div>`;
   return `<form class="fc-account" data-signin><span>Sign in to sync</span><input class="fc-account-input" name="username" placeholder="Username" autocomplete="username"><input class="fc-account-input" name="password" type="password" placeholder="Password" autocomplete="current-password"><button class="fc-mini mod-cta" type="submit">Sign in</button><span class="fc-account-err"></span></form>`;
 }
 function refreshAccountBar() {
@@ -162,7 +180,7 @@ function isNew(id) { return !S.cards[id]; }
 function isDue(id, now = Date.now()) { const c = S.cards[id]; return c && c.due <= now; }
 const mastered = id => { const c = S.cards[id]; return c && c.step < 0 && c.ivl >= 21; };
 const isOptional = id => !!S.optional[id];
-function setOptional(id, v) { if (v) S.optional[id] = true; else delete S.optional[id]; save(); }
+function setOptional(id, v) { if (v) S.optional[id] = true; else delete S.optional[id]; S.optionalAt[id] = Date.now(); save(); }
 function fmtIvl(ms) {
   if (ms < 60 * MIN) return Math.max(1, Math.round(ms / MIN)) + 'm';
   if (ms < DAY) return Math.round(ms / 36e5) + 'h';
@@ -231,6 +249,7 @@ function scopeCards(scope) {
   if (!scope || scope === 'all') return D.cards.filter(c => !S.optional[c.id]).map(c => c.id);
   if (scope === 'optional') return D.cards.filter(c => S.optional[c.id]).map(c => c.id);
   if (scope.startsWith('plan:') || scope.startsWith('cram:')) { const p = S.plans.find(x => x.id === scope.slice(5)); return p ? planCardIds(p) : []; }
+  if (scope.startsWith('note:')) { const n = scope.slice(5); return D.cards.filter(c => c.note === n && !S.optional[c.id]).map(c => c.id); }
   if (scope.startsWith('subject:')) { const s = scope.slice(8); return D.cards.filter(c => (D.deckById.get(c.deck) || {}).subject === s && !S.optional[c.id]).map(c => c.id); }
   return deckCards(scope);
 }
@@ -322,9 +341,69 @@ function planStats(p, now = Date.now()) {
   return { ids, total, fresh, learning, learned, due, mast, msLeft, usable, newDays, buffer, lastDay, target, todayLeft, doneToday, pace, status, verdict };
 }
 
+/* priorities: each section of a plan is high, normal or low. Only how often its cards are picked changes:
+   of every 9 cards about 6 are high, 2 normal and 1 low, so low never disappears. A tier with nothing
+   left drops out of the turn-taking, which is what returns a plan to its normal mix when the high
+   sections are finished. Nothing here touches a card's own progress. */
+const PRIO_WEIGHT = { high: 6, normal: 2, low: 1 };
+const prioOf = (p, deckId) => (p.prio && p.prio[deckId]) || 'normal';
+function tierMix(lists) {
+  const tiers = Object.keys(PRIO_WEIGHT).map(k => ({ w: PRIO_WEIGHT[k], left: (lists[k] || []).slice(), credit: 0 }));
+  const out = [];
+  for (;;) {
+    const live = tiers.filter(t => t.left.length);
+    if (!live.length) return out;
+    const sum = live.reduce((s, t) => s + t.w, 0);
+    live.forEach(t => { t.credit += t.w; });
+    const t = live.reduce((a, b) => (b.credit > a.credit ? b : a));
+    t.credit -= sum; out.push(t.left.shift());
+  }
+}
+function byTier(p, ids, owner) {
+  const out = { high: [], normal: [], low: [] };
+  for (const id of ids) out[prioOf(p, owner.get(id))].push(id);
+  return out;
+}
+const planFresh = (p, st) => tierMix(byTier(p, st.ids.filter(isNew), st.ids.owner));
+const reviewsAndNew = (due, fresh) => {      // one new card every three reviews
+  const q = []; let i = 0, j = 0;
+  while (i < due.length || j < fresh.length) { for (let k = 0; k < 3 && i < due.length; k++) q.push(due[i++]); if (j < fresh.length) q.push(fresh[j++]); }
+  return q;
+};
+
+/* skipping: a skip is remembered on this device for today and nowhere else, never in S, so it can't
+   touch scheduling or progress. It only keeps a restarted session from opening on the same cards. */
+const SKIP_KEY = 'fcSkips';
+const skipsToday = () => { const s = store.get(SKIP_KEY, null); return s && s.day === today() ? s.ids : []; };
+function rememberSkip(id) { const ids = skipsToday(); if (!ids.includes(id)) { ids.push(id); store.set(SKIP_KEY, { day: today(), ids }); } }
+const skippedLast = ids => { const s = new Set(skipsToday()); return s.size ? ids.filter(x => !s.has(x)).concat(ids.filter(x => s.has(x))) : ids; };
+
+/* study this first: what is chosen lives on this device, apart from S, so choosing can't change progress
+   or a plan. The chosen cards go in front of the usual queue with no daily limit; the rest follows as normal. */
+const FOCUS_KEY = 'fcFocus';
+const focusNow = () => store.get(FOCUS_KEY, null);
+function focusIds(f) {
+  const p = f.plan ? S.plans.find(x => x.id === f.plan) : null;
+  if (f.plan && !p) return [];
+  const ids = p ? planCardIds(p) : scopeCards('all'), owner = p ? ids.owner : null;
+  return ids.filter(id => {
+    const c = D.byId.get(id); if (!c) return false;
+    const deck = (owner && owner.get(id)) || c.deck;
+    return f.kind === 'note' ? c.note === f.id : f.kind === 'subject' ? (D.deckById.get(deck) || {}).subject === f.id : deck === f.id;
+  });
+}
+const waiting = ids => { const now = Date.now(); return ids.filter(id => isNew(id) || isDue(id, now)); };
+function focusBar(planId) {
+  const f = focusNow();
+  if (!f || (planId !== undefined && f.plan !== planId)) return '';
+  const left = waiting(focusIds(f)).length;
+  return `<div class="fc-focus-bar"><span>Studying first: <b>${esc(f.label)}</b> · ${left} left</span><button class="fc-mini" data-focus-clear>Back to normal plan</button></div>`;
+}
+function clearFocus() { store.set(FOCUS_KEY, null); }
+
 function planSchedule(p, st) {         // day by day from today
   const rows = [];
-  const freshIds = st.ids.filter(isNew);
+  const freshIds = planFresh(p, st);
   let k = 0, left = st.fresh;
   for (let i = 0; i < st.usable; i++) {
     const day = dayStart(addDays(Date.now(), i));
@@ -349,13 +428,18 @@ function planQueue(p, cram) {
       return (y.lapses - x.lapses) || (x.ease - y.ease) || (x.ivl - y.ivl);
     }).slice(0, 40);
   }
-  const due = st.ids.filter(id => !isNew(id) && S.cards[id].due <= now).sort((a, b) => S.cards[a].due - S.cards[b].due).slice(0, 300);
-  const fresh = st.ids.filter(isNew).slice(0, st.todayLeft);
-  const q = []; let i = 0, j = 0;
-  while (i < due.length || j < fresh.length) { for (let k = 0; k < 3 && i < due.length; k++) q.push(due[i++]); if (j < fresh.length) q.push(fresh[j++]); }
+  const owner = st.ids.owner;
+  const due = skippedLast(st.ids.filter(id => !isNew(id) && S.cards[id].due <= now).sort((a, b) => S.cards[a].due - S.cards[b].due)).slice(0, 300);
+  const pool = skippedLast(planFresh(p, st)), fresh = pool.slice(0, st.todayLeft);
+  // each priority keeps its own reviews-and-new rhythm, then the priorities take turns
+  const d = byTier(p, due, owner), f = byTier(p, fresh, owner), lists = {};
+  for (const k of Object.keys(PRIO_WEIGHT)) lists[k] = reviewsAndNew(d[k], f[k]);
+  const q = tierMix(lists);
+  q.reserve = pool.slice(st.todayLeft);
   return q;
 }
 
+const planFocusLeft = p => { const f = focusNow(); return f && f.plan === p.id ? waiting(focusIds(f)).length : 0; };
 const STATUS = { done: ['Goal met', 'ok'], over: ['Finished', 'dim'], behind: ['Behind', 'warn'], ontrack: ['On course', 'ok'], today: ['On course', 'ok'] };
 function planCard(p) {
   const st = planStats(p);
@@ -366,7 +450,8 @@ function planCard(p) {
     <div class="fc-deck-bar" title="${Math.round(pctSeen)}% seen, ${Math.round(pctLearned)}% learned"><i style="width:${pctSeen}%"></i><b style="width:${pctLearned}%"></b></div>
     <div class="fc-plan-nums"><span><b>${st.learned}</b> / ${st.total} learned</span><span><b>${st.todayLeft}</b> new left today</span><span><b>${st.due}</b> due</span></div>
     <div class="fc-plan-verdict">${esc(st.verdict)}</div>
-    <div class="fc-plan-actions"><button class="fc-mini mod-cta" data-plan-study="${esc(p.id)}"${st.due + st.todayLeft ? '' : ' disabled'}>${icon('play')} Study today's cards</button><button class="fc-mini" data-plan-open="${esc(p.id)}">${icon('list')} Plan</button></div>
+    ${focusBar(p.id)}
+    <div class="fc-plan-actions"><button class="fc-mini mod-cta" data-plan-study="${esc(p.id)}"${st.due + st.todayLeft + planFocusLeft(p) ? '' : ' disabled'}>${icon('play')} Study today's cards</button><button class="fc-mini" data-plan-open="${esc(p.id)}">${icon('list')} Plan</button></div>
   </div>`;
 }
 
@@ -388,9 +473,12 @@ function planView(p) {
     <div class="fc-plan-title"><h2>${esc(p.name)}</h2><span class="fc-plan-status ${cls}">${label}</span></div>
     <div class="fc-plan-when"><label>Deadline <input type="datetime-local" data-due value="${toLocalInput(p.due)}"></label><span data-countdown="${p.due}">${fmtLeft(st.msLeft)}</span></div>
     <div class="fc-plan-verdict big">${esc(st.verdict)}</div>
+    ${focusBar(p.id)}
     <div class="fc-stats fc-plan-stats"><div><b>${st.total}</b><span>cards</span></div><div><b>${st.total - st.fresh}</b><span>seen</span></div><div><b>${st.learned}</b><span>learned</span></div><div><b>${st.mast}</b><span>mastered</span></div></div>
-    <div class="fc-plan-actions"><button class="fc-big mod-cta" data-plan-study="${esc(p.id)}"${st.due + st.todayLeft ? '' : ' disabled'}>${icon('play')}<span><b>Study today's cards</b><small>${st.todayLeft} new · ${st.due} due</small></span></button>
-      <button class="fc-big" data-plan-cram="${esc(p.id)}"${st.total - st.fresh ? '' : ' disabled'}>${icon('zap')}<span><b>Extra practice</b><small>weakest cards you've seen</small></span></button></div>
+    <div class="fc-plan-actions"><button class="fc-big mod-cta" data-plan-study="${esc(p.id)}"${st.due + st.todayLeft + planFocusLeft(p) ? '' : ' disabled'}>${icon('play')}<span><b>Study today's cards</b><small>${st.todayLeft} new · ${st.due} due</small></span></button>
+      <button class="fc-big" data-plan-cram="${esc(p.id)}"${st.total - st.fresh ? '' : ' disabled'}>${icon('zap')}<span><b>Extra practice</b><small>weakest cards you've seen</small></span></button>
+      <button class="fc-big" data-choose>${icon('list')}<span><b>Choose what to study</b><small>any section or topic first</small></span></button>
+      <button class="fc-big" data-plan-edit>${icon('pencil')}<span><b>Edit plan</b><small>sections and priorities</small></span></button></div>
     <div class="fc-section-title">Day by day</div>
     <div class="fc-plan-days">${rows.length ? rows.map((r, i) => `<div class="fc-plan-day${i === 0 ? ' is-today' : ''}${r.review ? ' is-review' : ''}">
       <div class="fc-plan-date">${i === 0 ? 'Today' : fmtDate(r.day)}</div>
@@ -398,7 +486,7 @@ function planView(p) {
       <div class="fc-plan-day is-exam"><div class="fc-plan-date">${fmtDate(p.due)}</div><div class="fc-plan-work"><b>Deadline</b> ${new Date(p.due).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</div></div></div>
     <div class="fc-plan-papers"></div>
     <div class="fc-section-title">Covers</div>
-    <div class="fc-plan-covers">${decks.map(d => { const c = counts(deckCards(d.id)); return `<span>${esc(d.subject)} › ${esc(d.name)} <em>${c.total - c.fresh}/${c.total}</em></span>`; }).join('')}${p.terms ? '<span>Key terms linked from these notes</span>' : ''}</div>
+    <div class="fc-plan-covers">${decks.map(d => { const c = counts(deckCards(d.id)), pr = prioOf(p, d.id); return `<span>${pr !== 'normal' ? `<i class="fc-prio-tag ${pr}">${pr === 'high' ? 'High' : 'Low'}</i> ` : ''}${esc(d.subject)} › ${esc(d.name)} <em>${c.total - c.fresh}/${c.total}</em></span>`; }).join('')}${p.terms ? '<span>Key terms linked from these notes</span>' : ''}</div>
     ${hist.length ? `<div class="fc-section-title">Done so far</div><div class="fc-plan-hist">${hist.map(([d, r]) => `<span><b>${fmtDate(new Date(d + 'T12:00').getTime())}</b> ${r.n} reviews, ${r.fresh} new</span>`).join('')}</div>` : ''}
     <section class="fc-footer"><span class="spacer"></span><button class="fc-mini fc-danger" data-plan-delete>Delete plan</button></section>
     <div class="fc-note">Deleting the plan keeps all your card progress, XP and evolution.</div>
@@ -415,16 +503,108 @@ function planView(p) {
   tickPlans();
   root.onclick = e => {
     if (e.target.closest('[data-home]')) return dashboard();
+    if (e.target.closest('[data-focus-clear]')) { clearFocus(); return planView(p); }
+    if (e.target.closest('[data-choose]')) return focusPicker(p);
+    if (e.target.closest('[data-plan-edit]')) return planEdit(p);
     const s = e.target.closest('[data-plan-study]'); if (s && !s.disabled) return startSession('plan:' + p.id);
     const c = e.target.closest('[data-plan-cram]'); if (c && !c.disabled) return startSession('cram:' + p.id);
     const pp = e.target.closest('[data-paper]'); if (pp) return B.go(pp.dataset.paper);
     const del = e.target.closest('[data-plan-delete]');
     if (del) {
-      if (del.dataset.armed) { S.plans = S.plans.filter(x => x.id !== p.id); save(); B.toast('Plan deleted. Card progress kept.'); return dashboard(); }
+      if (del.dataset.armed) { S.plans = S.plans.filter(x => x.id !== p.id); S.plansGone[p.id] = Date.now(); save(); B.toast('Plan deleted. Card progress kept.'); return dashboard(); }
       del.dataset.armed = '1'; del.textContent = 'Tap again to delete'; setTimeout(() => { if (del.isConnected) { delete del.dataset.armed; del.textContent = 'Delete plan'; } }, 3000);
     }
   };
-  $('[data-due]', root).onchange = e => { const t = new Date(e.target.value).getTime(); if (t > Date.now()) { p.due = t; save(); planView(p); } else B.toast('Pick a time in the future'); };
+  $('[data-due]', root).onchange = e => { const t = new Date(e.target.value).getTime(); if (t > Date.now()) { p.due = t; p.edited = Date.now(); save(); planView(p); } else B.toast('Pick a time in the future'); };
+}
+
+/* edit a plan: sections and priorities are the plan's own list. Cards and their progress are never
+   touched here, so a section taken out and put back later carries on where it was. */
+function planEdit(p) {
+  stopSpecs(); keyHandler = null;
+  const edited = () => { p.edited = Date.now(); save(); };
+  const subjects = [...new Set(D.decks.filter(d => d.hub).map(d => d.subject))];
+  let subject = (D.deckById.get(p.decks[0]) || {}).subject || subjects[0];
+  const render = () => {
+    const ids = planCardIds(p), now = Date.now(), per = new Map(p.decks.map(id => [id, { total: 0, fresh: 0, open: 0 }]));
+    for (const id of ids) {
+      const r = per.get(ids.owner.get(id)); if (!r) continue;
+      r.total++; if (isNew(id)) r.fresh++;
+      const c = S.cards[id]; if (!c || c.step >= 0 || c.due <= now) r.open++;
+    }
+    const addable = D.decks.filter(d => d.subject === subject && d.hub && !p.decks.includes(d.id)).sort(deckOrder);
+    root.innerHTML = `<div class="fc-view fc-planedit">
+      <div class="fc-plan-bar"><button class="fc-mini" data-back>${icon('arrow-left')} Plan</button></div>
+      <h2>Edit plan</h2>
+      <label class="fc-field"><span>Name</span><input data-name maxlength="60" value="${esc(p.name)}"></label>
+      <div class="fc-section-title">Sections</div>
+      <div class="fc-sec-list">${p.decks.map(id => {
+        const d = D.deckById.get(id); if (!d) return '';
+        const r = per.get(id), pr = prioOf(p, id);
+        return `<div class="fc-sec"><div class="fc-sec-name"><b>${esc(d.name)}</b><span>${esc(d.subject)} · ${r.total - r.fresh}/${r.total} seen${r.total && !r.open ? ' · finished' : ''}</span></div>
+          <div class="fc-sec-prio" role="group" aria-label="Priority">${['high', 'normal', 'low'].map(k => `<button data-prio="${k}" data-deck="${esc(id)}"${k === pr ? ' class="is-on"' : ''}>${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>
+          <button class="fc-mini fc-sec-remove" data-remove="${esc(id)}" aria-label="Remove ${esc(d.name)}">${icon('x')}</button></div>`;
+      }).join('')}</div>
+      <label class="fc-check"><input type="checkbox" data-terms${p.terms ? ' checked' : ''}> Include the key terms used in these lectures</label>
+      <div class="fc-section-title">Add a section</div>
+      <label class="fc-field"><span>Module</span><select data-subject>${subjects.map(s => `<option${s === subject ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></label>
+      <div class="fc-sec-list">${addable.map(d => { const c = counts(deckCards(d.id)); return `<div class="fc-sec"><div class="fc-sec-name"><b>${esc(d.name)}</b><span>${c.total - c.fresh}/${c.total} seen</span></div><button class="fc-mini" data-add="${esc(d.id)}">${icon('plus')} Add</button></div>`; }).join('') || '<div class="fc-plan-empty">Every section of this module is in the plan.</div>'}</div>
+      <div class="fc-note">High sections come up about three times as often as normal ones; low ones less often, but they never disappear. When the high sections are finished the plan goes back to its usual mix by itself. Removing a section or changing a priority never changes any card's progress.</div>
+    </div>`;
+    $('.fc-planedit', root).onchange = e => {
+      if (e.target.matches('[data-name]')) { p.name = e.target.value.trim() || p.name; edited(); }
+      if (e.target.matches('[data-terms]')) { p.terms = e.target.checked; edited(); render(); }
+      if (e.target.matches('[data-subject]')) { subject = e.target.value; render(); }
+    };
+  };
+  render();
+  root.onclick = e => {
+    if (e.target.closest('[data-back]')) return planView(p);
+    const pb = e.target.closest('[data-prio]');
+    if (pb) { p.prio = Object.assign({}, p.prio); if (pb.dataset.prio === 'normal') delete p.prio[pb.dataset.deck]; else p.prio[pb.dataset.deck] = pb.dataset.prio; edited(); return render(); }
+    const rm = e.target.closest('[data-remove]');
+    if (rm) {
+      if (p.decks.length < 2) return B.toast('A plan needs at least one section. Use Delete plan to remove it.');
+      p.decks = p.decks.filter(id => id !== rm.dataset.remove); edited(); B.toast('Removed. Its cards keep their progress.'); return render();
+    }
+    const ad = e.target.closest('[data-add]');
+    if (ad) { p.decks = p.decks.concat(ad.dataset.add).sort((a, b) => deckOrder(D.deckById.get(a) || {}, D.deckById.get(b) || {})); edited(); return render(); }
+  };
+}
+
+/* choose what to study: module, then section, then the topics (source notes) inside a section */
+function focusPicker(p) {
+  stopSpecs(); keyHandler = null;
+  const ids = p ? planCardIds(p) : scopeCards('all'), owner = p ? ids.owner : null;
+  const tree = new Map();
+  for (const id of ids) {
+    const c = D.byId.get(id), d = c && D.deckById.get((owner && owner.get(id)) || c.deck); if (!d) continue;
+    if (!tree.has(d.subject)) tree.set(d.subject, new Map());
+    const m = tree.get(d.subject); if (!m.has(d.id)) m.set(d.id, { d, ids: [], notes: new Map() });
+    const r = m.get(d.id); r.ids.push(id);
+    if (!r.notes.has(c.note)) r.notes.set(c.note, []); r.notes.get(c.note).push(id);
+  }
+  const line = list => { const now = Date.now(), fresh = list.filter(isNew).length, due = list.filter(id => isDue(id, now)).length; return fresh + due ? `${fresh} new · ${due} due` : 'nothing waiting'; };
+  const row = (kind, id, label, list, cls = '') => `<button class="fc-choose-row ${cls}" data-focus-kind="${kind}" data-focus-id="${esc(id)}" data-focus-label="${esc(label)}"><span>${esc(label)}</span><em>${line(list)}</em></button>`;
+  root.innerHTML = `<div class="fc-view fc-choose">
+    <div class="fc-plan-bar"><button class="fc-mini" data-back>${icon('arrow-left')} ${p ? 'Plan' : 'Flashcards'}</button></div>
+    <h2>Choose what to study</h2>
+    <div class="fc-note">Your pick comes first with no daily limit, then the normal ${p ? 'plan' : 'order'} carries on. Your progress and ${p ? 'the plan' : 'decks'} stay as they are.</div>
+    ${focusBar(p ? p.id : null)}
+    ${[...tree].map(([sub, decks]) => `<div class="fc-section-title">${esc(sub)}</div>${tree.size > 1 ? row('subject', sub, 'All of ' + sub, [...decks.values()].flatMap(r => r.ids), 'is-all') : ''}${[...decks.values()].map(r => {
+      const notes = [...r.notes].sort((a, b) => B.collator.compare(a[0], b[0]));
+      return `<div class="fc-choose-deck">${row('deck', r.d.id, r.d.name, r.ids)}${notes.length > 1 && notes.length <= 40 ? `<details class="fc-topics"><summary>${notes.length} topics</summary>${notes.map(([n, l]) => row('note', n, B.noteTitle(n), l, 'is-topic')).join('')}</details>` : ''}</div>`;
+    }).join('')}`).join('')}
+  </div>`;
+  root.onclick = e => {
+    if (e.target.closest('[data-back]')) return p ? planView(p) : dashboard();
+    if (e.target.closest('[data-focus-clear]')) { clearFocus(); return focusPicker(p); }
+    const b = e.target.closest('[data-focus-kind]'); if (!b) return;
+    const f = { plan: p ? p.id : null, kind: b.dataset.focusKind, id: b.dataset.focusId, label: b.dataset.focusLabel };
+    if (!waiting(focusIds(f)).length) return B.toast('Nothing new or due there right now');
+    store.set(FOCUS_KEY, f);
+    startSession(p ? 'plan:' + p.id : 'all');
+  };
 }
 
 function planForm() {
@@ -649,7 +829,7 @@ B.registerView('flashcards', {
     loadCards().then(() => { if (root === view) dashboard(); }).catch(() => { view.innerHTML = '<div class="pane-empty">Could not load the flashcards.</div>'; });
     const onKey = e => keyHandler && keyHandler(e);
     document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('keydown', onKey); stopSpecs(); root = null; keyHandler = null; clearInterval(sprintTimer); clearInterval(planTimer); };
+    return () => { document.removeEventListener('keydown', onKey); stopSpecs(); root = null; keyHandler = null; sess = null; clearInterval(sprintTimer); clearInterval(planTimer); };
   },
 });
 let keyHandler = null;
@@ -683,12 +863,13 @@ function dashboard() {
         <div class="fc-streak${stk ? ' is-on' : ''}">${icon('flame')}<b>${stk}</b><span>day streak</span></div>
       </div>
     </section>
+    ${focusBar()}
     <section class="fc-actions">
-      <button class="fc-big mod-cta" data-study="all"${all.due + newToday ? '' : ' disabled'}>${icon('play')}<span><b>Study now</b><small>${all.due} due · ${newToday} new</small></span></button>
+      <button class="fc-big mod-cta" data-study="all"${all.due + newToday + (focusNow() && !focusNow().plan ? waiting(focusIds(focusNow())).length : 0) ? '' : ' disabled'}>${icon('play')}<span><b>Study now</b><small>${all.due} due · ${newToday} new</small></span></button>
       <button class="fc-big" data-sprint>${icon('timer')}<span><b>Sprint</b><small>60 seconds · best ${S.best.sprint}</small></span></button>
       <div class="fc-stats"><div><b>${all.total}</b><span>cards</span></div><div><b>${all.total - all.fresh}</b><span>seen</span></div><div><b>${all.mast}</b><span>mastered</span></div><div><b>${totalReviews()}</b><span>reviews</span></div></div>
     </section>
-    <section class="fc-plans"><div class="fc-section-title">Exam plans <button class="fc-mini" data-plan-new>${icon('plus')} New plan</button></div>
+    <section class="fc-plans"><div class="fc-section-title">Exam plans <span class="fc-title-actions"><button class="fc-mini" data-choose>${icon('list')} Choose what to study</button><button class="fc-mini" data-plan-new>${icon('plus')} New plan</button></span></div>
       ${S.plans.length ? `<div class="fc-plan-grid">${S.plans.slice().sort((a, b) => a.due - b.due).map(planCard).join('')}</div>` : '<div class="fc-plan-empty">Set a deadline for some lectures to get a day-by-day plan and a card set for it.</div>'}</section>
     <section class="fc-decks">${subjects.map(sub => {
       const decks = D.decks.filter(d => d.subject === sub);
@@ -704,6 +885,7 @@ function dashboard() {
           <div class="fc-deck-due"><span class="new">${opt.total} optional</span></div></div></div>` : ''}</section>
     <section class="fc-cabinet"><div class="fc-section-title">Evolution</div><div class="fc-evo">${STAGES.map((s, i) => `<div class="fc-evo-item${i <= st ? ' is-unlocked' : ''}${i === st ? ' is-current' : ''}"><canvas data-stage="${i}"></canvas><b>${i <= st ? esc(s.name) : '???'}</b><span>Level ${s.at}</span></div>`).join('')}</div></section>
     <section class="fc-cabinet"><div class="fc-section-title">Badges <span>${Object.keys(S.badges).length} of ${BADGES.length}</span></div><div class="fc-badges">${BADGES.map(b => `<div class="fc-badge${S.badges[b.id] ? ' is-earned' : ''}" title="${esc(b.desc)}">${icon(S.badges[b.id] ? 'trophy' : 'lock')}<b>${esc(b.name)}</b><span>${esc(b.desc)}</span></div>`).join('')}</div></section>
+    <div class="fc-section-title fc-settings-head">Settings</div>
     <section class="fc-footer">
       <label>New cards a day <input type="number" min="0" max="200" value="${S.newPerDay}" data-set="newPerDay"></label>
       <label>Daily goal <input type="number" min="5" max="500" value="${S.goal}" data-set="goal"></label>
@@ -715,10 +897,18 @@ function dashboard() {
     ${accountBarHtml()}
   </div>`;
   const spec = mountSpec($('.fc-spec-canvas', root), { stage: st });
-  $$('.fc-evo canvas', root).forEach(cv => { const i = +cv.dataset.stage; mountSpec(cv, { stage: i, locked: i > st, still: i !== st }); });
+  if (!B.isPhone()) $$('.fc-evo canvas', root).forEach(cv => { const i = +cv.dataset.stage; mountSpec(cv, { stage: i, locked: i > st, still: i !== st }); });
   tickPlans();
   if (newBadges.length) B.toast('Badge earned: ' + newBadges.map(b => b.name).join(', '));
   root.onclick = e => {
+    if (B.isPhone()) {      // long lists fold away on a phone
+      const fold = e.target.closest('.fc-cabinet .fc-section-title, .fc-settings-head');
+      if (fold) { fold.classList.toggle('is-open'); if (fold.parentElement.matches('.fc-cabinet') && !fold.dataset.drawn) { fold.dataset.drawn = '1'; $$('canvas', fold.parentElement).forEach(cv => { const i = +cv.dataset.stage; mountSpec(cv, { stage: i, locked: i > st, still: true }); }); } return; }
+      const head = e.target.closest('.fc-subject-head');
+      if (head && !e.target.closest('button')) { head.parentElement.classList.toggle('is-open'); return; }
+    }
+    if (e.target.closest('[data-focus-clear]')) { clearFocus(); return dashboard(); }
+    if (e.target.closest('[data-choose]')) return focusPicker(null);
     const sb = e.target.closest('[data-study]'); if (sb && !sb.disabled) return startSession(sb.dataset.study);
     if (e.target.closest('[data-plan-new]')) return planForm();
     const ps = e.target.closest('[data-plan-study]'); if (ps && !ps.disabled) return startSession('plan:' + ps.dataset.planStudy);
@@ -749,19 +939,32 @@ function dashboard() {
 }
 
 /* ---------------------------------------------------------------- study session */
-function buildQueue(scope) {
+function normalQueue(scope) {
   if (scope.startsWith('plan:') || scope.startsWith('cram:')) { const p = S.plans.find(x => x.id === scope.slice(5)); return p ? planQueue(p, scope.startsWith('cram:')) : []; }
   const ids = scopeCards(scope), now = Date.now();
-  const due = ids.filter(id => !isNew(id) && S.cards[id].due <= now).sort((a, b) => S.cards[a].due - S.cards[b].due).slice(0, 200);
-  const fresh = ids.filter(isNew).slice(0, scope === 'optional' ? Infinity : newLeftToday());
-  // interleave: one new card every three reviews
-  const q = []; let i = 0, j = 0;
-  while (i < due.length || j < fresh.length) { for (let k = 0; k < 3 && i < due.length; k++) q.push(due[i++]); if (j < fresh.length) q.push(fresh[j++]); }
+  const due = skippedLast(ids.filter(id => !isNew(id) && S.cards[id].due <= now).sort((a, b) => S.cards[a].due - S.cards[b].due)).slice(0, 200);
+  const pool = skippedLast(ids.filter(isNew));
+  // the daily limit is for the general queues. A section picked by hand opens whatever the day's count.
+  const cap = scope === 'all' || scope.startsWith('subject:') ? newLeftToday() : Infinity;
+  const q = reviewsAndNew(due, pool.slice(0, cap));
+  q.reserve = pool.slice(cap);
   return q;
+}
+function buildQueue(scope) {
+  const q = normalQueue(scope), f = focusNow();
+  if (!f || (f.plan ? scope !== 'plan:' + f.plan : scope !== 'all')) return q;
+  const list = waiting(focusIds(f));
+  if (!list.length) { clearFocus(); return q; }
+  const now = Date.now(), chosen = new Set(list);
+  const out = reviewsAndNew(skippedLast(list.filter(id => isDue(id, now)).sort((a, b) => S.cards[a].due - S.cards[b].due)), skippedLast(list.filter(isNew))).concat(q.filter(id => !chosen.has(id)));
+  out.reserve = (q.reserve || []).filter(id => !chosen.has(id));
+  out.focus = { ids: chosen, label: f.label };
+  return out;
 }
 function sessionHeader() {
   return `<div class="fc-session-top">
     <button class="clickable-icon" data-quit title="End session">${icon('x')}</button>
+    <button class="clickable-icon fc-undo" data-undo title="Undo last rating (U)" hidden>${icon('rotate')}</button>
     <div class="fc-progress"><div></div></div>
     <div class="fc-combo"><span class="fc-combo-n">0</span><span>combo</span></div>
     <div class="fc-mini-spec"><canvas></canvas></div>
@@ -786,44 +989,148 @@ function startSession(scope) {
   if (!queue.length) { B.toast('Nothing due here right now'); return; }
   stopSpecs();
   const lv = levelOf(S.xp);
-  sess = { plan: /^(plan|cram):/.test(scope) ? S.plans.find(x => x.id === scope.slice(5)) : null, scope, queue, total: queue.length, done: 0, right: 0, combo: 0, xp: 0, levels: [], startStage: stageOf(lv.L), startedAt: Date.now(), seen: new Set() };
-  root.onclick = null;
-  root.innerHTML = `<div class="fc-session">${sessionHeader()}<div class="fc-stage-area"></div><div class="fc-controls"></div></div>`;
-  sess.spec = mountSpec($('.fc-mini-spec canvas', root), { stage: stageOf(lv.L) });
-  $('[data-quit]', root).onclick = finishSession;
+  sess = { plan: /^(plan|cram):/.test(scope) ? S.plans.find(x => x.id === scope.slice(5)) : null, scope, queue, total: queue.length, done: 0, right: 0, combo: 0, xp: 0, levels: [], startStage: stageOf(lv.L), startedAt: Date.now(), seen: new Set(),
+    skipped: [], skips: 0, reserve: queue.reserve || [], focus: queue.focus || null, undo: [], gesture: {}, pushed: false };
+  if (B.isPhone()) { history.pushState({ fcSession: 1 }, ''); sess.pushed = true; }    // the back button ends the session, not the page
+  openSession();
   nextCard();
 }
+function openSession() {
+  root.onclick = null;
+  root.innerHTML = `<div class="fc-session">${sessionHeader()}<div class="fc-stage-area"></div><div class="fc-controls"></div></div>`;
+  sess.spec = mountSpec($('.fc-mini-spec canvas', root), { stage: stageOf(levelOf(S.xp).L) });
+  $('[data-quit]', root).onclick = finishSession;
+  $('[data-undo]', root).onclick = undoRating;
+  wireSwipe($('.fc-stage-area', root));
+}
+window.addEventListener('popstate', () => { if (sess && sess.pushed && root) { sess.pushed = false; finishSession(); } });
+// every card screen shares the keys for skip and undo
+const sessionKeys = (fn, canSkip = true) => e => {
+  const k = e.key.toLowerCase();
+  if (k === 'u' && !e.ctrlKey && !e.metaKey) return undoRating();
+  if (k === 's' && canSkip && !e.ctrlKey && !e.metaKey) return skipCard();
+  fn(e);
+};
 function updateTop() {
-  $('.fc-progress div', root).style.width = (sess.done / Math.max(1, sess.done + sess.queue.length) * 100) + '%';
+  $('.fc-progress div', root).style.width = (sess.done / Math.max(1, sess.done + sess.queue.length + sess.skipped.length) * 100) + '%';
+  $('[data-undo]', root).hidden = !sess.undo.length;
   const cb = $('.fc-combo', root); $('.fc-combo-n', cb).textContent = sess.combo; cb.classList.toggle('is-hot', sess.combo >= 5);
+}
+/* a skip leaves no mark on the card: it moves to a pile for this session, and a skipped new card lets the
+   next new one in, so skipping can't use up the day's new cards. */
+function skipCard() {
+  if (!sess || !sess.queue.length || sess.gesture.noSkip) return;
+  const id = sess.queue.shift();
+  sess.skipped.push(id); sess.skips++; rememberSkip(id);
+  if (isNew(id) && sess.reserve.length) sess.queue.push(sess.reserve.shift());
+  keyHandler = null;
+  floatXP(0, 'Skipped');
+  nextCard();
+}
+// the pile only comes back when asked for, so skipping can never turn into a loop
+function skippedGate() {
+  const n = sess.skipped.length;
+  const area = $('.fc-stage-area', root), ctr = $('.fc-controls', root);
+  sess.gesture = { noSkip: true };
+  area.onclick = null;
+  area.innerHTML = `<div class="fc-card fc-gate"><h3>${n} skipped card${n === 1 ? '' : 's'} left</h3><p>That's everything else in this session. Skipped cards haven't changed.</p></div>`;
+  ctr.innerHTML = `<div class="fc-gate-actions"><button class="fc-continue mod-cta" data-pile>Go through them</button><button class="fc-continue" data-finish>Finish</button></div>`;
+  const go = () => { sess.queue = sess.skipped; sess.skipped = []; nextCard(); };
+  ctr.onclick = e => { if (e.target.closest('[data-pile]')) go(); else if (e.target.closest('[data-finish]')) finishSession(); };
+  keyHandler = sessionKeys(e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }, false);
+}
+/* undo the last rating: everything grade() changed goes back and the card is shown again. Devices keep the
+   copy of a card with more reps, so the restored card takes one more than the rating it undoes; a card that
+   was new has no copy to keep, so S.undone records which rating is void. */
+function undoRating() {
+  const u = sess && sess.undo.pop(); if (!u) return;
+  const rated = S.cards[u.id];
+  if (u.card) S.cards[u.id] = Object.assign({}, u.card, { reps: rated.reps + 1 });
+  else { S.undone[u.id] = rated.reps; delete S.cards[u.id]; }
+  S.xp = u.xp; S.days[u.day] = u.dayRec; S.best.combo = u.bestCombo;
+  if (sess.plan && u.planLog) sess.plan.log[u.day] = u.planLog;
+  Object.assign(sess, u.sess);
+  sess.seen = new Set(u.seen);
+  if (u.focus && !focusNow()) store.set(FOCUS_KEY, u.focus);
+  save();
+  keyHandler = null;
+  B.toast('Rating undone');
+  nextCard();
+}
+function wireSwipe(area) {
+  const LABEL = { right: 'Good', left: 'Again', up: 'Skip' };
+  let g = null;
+  const reset = () => { const c = $('.fc-card', area); if (c) { c.style.transition = ''; c.style.transform = ''; } const l = $('.fc-swipe-label', area); if (l) l.remove(); };
+  area.addEventListener('touchstart', e => {
+    g = null;
+    const t = e.touches[0];
+    if (!B.isPhone() || !sess || e.touches.length > 1 || t.clientX < 16 || t.clientX > innerWidth - 16 || e.target.closest('button, a, summary')) return;
+    g = { x: t.clientX, y: t.clientY, dir: null, dx: 0, dy: 0 };
+  }, { passive: true });
+  area.addEventListener('touchmove', e => {
+    if (!g || e.touches.length > 1) return;
+    const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if (!g.dir) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      const atEnd = area.scrollTop + area.clientHeight >= area.scrollHeight - 2;
+      if (Math.abs(dx) > Math.abs(dy)) g.dir = sess.gesture.rate ? (dx > 0 ? 'right' : 'left') : 'none';
+      else g.dir = dy < 0 && atEnd && !sess.gesture.noSkip ? 'up' : 'none';     // otherwise it's a normal scroll
+      if (g.dir !== 'none') area.appendChild(h(`<div class="fc-swipe-label ${g.dir}">${LABEL[g.dir]}</div>`));
+    }
+    if (g.dir === 'none') return;
+    e.preventDefault();
+    g.dx = g.dir === 'up' ? 0 : dx; g.dy = g.dir === 'up' ? Math.min(0, dy) : 0;
+    const c = $('.fc-card', area); if (c) c.style.transform = `translate(${g.dx}px,${g.dy}px) rotate(${g.dx / 28}deg)`;
+    const need = g.dir === 'up' ? 90 : innerWidth * 0.3;
+    const l = $('.fc-swipe-label', area); if (l) l.style.opacity = Math.min(1, Math.abs(g.dx || g.dy) / need);
+  }, { passive: false });
+  const end = () => {
+    if (!g || !g.dir || g.dir === 'none') { g = null; return; }
+    const { dir, dx, dy } = g; g = null;
+    const passed = dir === 'up' ? -dy >= 90 : Math.abs(dx) >= innerWidth * 0.3;
+    reset();
+    if (!passed || !sess) return;
+    if (dir === 'up') skipCard(); else sess.gesture.rate(dir === 'right' ? 2 : 0);
+  };
+  area.addEventListener('touchend', end);
+  area.addEventListener('touchcancel', () => { g = null; reset(); });
 }
 function nextCard() {
   updateTop();
-  if (!sess.queue.length) return finishSession();
+  sess.gesture = {};
+  if (sess.focus && !sess.queue.concat(sess.skipped).some(id => sess.focus.ids.has(id))) {
+    B.toast(`Finished ${sess.focus.label}. Back to the normal plan.`);
+    clearFocus(); sess.focus = null;
+  }
+  if (!sess.queue.length) return sess.skipped.length ? skippedGate() : finishSession();
   const id = sess.queue[0], card = D.byId.get(id); if (!card) { sess.queue.shift(); return nextCard(); }
   const deck = D.deckById.get(card.deck) || { name: '', subject: '' };
   const fresh = isNew(id);
   const area = $('.fc-stage-area', root), ctr = $('.fc-controls', root);
   const optional = isOptional(id);
   const tag = optional ? '<span class="fc-tag-new">Optional</span>' : fresh ? '<span class="fc-tag-new">New</span>' : '';
-  const meta = `<div class="fc-card-meta"><span>${esc(deck.subject)} › ${esc(deck.name)}</span><span class="fc-meta-right">${tag}<button class="fc-mini fc-opt-toggle" data-optional="${esc(id)}">${optional ? 'Make core' : 'Make optional'}</button></span></div>`;
+  const meta = `<div class="fc-card-meta"><span>${esc(deck.subject)} › ${esc(deck.name)}</span><span class="fc-meta-right">${tag}<button class="fc-mini fc-opt-toggle" data-optional="${esc(id)}">${optional ? 'Make core' : 'Make optional'}</button><button class="clickable-icon fc-card-menu" data-card-menu aria-label="Card options">${icon('sliders')}</button></span></div>`;
   const source = `<a class="fc-source" data-note="${esc(card.note)}">${icon('file')} ${esc(B.titleOf(card.note))}</a>`;
   if (card.type === 'mcq') {
     const letters = 'ABCDEFGH';
     area.innerHTML = `<div class="fc-card is-mcq">${meta}<div class="fc-front">${card.front}</div><div class="fc-options">${card.options.map((o, i) => `<button class="fc-opt" data-o="${i}"><b>${letters[i]}</b><span>${o}</span></button>`).join('')}</div><div class="fc-back fc-mcq-back" hidden>${card.back || ''}${source}</div></div>`;
-    ctr.innerHTML = `<div class="fc-hint">Pick an answer · keys 1–${card.options.length}</div>`;
+    ctr.innerHTML = `<div class="fc-hint">Pick an answer · keys 1–${card.options.length}</div><button class="fc-skip" data-skip>Skip <kbd>S</kbd></button>`;
+    ctr.onclick = e => { if (e.target.closest('[data-skip]')) skipCard(); };
     const choose = i => {
       if (area.dataset.answered) return; area.dataset.answered = '1';
       const ok = i === card.answer;
       $$('.fc-opt', area).forEach((b, k) => { b.disabled = true; b.classList.toggle('is-right', k === card.answer); b.classList.toggle('is-wrong', k === i && !ok); });
       $('.fc-mcq-back', area).hidden = false;
       grade(id, ok ? 2 : 0, fresh);
+      sess.gesture = { noSkip: true };
+      updateTop();
       ctr.innerHTML = `<button class="fc-continue mod-cta">Continue <kbd>Space</kbd></button>`;
+      ctr.onclick = null;
       $('.fc-continue', ctr).onclick = advance;
-      keyHandler = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advance(); } };
+      keyHandler = sessionKeys(e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advance(); } }, false);
     };
-    area.onclick = e => { const ob = e.target.closest('[data-optional]'); if (ob) return toggleOptionalMidSession(id); const b = e.target.closest('.fc-opt'); if (b) choose(+b.dataset.o); clickSource(e); };
-    keyHandler = e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= card.options.length) choose(n - 1); };
+    area.onclick = e => { const ob = e.target.closest('[data-optional]'); if (ob) return toggleOptionalMidSession(id); const cm = e.target.closest('[data-card-menu]'); if (cm) return cardMenu(cm, id, optional); const b = e.target.closest('.fc-opt'); if (b) choose(+b.dataset.o); clickSource(e); };
+    keyHandler = sessionKeys(e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= card.options.length) choose(n - 1); });
   } else {
     const front = card.type === 'term' ? `<div class="fc-term">${card.front}</div><div class="fc-prompt">Define this term</div>` : `<div class="fc-front">${card.front}</div>`;
     area.innerHTML = `<div class="fc-card fc-flip"><div class="fc-face fc-face-front">${meta}${front}<div class="fc-tap">Tap to reveal</div></div><div class="fc-face fc-face-back">${meta}${card.type === 'term' ? `<div class="fc-term small">${card.front}</div>` : `<div class="fc-front small">${card.front}</div>`}<div class="fc-back">${card.back}</div>${source}</div></div>`;
@@ -832,34 +1139,46 @@ function nextCard() {
       if (flipEl.classList.contains('is-flipped')) return;
       flipEl.classList.add('is-flipped');
       const labels = ['Again', 'Hard', 'Good', 'Easy'];
-      ctr.innerHTML = `<div class="fc-grades">${labels.map((l, g) => `<button class="fc-grade g${g}" data-g="${g}"><b>${l}</b><span>${preview(id, g)}</span><kbd>${g + 1}</kbd></button>`).join('')}</div>`;
-      ctr.onclick = e => { const b = e.target.closest('[data-g]'); if (b) { grade(id, +b.dataset.g, fresh); advance(); } };
-      keyHandler = e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) { grade(id, n - 1, fresh); advance(); } };
+      ctr.innerHTML = `<div class="fc-grades">${labels.map((l, g) => `<button class="fc-grade g${g}" data-g="${g}"><b>${l}</b><span>${preview(id, g)}</span><kbd>${g + 1}</kbd></button>`).join('')}</div><button class="fc-skip" data-skip>Skip <kbd>S</kbd></button>`;
+      const rate = g => { grade(id, g, fresh); advance(); };
+      sess.gesture = { rate };
+      ctr.onclick = e => { if (e.target.closest('[data-skip]')) return skipCard(); const b = e.target.closest('[data-g]'); if (b) rate(+b.dataset.g); };
+      keyHandler = sessionKeys(e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4) rate(n - 1); });
     };
-    flipEl.onclick = e => { if (e.target.closest('[data-optional]')) return toggleOptionalMidSession(id); if (clickSource(e)) return; reveal(); };
-    ctr.innerHTML = `<button class="fc-continue mod-cta">Show answer <kbd>Space</kbd></button>`; ctr.onclick = null;
+    flipEl.onclick = e => { if (e.target.closest('[data-optional]')) return toggleOptionalMidSession(id); const cm = e.target.closest('[data-card-menu]'); if (cm) return cardMenu(cm, id, optional); if (clickSource(e)) return; reveal(); };
+    ctr.innerHTML = `<button class="fc-skip" data-skip>Skip <kbd>S</kbd></button><button class="fc-continue mod-cta">Show answer <kbd>Space</kbd></button>`;
+    ctr.onclick = e => { if (e.target.closest('[data-skip]')) skipCard(); };
     $('.fc-continue', ctr).onclick = reveal;
-    keyHandler = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); reveal(); } };
+    keyHandler = sessionKeys(e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); reveal(); } });
   }
+}
+function cardMenu(anchor, id, optional) {
+  B.showMenu(anchor, [{ icon: 'bookmark', title: optional ? 'Make core' : 'Make optional', run: () => toggleOptionalMidSession(id) }]);
 }
 // leaves the session without a grade: no schedule change, no XP, no day/plan counts
 function toggleOptionalMidSession(id) {
   setOptional(id, !isOptional(id));
   if (!sess) return;
   keyHandler = null;
-  sess.queue = sess.queue.filter(x => x !== id);
+  sess.queue = sess.queue.filter(x => x !== id); sess.skipped = sess.skipped.filter(x => x !== id);
   nextCard();
 }
 function clickSource(e) {
   const s = e.target.closest('.fc-source, a.internal-link');
   if (!s) return false;
   e.preventDefault(); e.stopPropagation();
-  B.go(s.dataset.note, null, true);
+  if (B.isPhone() && B.V.notes[s.dataset.note]) B.sheet(B.noteTitle(s.dataset.note), B.noteHtml(s.dataset.note, { noProps: true }));   // stays in the session
+  else B.go(s.dataset.note, null, true);
   return true;
 }
 function grade(id, g, fresh) {
   const ok = g >= 2;
+  sess.undo.push({ id, card: S.cards[id], xp: S.xp, day: today(), dayRec: Object.assign({}, dayRec()), bestCombo: S.best.combo,
+    planLog: sess.plan ? Object.assign({}, plog(sess.plan)) : null, seen: [...sess.seen], focus: focusNow(),
+    sess: { queue: sess.queue.slice(), done: sess.done, right: sess.right, combo: sess.combo, xp: sess.xp, levels: sess.levels.slice(), focus: sess.focus } });
+  if (sess.undo.length > 5) sess.undo.shift();
   S.cards[id] = schedule(S.cards[id], g);
+  if (S.cards[id].reps <= (S.undone[id] || 0)) S.cards[id].reps = S.undone[id] + 1;   // a new rating after an undo counts
   const d = dayRec(); d.n++; if (ok) d.ok++; if (fresh && !isOptional(id) && !sess.seen.has(id)) d.fresh++;
   if (sess.plan) { const r = plog(sess.plan); r.n++; if (fresh && !sess.seen.has(id)) r.fresh++; }
   sess.seen.add(id);
@@ -879,6 +1198,7 @@ function finishSession() {
   keyHandler = null;
   if (!sess) return dashboard();
   const s = sess; sess = null;
+  if (s.pushed) { s.pushed = false; history.back(); }
   stopSpecs();
   const lv = levelOf(S.xp), st = stageOf(lv.L);
   const evolved = st > s.startStage;
@@ -889,14 +1209,19 @@ function finishSession() {
     ${evolved ? `<div class="fc-evolved">${icon('sparkles')} Evolved into a ${esc(STAGES[st].name)}</div>` : ''}
     <h2>${s.done ? 'Session complete' : 'Session ended'}</h2>
     <div class="fc-sum-grid"><div><b>${s.done}</b><span>reviews</span></div><div><b>${acc}%</b><span>correct</span></div><div><b>+${s.xp}</b><span>XP</span></div><div><b>${Math.round((Date.now() - s.startedAt) / 60000)}m</b><span>time</span></div></div>
+    ${s.skips ? `<div class="fc-note">${s.skips} skip${s.skips === 1 ? '' : 's'}. Skipped cards are unchanged and stay in your queue.</div>` : ''}
     <div class="fc-level"><span class="fc-lv">Level ${lv.L}</span><div class="fc-xpbar"><div style="width:${(lv.into / lv.need * 100).toFixed(1)}%"></div></div><span class="fc-xpnum">${lv.into} / ${lv.need}</span></div>
     ${badges.length ? `<div class="fc-sum-badges">${badges.map(b => `<span>${icon('trophy')} ${esc(b.name)}</span>`).join('')}</div>` : ''}
-    <div class="fc-sum-actions"><button class="mod-cta" data-again>Keep going</button><button data-home>${s.plan ? 'Back to plan' : 'Back to decks'}</button></div>
+    <div class="fc-sum-actions"><button class="mod-cta" data-again>Keep going</button><button data-home>${s.plan ? 'Back to plan' : 'Back to decks'}</button>${s.undo.length ? '<button data-undo-last>Undo last rating</button>' : ''}</div>
   </div>`;
   const spec = mountSpec($('.fc-sum-spec canvas', root), { stage: evolved ? s.startStage : st });
   if (evolved) setTimeout(() => { spec.stage(st); spec.react('level'); }, 900);
   else if (s.levels.length) spec.react('level');
-  root.onclick = e => { if (e.target.closest('[data-again]')) startSession(s.scope); else if (e.target.closest('[data-home]')) { if (s.plan && S.plans.includes(s.plan)) planView(s.plan); else dashboard(); } };
+  root.onclick = e => {
+    if (e.target.closest('[data-undo-last]')) { stopSpecs(); sess = s; openSession(); return undoRating(); }
+    if (e.target.closest('[data-again]')) startSession(s.scope); else if (e.target.closest('[data-home]')) { if (s.plan && S.plans.includes(s.plan)) planView(s.plan); else dashboard(); }
+  };
+  keyHandler = null;
 }
 
 /* ---------------------------------------------------------------- sprint */
@@ -907,7 +1232,8 @@ function sprintPool() {
   return { terms, mcqs };
 }
 function sprintQuestion(pool) {
-  const strip = s => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  // to plain text, entities included: the text is escaped once more where it's shown
+  const strip = s => { const t = document.createElement('template'); t.innerHTML = s; return t.content.textContent.replace(/\s+/g, ' ').trim(); };
   if (pool.mcqs.length && Math.random() < 0.15) { const c = pool.mcqs[Math.floor(Math.random() * pool.mcqs.length)]; return { prompt: c.front, options: c.options, answer: c.answer, kind: 'mcq' }; }
   const c = pool.terms[Math.floor(Math.random() * pool.terms.length)];
   const subj = (D.deckById.get(c.deck) || {}).subject;

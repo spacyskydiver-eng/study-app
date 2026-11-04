@@ -133,7 +133,7 @@ function open() {
   sheet.hidden = false;
   requestAnimationFrame(() => sheet && sheet.classList.add('is-open'));
   if (dock) dock.classList.add('is-hidden');
-  if (!orb) N.loadGL().then(() => {
+  if (!orb && !B.isPhone()) N.loadGL().then(() => {
     if (!sheet || orb || !sheet.classList.contains('is-open') || !N.strands) return;
     orb = N.strands($('.na-orb', sheet), { energy: 0.5, glassSize: 1.05, intro: true });
     setMood(sheet.dataset.mood || 'idle');

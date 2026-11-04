@@ -8,3 +8,6 @@ src
 content
 tools
 __pycache__
+.dev.vars
+.dev.vars.*
+.env

@@ -16,3 +16,7 @@ database_id = "3d08b552-4bd0-4e1e-b405-74849513ae17"
 # Workers AI: the assistant's answers over mail and calendar (/api/jarvis)
 [ai]
 binding = "AI"
+
+# the deploy's id: /api/ping returns it so an installed app can tell a new version is out
+[version_metadata]
+binding = "CF_VERSION"

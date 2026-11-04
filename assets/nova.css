@@ -360,7 +360,7 @@ body.ui-nova .nv-today-cell b.nv-today-title { font-size: 16px; line-height: 1.3
 body.ui-nova .nv-today-cell small { color: var(--text-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 body.ui-nova .nv-today-ask { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0 16px; border-radius: 12px; border: 1px solid rgba(151,125,255,.3); background: linear-gradient(160deg, rgba(139,92,246,.28), rgba(34,211,238,.12)); color: #fff; cursor: pointer; font: inherit; font-size: 12px; }
 body.ui-nova .nv-today-ask .svg-icon { width: 18px; height: 18px; }
-@media (max-width: 900px) { body.ui-nova .nv-today { margin-left: 0; margin-right: 0; grid-template-columns: 1fr 1fr; } body.ui-nova .nv-today-wide { grid-column: span 2; } body.ui-nova .nv-today-ask { grid-column: span 2; flex-direction: row; padding: 10px; } }
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) { body.ui-nova .nv-today { margin-left: 0; margin-right: 0; grid-template-columns: 1fr 1fr; } body.ui-nova .nv-today-wide { grid-column: span 2; } body.ui-nova .nv-today-ask { grid-column: span 2; flex-direction: row; padding: 10px; } }
 
 /* accordion gallery (React Bits AccordionGallery, CSS-driven) */
 body.ui-nova .accordion-gallery { display: flex; gap: 10px; width: 100%; height: 340px; perspective: 1400px; }
@@ -557,7 +557,7 @@ body.ui-nova .nv-hero-copy h1 { margin: 0; }
 body.ui-nova .nv-today { grid-template-columns: minmax(0, 1fr) 150px; margin-left: 36%; margin-right: 5%; padding: 10px; gap: 8px; }
 body.ui-nova .nv-today-cell { background: transparent; }
 body.ui-nova .nv-today-cell:hover { background: rgba(151,125,255,.06); }
-@media (max-width: 900px) { body.ui-nova .nv-today { margin-left: 0; margin-right: 0; grid-template-columns: minmax(0, 1fr) 120px; } body.ui-nova .nv-today-wide { grid-column: auto; } }
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) { body.ui-nova .nv-today { margin-left: 0; margin-right: 0; grid-template-columns: minmax(0, 1fr) 120px; } body.ui-nova .nv-today-wide { grid-column: auto; } }
 /* module accordion: colour panels, no pictures */
 body.ui-nova .accordion-gallery { height: 260px; perspective: none; }
 body.ui-nova .ag-panel { transform: none; background: #0A0B14; border-color: var(--background-modifier-border); transition: flex-grow .6s cubic-bezier(.22,1,.36,1), border-color .3s; }
@@ -599,7 +599,7 @@ body.ui-nova .nv-lec .magic-bento__rim { display: none; }
 /* home hero: the beam lands on the today panel, which sits flush on the hero's bottom edge */
 body.ui-nova .nv-hero { min-height: 380px; }
 body.ui-nova .nv-today { margin: auto 4% 0 30%; max-width: none; border-radius: 16px 16px 0 0; border-bottom: 0; background: #0A0B14; transform: translateY(1px); padding: 14px; }
-@media (max-width: 900px) { body.ui-nova .nv-today { margin: auto 0 0; } }
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) { body.ui-nova .nv-today { margin: auto 0 0; } }
 
 /* =====================================================================
    NOVA BACKGROUND — one Galaxy canvas behind every page (persists across views)
@@ -723,7 +723,7 @@ body.ui-nova .nv-peek .nv-cols .markdown-preview-sizer { column-width: 320px; co
 body.ui-nova .nv-peek .markdown-rendered { font-size: 14.5px; }
 
 /* phones: one normal scrolling column, peek as a sheet */
-@media (max-width: 900px) {
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) {
   body.ui-nova .nv-lens-top { padding: 10px 14px 8px; }
   body.ui-nova .nv-lens-id .nv-back span { display: none; }
   body.ui-nova .nv-cols { overflow-y: auto; overflow-x: hidden; padding: 4px 16px 90px; }
@@ -736,7 +736,7 @@ body.ui-nova .nv-lens { grid-template-columns: minmax(0, 1fr); width: 100%; min-
 body.ui-nova .nv-lens > *, body.ui-nova .nv-lens-top > * { min-width: 0; }
 body.ui-nova .nv-lens-hint { margin-left: auto; flex: none; font-size: 11.5px; color: var(--text-faint); white-space: nowrap; }
 body.ui-nova .nv-lens-hint kbd { font: 10.5px var(--font-monospace-theme, monospace); padding: 1px 5px; border-radius: 5px; border: 1px solid rgba(151,125,255,.25); margin-right: 2px; color: var(--text-muted); }
-@media (max-width: 900px) { body.ui-nova .nv-lens-hint { display: none; } }
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) { body.ui-nova .nv-lens-hint { display: none; } }
 
 /* =====================================================================
    NOVA MAP — the 3D graph as background, and map mode (assets/nova-map.js)
@@ -970,7 +970,7 @@ body.ui-nova button.nv-ms-item { width: 100%; text-align: left; background: none
 .na-ref b { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .na-ref small { font-size: 11.5px; color: #8D93BE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-@media (max-width: 900px) {
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) {
   .ol-page { padding: 12px 12px 90px; }
   .ol-split { grid-template-columns: minmax(0, 1fr); }
   .ol-mail .ol-reader { display: none; }
@@ -1022,13 +1022,13 @@ body.ui-nova .nv-ms-stats em { font-style: normal; color: var(--ink3); font-size
 .nb-dock-label { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); padding: 5px 9px; border-radius: 7px; background: #1D1A30; color: #EEF0FF; font: 500 11.5px/1 "Inter", system-ui, sans-serif; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .12s .25s; }
 .nb-dock-item:hover .nb-dock-label, .nb-dock-item:focus-visible .nb-dock-label { opacity: 1; }
 /* pages leave room for it */
-@media (min-width: 901px) { body.ui-nova .view-content.nv-view-ol .ol-page { padding-bottom: 66px; } body.ui-nova .nv-page { padding-bottom: 90px; } }
-@media (max-width: 900px) { .nb-dock { display: none; } }
+@media (min-width: 901px) and (min-height: 501px), (min-width: 901px) and (pointer: fine) { body.ui-nova .view-content.nv-view-ol .ol-page { padding-bottom: 66px; } body.ui-nova .nv-page { padding-bottom: 90px; } }
+@media (max-width: 900px), (pointer: coarse) and (max-height: 500px) { .nb-dock { display: none; } }
 
 
 
 .nmap-rays { position: absolute; inset: 0; pointer-events: none; }
-@media (min-width: 901px) { body.ui-nova .nv-docked { display: none !important; } }
+@media (min-width: 901px) and (min-height: 501px), (min-width: 901px) and (pointer: fine) { body.ui-nova .nv-docked { display: none !important; } }
 body.nova-map-on .nb-dock { display: none; }
 .ol-item.is-ref { box-shadow: inset 3px 0 0 #67E8F9; background: rgba(103,232,249,.07); }
 .ol-ev.is-ref { box-shadow: 0 0 0 1px rgba(103,232,249,.6); }

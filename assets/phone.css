@@ -1,0 +1,176 @@
+/* The phone layout. Every rule is under body.is-phone (a touch screen of phone size, set in app.js),
+   so nothing here reaches a desktop window of any size. */
+#ph-bar { display: none; }
+
+body.is-phone {
+  --ph-bar: calc(56px + env(safe-area-inset-bottom, 0px));
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  --ph-surface: #0b0d18;      /* Nova's own surfaces are see-through; a sheet over text needs a solid one */
+}
+body.is-phone.theme-light { --ph-surface: #fff; }
+/* iOS zooms the page into any field under 16px */
+body.is-phone input, body.is-phone select, body.is-phone textarea { font-size: 16px !important; }
+body.is-phone .app-container { height: 100dvh; padding-bottom: var(--ph-bar); box-sizing: border-box; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+body.is-phone.ph-typing .app-container { padding-bottom: 0; }
+
+/* ---------- bottom bar */
+body.is-phone #ph-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; height: var(--ph-bar); padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); box-sizing: border-box; background: var(--background-secondary); border-top: 1px solid var(--background-modifier-border); }
+body.is-phone #ph-bar button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0; background: none; color: var(--text-muted); font-size: 11px; font-family: inherit; }
+body.is-phone #ph-bar .svg-icon { width: 22px; height: 22px; }
+body.is-phone #ph-bar button.is-active { color: var(--interactive-accent); font-weight: 650; }
+body.is-phone.ph-typing #ph-bar, body.is-phone:has(.fc-session) #ph-bar { display: none; }
+body.is-phone:has(.fc-session) .app-container { padding-bottom: 0; }
+body.is-phone:has(.fc-session) .mobile-header { display: none; }
+
+/* ---------- top bar: back, title, contents */
+body.is-phone .view-header, body.is-phone .workspace-ribbon, body.is-phone .workspace-tab-header-container, body.is-phone .status-bar, body.is-phone .resize-handle { display: none !important; }
+body.is-phone .mobile-header { display: flex; height: calc(48px + env(safe-area-inset-top, 0px)); }
+body.is-phone .mobile-header [data-act]:not([data-act="back"]) { display: none; }
+body.is-phone .mobile-header .clickable-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+body.is-phone .mobile-header [data-act="back"] { display: inline-flex; }
+body.is-phone .mobile-header [data-ph-contents] { visibility: hidden; }
+body.is-phone:has(#leaf[data-type="markdown"]) .mobile-header [data-ph-contents] { visibility: visible; }
+
+/* ---------- Notes and Search fill the screen; contents and links come up as a sheet */
+body.is-phone .workspace-split.mod-left-split, body.is-phone .workspace-split.mod-right-split { background: var(--ph-surface) !important; }
+body.is-phone .workspace-split.mod-left-split { position: fixed; top: 0; left: 0; bottom: var(--ph-bar); width: 100vw !important; max-width: 100vw; z-index: 30; padding-top: env(safe-area-inset-top, 0px); box-shadow: none; transition: transform .2s ease; }
+body.is-phone .workspace-split.mod-left-split.is-collapsed { transform: translateX(-105%); }
+body.is-phone .workspace-split.mod-right-split { position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: 100vw !important; max-width: 100vw; height: min(72dvh, 560px); z-index: 45; border-radius: 18px 18px 0 0; transition: transform .2s ease; padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 -20px 60px rgba(0,0,0,.6); }
+body.is-phone .workspace-split.mod-right-split.is-collapsed { transform: translateY(105%); box-shadow: none; }
+body.is-phone .sidebar-scrim.is-visible { z-index: 44; display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); }
+body.is-phone [data-rpane="localgraph"] { display: none !important; }
+body.is-phone .sidebar-tab { min-height: 44px; min-width: 44px; }
+body.is-phone .tree-item, body.is-phone .nav-file-title, body.is-phone .nav-folder-title, body.is-phone .search-result { min-height: 44px; display: flex; align-items: center; box-sizing: border-box; }
+body.is-phone .nv-nav-item, body.is-phone .nv-nav-lec, body.is-phone .nv-nav-modname, body.is-phone .nv-nav-caret, body.is-phone .nv-nav-modrow { min-height: 44px; }
+body.is-phone .nv-nav-caret { min-width: 44px; }
+
+/* the neural map and the graph are desktop only */
+body.is-phone [data-map], body.is-phone [data-navmap], body.is-phone .nv-laser { display: none !important; }
+
+/* ---------- notes: one column, nothing wider than the screen */
+body.is-phone .view-content { overflow-x: hidden; overscroll-behavior-y: contain; }
+body.is-phone .markdown-preview-view { padding: 8px 16px 32px; font-size: 16.5px; line-height: 1.6; overflow-wrap: anywhere; }
+body.is-phone .markdown-preview-sizer { max-width: 100%; min-width: 0; columns: auto !important; }
+body.is-phone .markdown-preview-view img, body.is-phone .markdown-preview-view svg:not(.svg-icon), body.is-phone .markdown-preview-view video { max-width: 100%; height: auto; float: none !important; }
+body.is-phone .markdown-preview-view table { display: block; width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overflow-wrap: normal; }
+body.is-phone .markdown-preview-view td, body.is-phone .markdown-preview-view th { padding: 8px 10px; min-width: 88px; }
+body.is-phone .markdown-preview-view pre, body.is-phone .markdown-preview-view .math-display { max-width: 100%; overflow-x: auto; }
+body.is-phone .callout { max-width: 100%; box-sizing: border-box; margin-left: 0; margin-right: 0; }
+body.is-phone .lightbox { padding: 0; }
+body.is-phone .lightbox img { border-radius: 0; padding: 4px; box-sizing: border-box; }
+
+/* ---------- bottom sheets */
+.ph-sheet-wrap { position: fixed; inset: 0; z-index: 60; }
+.ph-sheet-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+.ph-sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 82dvh; display: flex; flex-direction: column; border-radius: 18px 18px 0 0; background: var(--ph-surface, var(--background-primary)); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.ph-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 6px 18px; border-bottom: 1px solid var(--background-modifier-border); font-size: 16px; }
+.ph-sheet-head .clickable-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.ph-sheet-body { overflow-y: auto; overscroll-behavior: contain; }
+.ph-sheet-body .markdown-preview-view { padding: 10px 16px 24px; }
+.ph-more-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 52px; padding: 0 18px; border: 0; background: none; color: var(--text-normal); font-size: 16px; font-family: inherit; text-align: left; }
+.ph-more-row .svg-icon { width: 22px; height: 22px; color: var(--text-muted); }
+.ph-page { padding: 12px 16px 32px; }
+.ph-page h2 { font-size: 15px; margin: 20px 0 8px; color: var(--text-muted); }
+.ph-lead { color: var(--text-muted); margin: 6px 0; }
+.ph-link { display: flex; align-items: center; gap: 10px; min-height: 44px; border-bottom: 1px solid var(--background-modifier-border); color: var(--text-normal); text-decoration: none; }
+.ph-link .svg-icon { flex: none; width: 18px; height: 18px; color: var(--text-muted); }
+
+/* ---------- flashcard session: full screen, controls under the thumb */
+body.is-phone .view-content.fc-host:has(.fc-session) { overflow: hidden; }
+body.is-phone .fc-session { position: fixed; inset: 0; z-index: 35; max-width: none; margin: 0; padding: calc(6px + env(safe-area-inset-top, 0px)) 12px calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; min-height: 0; background: var(--ph-surface); box-sizing: border-box; overflow: hidden; }
+body.is-phone .fc-session-top { gap: 8px; }
+body.is-phone .fc-session-top .clickable-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+body.is-phone .fc-session-top .clickable-icon[hidden] { display: none; }
+body.is-phone .fc-mini-spec { display: none; }
+body.is-phone .fc-stage-area { padding: 0; display: block; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; min-height: 0; perspective: none; }
+body.is-phone .fc-card, body.is-phone .fc-flip { min-height: 100%; box-sizing: border-box; }
+body.is-phone .fc-flip { display: block; transform: none !important; transition: none; transform-style: flat; padding: 0; }
+body.is-phone .fc-face { transform: none; backface-visibility: visible; -webkit-backface-visibility: visible; min-height: 100%; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; }
+body.is-phone .fc-flip { height: 100%; }
+body.is-phone .fc-flip .fc-face-back { display: none; }
+body.is-phone .fc-flip.is-flipped { height: auto; }
+body.is-phone .fc-flip.is-flipped .fc-face-front { display: none; }
+body.is-phone .fc-flip.is-flipped .fc-face-back { display: flex; }
+body.is-phone .fc-card-meta { align-items: center; margin-bottom: 10px; }
+body.is-phone .fc-card-meta > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.is-phone .fc-opt-toggle { display: none; }
+body.is-phone .fc-card-menu { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; margin: -8px -8px -8px 0; }
+body.is-phone .fc-front { font-size: 20px; }
+body.is-phone .fc-front.small, body.is-phone .fc-term.small { font-size: 14.5px; }
+body.is-phone .fc-back { font-size: 17px; }
+body.is-phone .fc-source { min-height: 44px; }
+body.is-phone .fc-controls { min-height: 0; flex-wrap: nowrap; gap: 8px; align-items: stretch; }
+body.is-phone .fc-controls kbd { display: none; }
+body.is-phone .fc-continue { flex: 1; min-width: 0; min-height: 52px; font-size: 16px; }
+body.is-phone .fc-skip { flex: none; min-height: 52px; min-width: 76px; justify-content: center; padding: 0 12px; font-size: 15px; }
+body.is-phone .fc-controls:has(.fc-grades) { flex-direction: column; }
+body.is-phone .fc-grades { gap: 6px; }
+body.is-phone .fc-grade { min-height: 60px; padding: 8px 4px; justify-content: center; }
+body.is-phone .fc-grades + .fc-skip { min-height: 44px; padding: 0; width: 100%; }
+body.is-phone .fc-gate-actions { flex-wrap: nowrap; }
+body.is-phone .fc-gate { display: flex; flex-direction: column; justify-content: center; }
+.fc-swipe-label { position: fixed; top: 22%; left: 50%; transform: translateX(-50%); z-index: 38; padding: 8px 22px; border-radius: 12px; font-size: 22px; font-weight: 750; opacity: 0; pointer-events: none; color: #fff; }
+.fc-swipe-label.right { background: #059669; } .fc-swipe-label.left { background: #DC2626; } .fc-swipe-label.up { background: #4F46E5; }
+body.is-phone .fc-float { position: fixed; top: 64px; right: 18px; z-index: 39; }
+body.is-phone .fc-summary { padding: 16px 16px 24px; }
+body.is-phone .fc-sum-actions { flex-wrap: wrap; }
+body.is-phone .fc-sum-actions button { min-height: 48px; }
+
+/* sideways: the card on the left, the controls on the right */
+@media (orientation: landscape) {
+  body.is-phone .fc-session { grid-template-columns: minmax(0, 1fr) minmax(190px, 34%); grid-template-rows: auto minmax(0, 1fr); padding-left: calc(10px + env(safe-area-inset-left, 0px)); padding-right: calc(10px + env(safe-area-inset-right, 0px)); }
+  body.is-phone .fc-session-top { grid-column: 1 / -1; }
+  body.is-phone .fc-session-top .clickable-icon { width: 44px; height: 40px; }
+  body.is-phone .fc-combo { display: none; }
+  body.is-phone .fc-controls, body.is-phone .fc-controls:has(.fc-grades) { flex-direction: column; justify-content: flex-end; overflow-y: auto; }
+  body.is-phone .fc-grades { grid-template-columns: repeat(2, 1fr); }
+  body.is-phone .fc-grade { min-height: 52px; }
+  body.is-phone .fc-continue, body.is-phone .fc-skip { flex: none; min-height: 48px; }
+  body.is-phone .fc-gate-actions { flex-direction: column; }
+  body.is-phone .mobile-header { height: 40px; }
+  body.is-phone { --ph-bar: calc(46px + env(safe-area-inset-bottom, 0px)); }
+  body.is-phone #ph-bar button { flex-direction: row; gap: 6px; font-size: 12px; }
+}
+
+/* ---------- flashcards dashboard: the main button stays under the thumb, long lists fold */
+body.is-phone .fc-view { padding: 12px 14px 92px; }
+body.is-phone .fc-hero { grid-template-columns: 76px minmax(0, 1fr); text-align: left; padding: 12px; gap: 12px; align-items: center; }
+body.is-phone .fc-spec { width: 76px; height: 76px; margin: 0; }
+body.is-phone .fc-rename { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+body.is-phone .fc-name { justify-content: flex-start; } body.is-phone .fc-name-text { font-size: 20px; }
+body.is-phone .fc-kicker, body.is-phone .fc-next, body.is-phone .fc-stage { display: none; }
+body.is-phone .fc-hero-side { grid-column: 1 / -1; flex-direction: row; justify-content: space-around; }
+body.is-phone .fc-hero-side .fc-ring { width: 72px; height: 72px; }
+body.is-phone .fc-actions { display: contents; }
+body.is-phone .fc-view:has(> .fc-actions) { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
+body.is-phone .fc-actions .fc-big.mod-cta { position: sticky; bottom: 8px; z-index: 20; min-height: 58px; order: 90; flex: none; box-shadow: 0 8px 24px rgba(0,0,0,.6); }
+body.is-phone .fc-view > section, body.is-phone .fc-view > .fc-focus-bar, body.is-phone .fc-view > .fc-account { flex: none; }
+body.is-phone .fc-view > .fc-hero { order: -3; } body.is-phone .fc-view > .fc-focus-bar { order: -2; }
+body.is-phone .fc-actions .fc-big:not(.mod-cta) { order: 2; }
+body.is-phone .fc-stats { grid-column: auto; order: 3; }
+body.is-phone .fc-big { min-height: 56px; box-sizing: border-box; }
+body.is-phone .fc-mini { min-height: 44px; padding-left: 12px; padding-right: 12px; }
+body.is-phone .fc-section-title { flex-wrap: wrap; align-items: center; }
+body.is-phone .fc-plan-grid { grid-template-columns: minmax(0, 1fr); }
+body.is-phone .fc-plan-actions .fc-big { flex: 1 1 100%; }
+body.is-phone .fc-subject-head { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+body.is-phone .fc-subject-head > span:first-child::before { content: '›'; display: inline-block; margin-right: 8px; font-size: 16px; transition: transform .15s; }
+body.is-phone .fc-subject.is-open .fc-subject-head > span:first-child::before { transform: rotate(90deg); }
+body.is-phone .fc-subject:not(.is-open) .fc-deck { display: none; }
+body.is-phone .fc-deck { min-height: 52px; box-sizing: border-box; }
+body.is-phone .fc-cabinet .fc-section-title, body.is-phone .fc-settings-head { display: flex; min-height: 44px; cursor: pointer; margin-bottom: 0; }
+body.is-phone .fc-cabinet .fc-section-title:not(.is-open) + *, body.is-phone .fc-settings-head:not(.is-open) + .fc-footer { display: none; }
+body.is-phone .fc-footer { flex-wrap: wrap; }
+body.is-phone .fc-footer label { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; }
+body.is-phone .fc-account { flex-wrap: wrap; }
+body.is-phone .fc-account-input { flex: 1 1 100%; min-height: 44px; box-sizing: border-box; }
+body.is-phone .fc-sec-prio button { min-height: 44px; min-width: 62px; }
+body.is-phone .fc-sec-remove { min-width: 44px; justify-content: center; }
+body.is-phone .fc-choose-row { min-height: 52px; }
+body.is-phone .fc-topics summary { min-height: 36px; display: flex; align-items: center; }
+body.is-phone .fc-plan-when { flex-wrap: wrap; }
+
+/* ---------- Nova pages. The assistant moves into More: a floating orb would sit on the controls. */
+body.is-phone .na-dock { display: none; }
+body.is-phone.ui-nova .nv-hero { min-height: 0; }

@@ -94,19 +94,42 @@ function paintChecks(root = document) {
   root.querySelectorAll('[data-check]').forEach(b => { const on = !!d[b.dataset.check]; b.classList.toggle('is-on', on); b.setAttribute('aria-checked', on); b.title = on ? 'Gone through. Click to untick' : 'Tick when you have gone through it'; });
   root.querySelectorAll('[data-done-count]').forEach(el => { const ids = el.dataset.doneCount.split('|').filter(Boolean); const n = ids.filter(i => d[i]).length; el.textContent = ids.length ? `${n}/${ids.length}` : ''; el.classList.toggle('is-all', ids.length > 0 && n === ids.length); });
 }
-async function setDone(id, on) {
+/* A tick the server hasn't confirmed waits in novaDonePending, so one made offline is sent later and
+   the server's older list can't undo it in the meantime. */
+const PENDING_KEY = 'novaDonePending';
+function applyServerDone(done) {
+  const d = Object.assign({}, done);
+  for (const [id, on] of Object.entries(store.get(PENDING_KEY, {}))) { if (on) d[id] = d[id] || Date.now(); else delete d[id]; }
+  store.set(DONE_KEY, d); paintChecks();
+}
+let flushing = null;
+function flushDone() {
+  if (flushing) return flushing;
+  flushing = (async () => {
+    try {
+      for (const [id, on] of Object.entries(store.get(PENDING_KEY, {}))) {
+        const r = await fetch('/api/progress', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, done: on }) });
+        if (!r.ok) break;
+        const p = store.get(PENDING_KEY, {}); if (p[id] === on) { delete p[id]; store.set(PENDING_KEY, p); }
+        const j = await r.json(); if (j && j.done) applyServerDone(j.done);
+      }
+    } catch (e) { /* offline: they stay queued */ }
+  })().finally(() => { flushing = null; });
+  return flushing;
+}
+function setDone(id, on) {
   const d = doneMap(); if (on) d[id] = Date.now(); else delete d[id]; store.set(DONE_KEY, d); paintChecks();
-  try {
-    const r = await fetch('/api/progress', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, done: on }) });
-    const j = await r.json(); if (j && j.done) { store.set(DONE_KEY, j.done); paintChecks(); }
-  } catch (e) { /* kept locally; the next load re-sends nothing, so retry on next tick */ }
+  store.set(PENDING_KEY, Object.assign(store.get(PENDING_KEY, {}), { [id]: !!on }));
+  return flushDone();
 }
 let doneLoaded = false;
 async function loadDone() {
   if (doneLoaded) return; doneLoaded = true;
-  try { const r = await fetch('/api/progress', { credentials: 'same-origin' }); const j = await r.json(); if (j && j.done) { store.set(DONE_KEY, j.done); paintChecks(); } }
+  await flushDone();
+  try { const r = await fetch('/api/progress', { credentials: 'same-origin' }); const j = await r.json(); if (j && j.done) applyServerDone(j.done); }
   catch (e) { doneLoaded = false; }
 }
+window.addEventListener('online', () => { doneLoaded = false; loadDone(); });
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-check]'); if (!b || !B.isNova()) return;
   e.preventDefault(); e.stopPropagation();
@@ -116,6 +139,7 @@ N.progress = { isDone, set: setDone, load: loadDone, all: doneMap };
 
 /* ---------------------------------------------------------------- GL helpers: mount once the bundle is in */
 function mountGL(el, kind, props, bag) {
+  if (B.isPhone()) return;             // phones get the plain page: no WebGL, no battery drain
   N.loadGL().then(() => {
     if (!el.isConnected || !B.isNova() || !N[kind]) return;
     try { bag.push(N[kind](el, props)); } catch (e) { console.error(e); }

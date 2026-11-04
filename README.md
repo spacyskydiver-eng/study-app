@@ -4,10 +4,16 @@ An Obsidian-style reader for the Biomedicine Vault: file explorer, tabs, reading
 
 Also here:
 
-- **Flashcards** (`#/flashcards`): every question and key term in the vault as spaced-repetition cards, with XP, levels, streaks, badges, a 60-second sprint and an evolving specimen. Progress lives in the browser; export/import moves it between devices.
+- **Flashcards** (`#/flashcards`): every question and key term in the vault as spaced-repetition cards, with XP, levels, streaks, badges, a 60-second sprint and an evolving specimen. Skip any card, undo the last rating, choose any section or topic to study first, and give a plan's sections a high, normal or low priority. Progress lives in the browser and, once signed in, syncs between devices; export/import also moves it.
 - **Book library** (`#/books`): searches the private textbook engine set in `site.config.json`, and every Alberts quote or figure in the notes links to its book page.
 
 The old flashcard app lives at `legacy/index.html`.
+
+## On a phone
+
+On a touch screen of phone size the site uses its own layout (`assets/phone.css`, `assets/phone.js`, everything under `body.is-phone`): a bottom bar for the main sections, one column, full-screen flashcards with swipes (right Good, left Again, up Skip). The graph and the neural map are desktop only. Desktop windows never get this layout, however narrow.
+
+Add the site to the home screen to install it (`manifest.webmanifest`). `sw.js` keeps an offline copy; the network always comes first, so a normal deploy reaches the installed app with nothing to bump, and the PIN still shows whenever the server can be reached. With no connection the saved copy opens without the PIN. Mail, calendar and `/api/` calls are never saved. Flashcard progress and lecture ticks made offline sync when the connection is back.
 
 ## 3D free graph
 

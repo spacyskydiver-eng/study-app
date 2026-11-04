@@ -277,6 +277,7 @@ function bento(root, opts = {}) {
    (bundled with ogl, ~70 KB) and is only fetched the first time a surface needs it. */
 let glLoad = null;
 function loadGL() {
+  if (document.body.classList.contains('is-phone')) return Promise.reject(new Error('no WebGL on phones'));
   if (window.NovaUI.ditherVeil) return Promise.resolve();
   return glLoad || (glLoad = new Promise((res, rej) => {
     const sc = document.createElement('script');

@@ -53,8 +53,15 @@ async function validSession(request, env) {
 
 function loginPage(error) {
   return `<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sign in</title>
+<meta name="theme-color" content="#0b0e1a">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vault">
 <style>
   :root { color-scheme: dark; }
   body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0b0e1a; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#e6e8f0; }
@@ -236,7 +243,11 @@ async function fcPutProgress(request, env) {
   const dataStr = typeof d.data === "string" ? d.data : JSON.stringify(d.data);
   await fcTable(env);
   const updated = Date.now();
-  await env.DB.prepare("INSERT INTO fc_progress (user, data, updated) VALUES (?, ?, ?) ON CONFLICT(user) DO UPDATE SET data = excluded.data, updated = excluded.updated").bind(user, dataStr, updated).run();
+  // base = the server copy this upload was merged with. A newer row is refused rather than overwritten,
+  // so a phone that was offline can't wipe what another device saved meanwhile; it merges and tries again.
+  const base = typeof d.base === "number" ? d.base : Number.MAX_SAFE_INTEGER;
+  const res = await env.DB.prepare("INSERT INTO fc_progress (user, data, updated) VALUES (?, ?, ?) ON CONFLICT(user) DO UPDATE SET data = excluded.data, updated = excluded.updated WHERE fc_progress.updated <= ?").bind(user, dataStr, updated, base).run();
+  if (!res.meta.changes) return fcJson({ conflict: true }, 409);
   return fcJson({ updated });
 }
 async function handleFc(request, env, url) {
@@ -849,7 +860,11 @@ export default {
     // the send flow reads queued emails from here; the secret token in the path is the key
     const tok = String(env.SYNC_TOKEN || "").trim();
     if (tok && url.pathname === `/outbox/${tok}.rss`) return outboxFeed(env, url);
+    // what a browser fetches without cookies to install the app. Nothing private is in these files.
+    if (url.pathname === "/manifest.webmanifest" || url.pathname.startsWith("/assets/icons/")) return env.ASSETS.fetch(request);
+    if (url.pathname === "/sw.js") return new Response((await env.ASSETS.fetch(request)).body, { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache" } });
     if (await validSession(request, env)) {
+      if (url.pathname === "/api/ping") return json({ ok: true, version: (env.CF_VERSION && env.CF_VERSION.id) || "" });
       if (url.pathname.startsWith("/api/fc/")) return handleFc(request, env, url);
       if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision|progress)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
       // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
@@ -859,6 +874,9 @@ export default {
       out.headers.set("Cache-Control", "private, no-store");
       return out;
     }
-    return htmlResponse(loginPage(), 401);
+    // X-Site-Gate tells the page this is the PIN and not a flashcard sign-out
+    const gate = htmlResponse(loginPage(), 401);
+    gate.headers.set("X-Site-Gate", "pin");
+    return gate;
   },
 };
