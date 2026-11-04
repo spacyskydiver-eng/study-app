@@ -695,8 +695,10 @@ function tickPlans() {
 }
 
 /* ---------------------------------------------------------------- the specimen */
+const stillFrames = new Map();     // finished drawings of the still specimens, reused pixel for pixel
 function specimen(canvas, opts = {}) {
   const ctx = canvas.getContext('2d');
+  let onscreen = false, wait = 0, lastDraw = 0;
   let raf = 0, alive = true, t0 = performance.now(), react = { kind: null, at: 0 }, stageIdx = opts.stage || 0, glowBoost = 0;
   const pal = [
     ['#34D399', '#A7F3D0'], ['#38BDF8', '#BAE6FD'], ['#A78BFA', '#DDD6FE'], ['#34D399', '#FDE68A'],
@@ -1189,8 +1191,15 @@ function specimen(canvas, opts = {}) {
       }
     },
   };
+  const wake = () => { if (!raf && alive && onscreen) raf = requestAnimationFrame(frame); };
+  const stillKey = () => `${stageIdx}|${!!opts.locked}|${canvas.width}x${canvas.height}`;
   function frame(now) {
-    raf = 0; if (!alive || !canvas.isConnected) return;
+    raf = 0; if (!alive || !canvas.isConnected || !onscreen) return;
+    if (document.body.classList.contains('nova-map-on')) { clearTimeout(wait); wait = setTimeout(wake, 300); return; }   // hidden behind the map
+    if (!opts.still && now - lastDraw < 14) { raf = requestAnimationFrame(frame); return; }   // 60 fps, also on 120 Hz screens
+    lastDraw = now;
+    const saved = opts.still && stillFrames.get(stillKey());
+    if (saved) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(saved, 0, 0); return; }
     const t = (now - t0) / 1000;
     const { w, h: hh, d } = dim;
     ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, w, hh);
@@ -1209,14 +1218,22 @@ function specimen(canvas, opts = {}) {
     if (opts.locked) { ctx.globalAlpha = 0.18; }
     draw[stageIdx](t, w, hh, opts.locked ? '#8B93B8' : c1, opts.locked ? '#8B93B8' : c2);
     ctx.globalAlpha = 1;
-    if (!opts.still) raf = requestAnimationFrame(frame);
+    if (opts.still) { const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); stillFrames.set(stillKey(), c); }
+    else raf = requestAnimationFrame(frame);
   }
-  const ro = new ResizeObserver(() => { dim = size(); if (opts.still) frame(performance.now()); }); ro.observe(canvas);
-  raf = requestAnimationFrame(frame);
+  let seen = `${canvas.width}x${canvas.height}`;
+  const ro = new ResizeObserver(() => {
+    const r = canvas.getBoundingClientRect(), d = window.devicePixelRatio || 1, next = `${Math.max(1, r.width * d)}x${Math.max(1, r.height * d)}`;
+    if (next === seen) return;
+    seen = next; dim = size(); lastDraw = 0; wake();
+  });
+  ro.observe(canvas);
+  const io = new IntersectionObserver(es => { onscreen = es[es.length - 1].isIntersecting; wake(); }, { rootMargin: '240px' });
+  io.observe(canvas);
   return {
     react(kind) { react = { kind, at: performance.now() }; },
-    stage(i) { stageIdx = i; },
-    stop() { alive = false; cancelAnimationFrame(raf); ro.disconnect(); },
+    stage(i) { stageIdx = i; wake(); },
+    stop() { alive = false; cancelAnimationFrame(raf); clearTimeout(wait); ro.disconnect(); io.disconnect(); },
   };
 }
 

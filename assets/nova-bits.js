@@ -124,7 +124,7 @@ N.sideRays = function sideRays(container, props = {}) {
     if (busy && visible && !document.hidden) raf = requestAnimationFrame(frame);
   };
   const wake = () => { if (raf || !alive || !visible || document.hidden) return; last = performance.now(); raf = requestAnimationFrame(frame); };
-  const onMove = e => { const r = wrap.getBoundingClientRect(); ptr.x = e.clientX - r.left; ptr.y = e.clientY - r.top; ptr.inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; wake(); };
+  const onMove = e => { if (!P.followMouse) return; const r = wrap.getBoundingClientRect(); ptr.x = e.clientX - r.left; ptr.y = e.clientY - r.top; ptr.inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; wake(); };
   window.addEventListener('pointermove', onMove, { passive: true });
   const ro = new ResizeObserver(() => { resize(); wake(); }); ro.observe(wrap);
   const io = new IntersectionObserver(es => { visible = es.some(x => x.isIntersecting); wake(); }); io.observe(wrap);

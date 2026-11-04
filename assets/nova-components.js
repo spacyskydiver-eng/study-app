@@ -192,9 +192,19 @@ function bento(root, opts = {}) {
       if (p >= 1) { wave.t = -1; wa = 0; } else busy = true;
     }
     const steps = Math.max(1, Math.ceil(dt / (1 / 240))), h = dt / steps;
+    const glowReach = s.spotlightRadius * 0.75, vw = innerWidth, vh = innerHeight;
     cards.forEach((card, i) => {
       const r = rects[i]; if (!r) return;
       const st = stateFor(card);
+      // the glow fades to nothing at glowReach and the ripple is a thin ring, so a card neither can touch
+      // looks the same whatever it's told; writing to it would only restyle it and all its children
+      const offscreen = r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw;
+      const gap = Math.hypot(Math.max(r.left - light.x, 0, light.x - r.right), Math.max(r.top - light.y, 0, light.y - r.bottom));
+      const lit = !offscreen && light.near > 0 && gap <= glowReach;
+      const ring = !offscreen && wa > 0 && Math.hypot(Math.max(r.left - wave.x, 0, wave.x - r.right), Math.max(r.top - wave.y, 0, wave.y - r.bottom)) <= wr &&
+        Math.hypot(Math.max(wave.x - r.left, r.right - wave.x), Math.max(wave.y - r.top, r.bottom - wave.y)) >= wr - 110;
+      const px0 = pointer.x - r.left, py0 = pointer.y - r.top, over = pointer.inside && px0 >= 0 && py0 >= 0 && px0 <= r.width && py0 <= r.height;
+      if (!lit && !ring && !over && !st.lit && !st.ring && !st.hot && st.press === 1 && !st.vpress && !st.rx && !st.ry && !st.tx && !st.ty) { if (card.hasAttribute('data-active')) card.removeAttribute('data-active'); return; }
       const lx = light.x - r.left, ly = light.y - r.top, px = pointer.x - r.left, py = pointer.y - r.top;
       const inside = pointer.inside && px >= 0 && py >= 0 && px <= r.width && py <= r.height;
       card.toggleAttribute('data-active', inside);
@@ -212,25 +222,34 @@ function bento(root, opts = {}) {
       const pressT = pointer.down === card && s.clickEffect && motion ? 0.985 : 1;
       for (let n = 0; n < steps; n++) { st.vpress += (420 * (pressT - st.press) - 28 * st.vpress) * h; st.press += st.vpress * h; }
       if (Math.abs(pressT - st.press) < 0.0002 && Math.abs(st.vpress) < 0.001) { st.press = pressT; st.vpress = 0; } else busy = true;
-      write(card, st, '--mb-x', lx.toFixed(1) + 'px');
-      write(card, st, '--mb-y', ly.toFixed(1) + 'px');
-      write(card, st, '--mb-near', (s.borderGlow ? light.near : 0).toFixed(3));
+      if (lit || st.hot) {
+        write(card, st, '--mb-x', lx.toFixed(1) + 'px');
+        write(card, st, '--mb-y', ly.toFixed(1) + 'px');
+      }
+      write(card, st, '--mb-near', (s.borderGlow && lit ? light.near : 0).toFixed(3));
+      st.lit = lit;
       write(card, st, '--mb-hot', st.hot.toFixed(3));
       write(card, st, '--mb-rx', st.rx.toFixed(3) + 'deg');
       write(card, st, '--mb-ry', st.ry.toFixed(3) + 'deg');
       write(card, st, '--mb-tx', st.tx.toFixed(2) + 'px');
       write(card, st, '--mb-ty', st.ty.toFixed(2) + 'px');
       write(card, st, '--mb-press', st.press.toFixed(4));
-      write(card, st, '--mb-wx', (wave.x - r.left).toFixed(1) + 'px');
-      write(card, st, '--mb-wy', (wave.y - r.top).toFixed(1) + 'px');
-      write(card, st, '--mb-wr', wr.toFixed(1) + 'px');
-      write(card, st, '--mb-wa', wa.toFixed(3));
+      if (ring) {
+        write(card, st, '--mb-wx', (wave.x - r.left).toFixed(1) + 'px');
+        write(card, st, '--mb-wy', (wave.y - r.top).toFixed(1) + 'px');
+        write(card, st, '--mb-wr', wr.toFixed(1) + 'px');
+      }
+      write(card, st, '--mb-wa', (ring ? wa : 0).toFixed(3));
+      st.ring = ring;
     });
     if (busy && visible) raf = requestAnimationFrame(frame);
   };
   const wake = () => { if (raf || !visible) return; last = performance.now(); raf = requestAnimationFrame(frame); };
   const cardOf = t => (t instanceof Element ? t.closest('.magic-bento__card') : null);
-  const onMove = e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.inside = true; wake(); };
+  const onMove = e => {
+    if (document.body.classList.contains('nova-map-on')) { if (pointer.inside) { pointer.inside = false; wake(); } return; }   // the cards are hidden behind the map
+    pointer.x = e.clientX; pointer.y = e.clientY; pointer.inside = true; wake();
+  };
   const onOut = e => { if (e.relatedTarget) return; pointer.inside = false; pointer.down = null; wake(); };
   const onDown = e => { onMove(e); const c = cardOf(e.target); pointer.down = c && root.contains(c) ? c : null; };
   const onUp = () => { if (pointer.down) { pointer.down = null; wake(); } };

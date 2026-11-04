@@ -154,7 +154,7 @@ function mount() {
   M.pProg = program(gl, PV, PF); M.lProg = program(gl, LV, LF);
   const nodes = M.data.nodes, links = M.data.links;
   M.pos = new Float32Array(nodes.length * 3); M.col = new Float32Array(nodes.length * 3); M.size = new Float32Array(nodes.length); M.hiArr = new Float32Array(nodes.length);
-  nodes.forEach((n, i) => { M.col.set(hex(n.color), i * 3); M.size[i] = n.size; });
+  nodes.forEach((n, i) => { n.rgb = hex(n.color); M.col.set(n.rgb, i * 3); M.size[i] = n.size; });
   M.lpos = new Float32Array(links.length * 6); M.lcol = new Float32Array(links.length * 6); M.lhi = new Float32Array(links.length * 2);
   links.forEach((l, i) => { const ca = hex(l.source.color), cb = hex(l.target.color); M.lcol.set(ca, i * 6); M.lcol.set(cb, i * 6 + 3); });
   const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage); return b; };
@@ -333,9 +333,9 @@ function updateDrops(gl) {
     const dx = nd.x - M.cam.tx, dz = nd.z - M.cam.tz, q = dx * dx + dz * dz;
     if (q > r2 && nd.id !== M.target) continue;
     const fade = nd.id === M.target ? 1.4 : 0.55 * (1 - q / r2);
-    const cc = hex(nd.color);
-    d.pos.set([nd.x, nd.y, nd.z, nd.x, P.y, nd.z], n * 6);
-    d.col.set([cc[0] * fade, cc[1] * fade, cc[2] * fade, cc[0] * fade * 0.25, cc[1] * fade * 0.25, cc[2] * fade * 0.25], n * 6);
+    const cc = nd.rgb, o = n * 6;
+    d.pos[o] = d.pos[o + 3] = nd.x; d.pos[o + 1] = nd.y; d.pos[o + 2] = d.pos[o + 5] = nd.z; d.pos[o + 4] = P.y;
+    for (let k = 0; k < 3; k++) { d.col[o + k] = cc[k] * fade; d.col[o + 3 + k] = cc[k] * fade * 0.25; }
     n++;
   }
   d.n = n;
@@ -480,8 +480,13 @@ function hudFrame() {
 }
 function pick(x, y) {
   if (!M.m) return null;
+  const m = M.m, W = M.w, H = M.h;
   let best = null, bd = 18 * 18;
-  for (const n of M.data.nodes) { const p = project(M.m, n); if (!p) continue; const d = (p.x - x) ** 2 + (p.y - y) ** 2; if (d < bd) { bd = d; best = n; } }
+  for (const n of M.data.nodes) {
+    const cw = m[3] * n.x + m[7] * n.y + m[11] * n.z + m[15]; if (cw <= 2) continue;
+    const px = ((m[0] * n.x + m[4] * n.y + m[8] * n.z + m[12]) / cw * 0.5 + 0.5) * W, py = (1 - ((m[1] * n.x + m[5] * n.y + m[9] * n.z + m[13]) / cw * 0.5 + 0.5)) * H;
+    const d = (px - x) ** 2 + (py - y) ** 2; if (d < bd) { bd = d; best = n; }
+  }
   return best;
 }
 function wireInput() {
@@ -499,10 +504,17 @@ function wireInput() {
       } else { M.goal.yaw -= dx * 0.005; M.goal.pitch = Math.max(-0.2, Math.min(1.35, M.goal.pitch + dy * 0.005)); }
       M.pointer.x = e.clientX; M.pointer.y = e.clientY; kick(); return;
     }
-    const n = pick(e.clientX, e.clientY), tip = M.hud.querySelector('.nmap-tip');
-    if (!tip) return;
-    if (n) { tip.hidden = false; tip.textContent = n.title; tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 10}px)`; tip.style.setProperty('--c', n.color); c.style.cursor = 'pointer'; }
-    else { tip.hidden = true; c.style.cursor = 'grab'; }
+    // the mouse can report more often than the screen draws: look once a frame, at the latest spot
+    M.hoverAt = [e.clientX, e.clientY];
+    if (M.hoverRaf) return;
+    M.hoverRaf = requestAnimationFrame(() => {
+      if (!M) return;
+      M.hoverRaf = 0;
+      const [x, y] = M.hoverAt, n = M.mode === 'map' && !M.dragging ? pick(x, y) : null, tip = M.hud.querySelector('.nmap-tip');
+      if (!tip) return;
+      if (n) { if (tip.hidden) tip.hidden = false; if (tip.textContent !== n.title) { tip.textContent = n.title; tip.style.setProperty('--c', n.color); } tip.style.transform = `translate(${x + 14}px, ${y + 10}px)`; c.style.cursor = 'pointer'; }
+      else { tip.hidden = true; c.style.cursor = 'grab'; }
+    });
   });
   const up = e => {
     if (!M || !M.dragging) return; M.dragging = false;

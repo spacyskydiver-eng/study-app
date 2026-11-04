@@ -222,6 +222,9 @@ body.ui-nova .magic-bento__card {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+}
+/* only the card under the pointer can move, so only it needs its own GPU layer */
+body.ui-nova .magic-bento__card[data-active] {
   transform: perspective(900px) translate3d(var(--mb-tx, 0px), var(--mb-ty, 0px), 0) rotateX(var(--mb-rx, 0deg)) rotateY(var(--mb-ry, 0deg)) scale(var(--mb-press, 1));
 }
 body.ui-nova .magic-bento__card > :not(.magic-bento__light):not(.magic-bento__rim):not(.magic-bento__border) { position: relative; z-index: 2; }
@@ -744,8 +747,8 @@ body.ui-nova .nv-lens-hint kbd { font: 10.5px var(--font-monospace-theme, monosp
 .nova-map canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .nova-map { transition: filter .6s; }
 .nova-map.is-loading canvas { opacity: .6; }
-body.ui-nova #app { transition: opacity .55s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1), filter .55s; }
-body.nova-map-on #app { opacity: 0; transform: scale(.965); filter: blur(6px); pointer-events: none; }
+body.ui-nova #app { transition: opacity .55s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1), filter .55s, visibility 0s; }
+body.nova-map-on #app { opacity: 0; transform: scale(.965); filter: blur(6px); pointer-events: none; visibility: hidden; transition-delay: 0s, 0s, 0s, .65s; }
 body.nova-map-on .nova-map { pointer-events: auto; z-index: 2; }
 body.nova-map-on .nova-map::after { background: radial-gradient(80% 70% at 50% 50%, transparent 40%, rgba(4,4,12,.45) 100%); }
 body.nova-map-on .na-dock { opacity: 0; pointer-events: none; }
