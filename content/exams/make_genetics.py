@@ -543,6 +543,85 @@ L['l10'] = ('Polymerase Chain Reaction', 'Lecture 10', '01 Year 1/Molecular Biol
        'Cutting DNA at specific sequences is what restriction enzymes do.')),
 ])
 
+# ------------------------------------------------------------------ Lecture 15
+def Qi(img, stem, *parts):
+    return Q(stem, *parts, img=img)
+
+L['l15'] = ('DNA Damage and Repair', 'Lecture 15', '01 Year 1/Molecular Biology and Genetics/Lectures/15 DNA Damage and Repair/DNA Damage and Repair (Lecture 15)', [
+ Q('DNA is damaged all the time, from inside and outside the cell.',
+   text('Distinguish between endogenous and exogenous DNA damage, giving two causes of each.', 4, [
+     P('Endogenous damage comes from inside the cell', [r'endogen', r'inside|within|internal|cell itself']),
+     P('Endogenous causes: oxygen free radicals / replication errors', r'radical|reactive oxygen|ros|hydroxyl|replication|metabol'),
+     P('Exogenous damage comes from outside the cell', [r'exogen', r'outside|external|environment']),
+     P('Exogenous causes: ionising radiation, UV, environmental chemicals', r'ionis|ioniz|x-?ray|gamma|uv|ultraviolet|chemical|mutagen')],
+     'Endogenous damage arises inside the cell, for example from oxygen free radicals made by metabolism or from errors during replication. Exogenous damage comes from outside the cell, for example ionising radiation, UV light and chemicals in the environment.', 4),
+   mcq('Which is the most reactive oxygen radical in biological systems?', ['Superoxide (O₂·⁻)', 'Hydrogen peroxide (H₂O₂)', 'Hydroxyl radical (HO·)', 'Singlet oxygen'], 2,
+       'The hydroxyl radical, HO·, is by far the most reactive. It attacks the C4–C5 double bond of pyrimidines in particular.')),
+ Qi(A + 'mg15_s07.jpg', 'Oxidative and spontaneous damage change the chemistry of DNA.',
+   text('Describe what happens in depurination and in the deamination of cytosine.', 4, [
+     P('Depurination: the glycosidic bond between the sugar and a purine (A or G) is broken', [r'glycosid|n-glycosyl|bond', r'purine|guanine|adenine|\bg\b|\ba\b']),
+     P('This leaves a sugar with no base (abasic / depurinated site)', r'no base|abasic|ap site|missing base|without (a|its) base|depurinated sugar|empty'),
+     P('Deamination removes the amino group from cytosine', r'amino|nh|amine'),
+     P('Cytosine becomes uracil', r'uracil')],
+     'In depurination water breaks the glycosidic bond linking a purine (A or G) to deoxyribose, leaving a depurinated sugar with no base. In deamination the amino group of cytosine is removed, turning it into uracil.', 4),
+   text('Explain why the deamination of cytosine leads to a mutation if it is not repaired.', 2, [
+     P('Uracil pairs with adenine (not guanine)', [r'uracil|\bu\b', r'adenine|\ba\b|pairs with a']),
+     P('After replication the original C–G pair becomes T–A (U–A)', r't-?a|a-?t|u-?a|c-?g.*(t|a)|transition|substitut|change')],
+     'Uracil base-pairs with adenine. When the strand is copied, an A is placed opposite the U, and in the next round a T opposite that A, so the original C–G base pair becomes T–A.', 2),
+   text('Why is a double strand break more dangerous than a single strand break?', 2, [
+     P('Both strands are broken', r'both|two strands'),
+     P('No intact complementary strand to use as a template / chromosome can be broken or lost', r'no (intact|undamaged)|template|complement|chromosome|lost|fragment')],
+     'In a double strand break both backbones are cut, so there is no intact complementary strand left to act as a template, and the chromosome can be broken apart or rearranged.', 2)),
+ Qi(A + 'mg15_s09.jpg', 'UV light damages DNA.',
+   text('Describe the damage UV light causes in DNA and its effect on the double helix.', 3, [
+     P('Adjacent pyrimidines (usually thymines) on the same strand', r'adjacent|neighbou?r|next to|same strand|consecutive'),
+     P('Are covalently crosslinked into a pyrimidine (thymine) dimer: cyclobutane dimer or 6-4 photoproduct', r'dimer|crosslink|cross-link|cyclobutane|6-?4'),
+     P('This kinks/distorts the helix, blocking replication and transcription', r'kink|distort|bend|block|stall')],
+     'UV light covalently links two adjacent pyrimidines on the same strand, usually two thymines, into a pyrimidine dimer: either a cyclobutane dimer (C5–C5 and C6–C6 bonds) or a 6-4 photoproduct. The dimer kinks and distorts the helix, which blocks replication and transcription.', 3),
+   text('Describe how photolyase repairs a thymine dimer.', 4, [
+     P('Photolyase binds the dimer and flips it into its active site', r'flip|bind|active site|pocket'),
+     P('5,10-MTHF absorbs a photon of blue light', r'mthf|methenyl|blue|photon|light'),
+     P('Energy passes to FADH⁻, which transfers an electron to the dimer', r'fadh|flavin|electron'),
+     P('The dimer is split back into two pyrimidines and FADH⁻ is regenerated', r'split|cleav|break|separat|regenerat|monomer')],
+     'Photolyase binds the DNA and flips the dimer into its active site. Its cofactor 5,10-MTHF absorbs a photon of blue light and passes the energy to FADH⁻. The excited FADH⁻ gives an electron to the dimer, splitting it back into two separate pyrimidines, and the electron returns to the flavin, regenerating FADH⁻.', 4),
+   mcq('Which statement about photoreactivation is correct?', ['It needs several proteins working together', 'It removes a 29-nucleotide stretch of DNA', 'It does not occur in placental mammals such as humans', 'It works in the dark'], 2,
+       'Photolyase is a single protein, does not remove nucleotides and needs blue light. It is found in many prokaryotes and eukaryotes but not in placental mammals.')),
+ Qi(A + 'mg15_s15.jpg', 'Humans repair thymine dimers by nucleotide excision repair (NER).',
+   text('Outline the steps of nucleotide excision repair.', 4, [
+     P('An excinuclease cuts the damaged strand on both sides of the lesion', r'excinuclease|nuclease|cut|incis|nick'),
+     P('DNA helicase removes the damaged oligonucleotide', r'helicase|remov|excis|oligo'),
+     P('DNA polymerase fills the gap using the undamaged strand as template', [r'polymerase|fill|synthes', r'template|undamaged|other strand|complement|gap']),
+     P('DNA ligase seals the nick', r'ligase|seal|join')],
+     'An excinuclease cuts the damaged strand on both sides of the lesion. DNA helicase removes the damaged oligonucleotide. DNA polymerase (I in E. coli, ε in humans) fills the gap by copying the undamaged strand, and DNA ligase seals the remaining nick.', 4),
+   num('How many nucleotides long is the fragment removed by NER in humans?', 29, tol=0, unit='nt', working='29 nucleotides in humans; 13 in E. coli.'),
+   text('Explain why patients with xeroderma pigmentosum develop skin cancers.', 2, [
+     P('Their nucleotide excision repair is defective', r'ner|nucleotide excision|excision repair|repair'),
+     P('UV damage (pyrimidine dimers) is not repaired, so mutations build up and cause cancer', r'uv|sun|dimer|mutation|accumulat|build')],
+     'XP is a defect in nucleotide excision repair. Pyrimidine dimers made by UV in sunlight cannot be removed, so mutations build up in skin cells and lead to skin cancer.', 2)),
+ Qi(A + 'mg15_s19.jpg', 'Mismatch repair (MMR) corrects replication errors in <em>E. coli</em>.',
+   text('Explain how the MMR system recognises which strand contains the error.', 3, [
+     P('Dam methylase methylates the A in GATC sequences', r'dam|methyl', ),
+     P('Just after replication only the template strand is methylated (hemimethylated)', r'hemimethyl|template.*methyl|only one strand|parent'),
+     P('The unmethylated strand is the new strand, so it must hold the error', r'unmethylated|new|daughter|newly')],
+     'Dam methylase methylates the A in every GATC. For a short time after replication only the template strand is methylated (the DNA is hemimethylated), so the unmethylated strand must be the new strand, and that is the one carrying the wrong base.', 3),
+   text('Describe the roles of MutS, MutL and MutH.', 3, [
+     P('MutS binds the mismatch', [r'muts', r'bind|recogn|find|detect']),
+     P('MutL binds MutS; the DNA is threaded/looped through the complex', [r'mutl', r'muts|complex|thread|loop|join|bind']),
+     P('MutH cuts the unmethylated strand at the hemimethylated GATC', [r'muth', r'cut|cleav|nick|incis'])],
+     'MutS binds the mismatched base pair and MutL binds MutS; DNA is threaded through the MutS–MutL complex in both directions. When it meets MutH bound at a hemimethylated GATC, MutH cuts the unmethylated (new) strand 5′ of the G in GATC.', 3),
+   text('After MutH cuts, how is the repair completed?', 2, [
+     P('Helicase II and an exonuclease remove the new strand from the cut to past the mismatch', r'exonuclease|helicase|remov|degrad|digest'),
+     P('DNA polymerase III fills the gap and DNA ligase seals it', r'polymerase|ligase|fill|seal')],
+     'DNA helicase II unwinds and an exonuclease removes the new strand from the cut to beyond the mismatch. DNA polymerase III (with SSB) resynthesises the stretch and DNA ligase seals the nick.', 2)),
+ Q('Defects in DNA repair cause human disease.',
+   mcq('Hereditary non-polyposis colorectal cancer (HNPCC) is caused by defects in which pathway?', ['Nucleotide excision repair', 'Mismatch repair', 'Homologous recombination', 'Photoreactivation'], 1,
+       'HNPCC (and Turcot syndrome) are mismatch repair defects.'),
+   mcq('Mutations in BRCA1 and BRCA2 predispose to breast and ovarian cancer. Which repair pathway do they act in?', ['Mismatch repair', 'Base excision repair', 'Homologous recombination', 'Nucleotide excision repair'], 2,
+       'BRCA1 and BRCA2 work in homologous recombination, which repairs double strand breaks.'),
+   mcq('Which syndrome has defective NER but <strong>no</strong> cancer predisposition?', ['Xeroderma pigmentosum', 'Cockayne syndrome', 'Bloom syndrome', 'Ataxia-telangiectasia'], 1,
+       'Cockayne syndrome and trichothiodystrophy are NER defects with photosensitivity and developmental problems but no cancer predisposition.')),
+])
+
 # ------------------------------------------------------------------ Practicals
 L['pr'] = ('Practicals', 'Practicals 1 to 3', '01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics', [
  Q('Practical 1. A standard curve of absorbance at 260 nm against DNA concentration had the equation A = 0.020C + 0.005 (C in µg/mL, R² = 0.996). The unknown was diluted by adding 50 µL to 950 µL of TE buffer, and the diluted sample read A = 0.245.',
@@ -574,7 +653,7 @@ L['pr'] = ('Practicals', 'Practicals 1 to 3', '01 Year 1/Molecular Biology and G
      'Recovery gives transformed cells time to express the plasmid\'s ampicillin-resistance gene before meeting the antibiotic. Untransformed cells on ampicillin should not grow, confirming that any growth on the test plate comes from the plasmid.', 2)),
 ])
 
-ORDER = ['l1', 'l2', 'l3', 'l5', 'l6', 'l7', 'l8', 'l10', 'pr']
+ORDER = ['l1', 'l2', 'l3', 'l5', 'l6', 'l7', 'l8', 'l10', 'l15', 'pr']
 
 
 def build():
