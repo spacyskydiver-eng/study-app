@@ -4391,6 +4391,1068 @@
    ]
   },
   {
+   "id": "gen-l11",
+   "title": "DNA Sequencing",
+   "lecture": "Lecture 11",
+   "hub": "01 Year 1/Molecular Biology and Genetics/Lectures/11 DNA Sequencing/DNA Sequencing (Lecture 11)",
+   "marks": 33,
+   "questions": [
+    {
+     "stem": "PCR can be used to measure how much of an RNA is present.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Explain how a TaqMan probe allows the amount of PCR product to be measured in real time.",
+       "marks": 4,
+       "scheme": [
+        {
+         "text": "The probe binds the target between the primers",
+         "marks": 1,
+         "kw": [
+          [
+           "bind|hybridi|anneal"
+          ]
+         ]
+        },
+        {
+         "text": "It carries a reporter dye and a quencher; while intact the quencher stops the reporter emitting",
+         "marks": 1,
+         "kw": [
+          [
+           "reporter|dye|fluoro",
+           "quench"
+          ]
+         ]
+        },
+        {
+         "text": "The polymerase extending the primer cleaves the probe / releases the reporter",
+         "marks": 1,
+         "kw": [
+          [
+           "cleav|cut|degrad|releas|5.?nuclease|exonuclease"
+          ]
+         ]
+        },
+        {
+         "text": "Freed reporter fluoresces; the signal measured each cycle rises with the amount of product",
+         "marks": 1,
+         "kw": [
+          [
+           "fluoresc|light|emit|signal|each cycle|real[- ]?time|measur"
+          ]
+         ]
+        }
+       ],
+       "model": "The TaqMan probe hybridises to the target between the two primers. It carries a reporter dye and a quencher, and while the probe is intact the quencher stops the reporter fluorescing. As Taq polymerase extends the primer it reaches the probe and cleaves it, freeing the reporter from the quencher, so it fluoresces when excited. The fluorescence is measured each cycle and increases with the amount of PCR product.",
+       "lines": 4,
+       "id": "l11-q1a"
+      },
+      {
+       "type": "text",
+       "stem": "Why must the RNA first be treated with reverse transcriptase?",
+       "marks": 1,
+       "scheme": [
+        {
+         "text": "Taq/DNA polymerase needs a DNA template, so the RNA is copied into cDNA",
+         "marks": 1,
+         "kw": [
+          [
+           "cdna|copy|dna template|complementary dna|rna (in)?to dna"
+          ]
+         ]
+        }
+       ],
+       "model": "PCR uses a DNA polymerase, which copies DNA, so reverse transcriptase first copies the RNA into complementary DNA (cDNA).",
+       "lines": 1,
+       "id": "l11-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "Who first developed DNA fingerprinting?",
+       "options": [
+        "Kary Mullis",
+        "Fred Sanger",
+        "Alec Jeffreys",
+        "Craig Venter"
+       ],
+       "answer": 2,
+       "explain": "Prof Alec Jeffreys and colleagues at the University of Leicester, in the 1980s.",
+       "marks": 1,
+       "id": "l11-q1c"
+      }
+     ],
+     "img": "attachments/04 Attachments/mg11_s05.jpg",
+     "id": "l11-q1"
+    },
+    {
+     "stem": "Sanger (dideoxy) sequencing was developed in 1977.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Explain why a dideoxynucleotide (ddNTP) stops DNA synthesis.",
+       "marks": 2,
+       "scheme": [
+        {
+         "text": "ddNTPs lack the 3′-OH group",
+         "marks": 1,
+         "kw": [
+          [
+           "3.?.?oh|3.?.?hydroxyl|no (3|hydroxyl|oh)|lack.*oh"
+          ]
+         ]
+        },
+        {
+         "text": "So the polymerase cannot form a phosphodiester bond to the next nucleotide",
+         "marks": 1,
+         "kw": [
+          [
+           "phosphodiester|next nucleotide|cannot (add|join|extend)|no further|chain terminat"
+          ]
+         ]
+        }
+       ],
+       "model": "A ddNTP has no hydroxyl group on its 3′ carbon. DNA polymerase adds each new nucleotide to the 3′-OH of the growing chain, so once a ddNTP is added no phosphodiester bond can be made to another nucleotide and the chain stops.",
+       "lines": 2,
+       "id": "l11-q2a"
+      },
+      {
+       "type": "text",
+       "stem": "Describe how automated Sanger sequencing determines the sequence of a DNA template.",
+       "marks": 4,
+       "scheme": [
+        {
+         "text": "A primer is annealed and DNA polymerase extends it with dNTPs",
+         "marks": 1,
+         "kw": [
+          [
+           "primer",
+           "polymerase|extend|dntp"
+          ]
+         ]
+        },
+        {
+         "text": "Small amounts of the four ddNTPs, each labelled with a different fluorescent dye",
+         "marks": 1,
+         "kw": [
+          [
+           "ddntp|dideoxy",
+           "fluoresc|dye|colou?r|label"
+          ]
+         ]
+        },
+        {
+         "text": "Chains stop at random positions, giving fragments ending at every base",
+         "marks": 1,
+         "kw": [
+          [
+           "every|each (position|base)|random|different length"
+          ]
+         ]
+        },
+        {
+         "text": "Fragments separated by size (capillary electrophoresis) and the colour order read from shortest to longest",
+         "marks": 1,
+         "kw": [
+          [
+           "capillary|electrophoresis|size|length|shortest|order"
+          ]
+         ]
+        }
+       ],
+       "model": "A primer is annealed to the template and extended by DNA polymerase with the four dNTPs plus small amounts of the four ddNTPs, each with a different fluorescent dye. Each chain stops wherever a ddNTP is incorporated, so fragments ending at every position are made. Capillary electrophoresis separates them by size, and a laser reads the colour of each fragment from shortest to longest, giving the sequence.",
+       "lines": 4,
+       "id": "l11-q2b"
+      },
+      {
+       "type": "num",
+       "stem": "Early automated sequencers ran 24 lanes of 200 bases. How many bases is that per run?",
+       "value": 4800,
+       "marks": 1,
+       "unit": "bases",
+       "working": "24 × 200 = 4800, about 5000 bases per day.",
+       "tol": 0,
+       "id": "l11-q2c"
+      }
+     ],
+     "img": "attachments/04 Attachments/mg11_s11.jpg",
+     "id": "l11-q2"
+    },
+    {
+     "stem": "The first draft human genome sequences were published in 2001.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Compare the strategies used by the public Human Genome Project and by Celera.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "Public project (Francis Collins): hierarchical / BAC-by-BAC shotgun",
+         "marks": 1,
+         "kw": [
+          [
+           "public|hgp|collins",
+           "bac|hierarch|map|clone by clone|ordered"
+          ]
+         ]
+        },
+        {
+         "text": "Overlapping BACs from a map were each shotgun sequenced",
+         "marks": 1,
+         "kw": [
+          [
+           "overlap|map|bac|each"
+          ]
+         ]
+        },
+        {
+         "text": "Celera (Craig Venter): whole-genome shotgun, random fragments of the whole genome assembled by computer",
+         "marks": 1,
+         "kw": [
+          [
+           "celera|venter",
+           "whole[- ]genome|random|shotgun"
+          ]
+         ]
+        }
+       ],
+       "model": "The public Human Genome Project, led by Francis Collins, used a hierarchical (BAC-by-BAC) shotgun approach: a minimal set of overlapping BAC clones was chosen from a map and each was shotgun sequenced. Celera, led by J. Craig Venter, used whole-genome shotgun sequencing, breaking the entire genome into random fragments and assembling the reads by computer.",
+       "lines": 3,
+       "id": "l11-q3a"
+      },
+      {
+       "type": "mcq",
+       "stem": "When was the finished human genome sequence completed?",
+       "options": [
+        "1995",
+        "2001",
+        "2004",
+        "2010"
+       ],
+       "answer": 2,
+       "explain": "The draft came in 2001 and the finished sequence in 2004.",
+       "marks": 1,
+       "id": "l11-q3b"
+      }
+     ],
+     "id": "l11-q3"
+    },
+    {
+     "stem": "Next-generation sequencing (NGS) sequences millions of fragments in parallel.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Outline the steps of next-generation sequencing.",
+       "marks": 4,
+       "scheme": [
+        {
+         "text": "Genomic DNA is fragmented and a size class selected",
+         "marks": 1,
+         "kw": [
+          [
+           "fragment|break|shear|size"
+          ]
+         ]
+        },
+        {
+         "text": "Adapters are ligated to the ends of each fragment",
+         "marks": 1,
+         "kw": [
+          [
+           "adapt|ligat"
+          ]
+         ]
+        },
+        {
+         "text": "Fragments are immobilised on a surface and amplified by PCR (~1000 copies, clusters), with no in vivo cloning",
+         "marks": 1,
+         "kw": [
+          [
+           "immobil|surface|chip|bead|cluster|polony|amplif|pcr|1000"
+          ]
+         ]
+        },
+        {
+         "text": "Each is sequenced by synthesis, detecting the base added at each step",
+         "marks": 1,
+         "kw": [
+          [
+           "synthes|each step|cycle|detect|one (base|nucleotide)"
+          ]
+         ]
+        }
+       ],
+       "model": "Genomic DNA is fragmented and fragments of a chosen size selected. Adapters are ligated to each end. Without any in vivo cloning, the fragments are immobilised on a surface and amplified by PCR to about 1000 copies each. Every cluster is then sequenced by synthesis, the incorporated base being detected after each step.",
+       "lines": 4,
+       "id": "l11-q4a"
+      },
+      {
+       "type": "text",
+       "stem": "In pyrosequencing, explain how the incorporation of a nucleotide produces light.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "Incorporation releases pyrophosphate (PPi)",
+         "marks": 1,
+         "kw": [
+          [
+           "pyrophosphate|ppi"
+          ]
+         ]
+        },
+        {
+         "text": "Sulfurylase converts the pyrophosphate into ATP",
+         "marks": 1,
+         "kw": [
+          [
+           "sulfurylase|sulphurylase",
+           "atp"
+          ]
+         ]
+        },
+        {
+         "text": "Luciferase uses the ATP to oxidise luciferin, giving a flash of light",
+         "marks": 1,
+         "kw": [
+          [
+           "luciferase|luciferin"
+          ]
+         ]
+        }
+       ],
+       "model": "When a dNTP is incorporated, pyrophosphate is released. Sulfurylase converts the pyrophosphate into ATP, and luciferase uses that ATP to oxidise luciferin, producing a flash of light.",
+       "lines": 3,
+       "id": "l11-q4b"
+      },
+      {
+       "type": "text",
+       "stem": "In pyrosequencing, how would the trace show the sequence AA compared with A?",
+       "marks": 1,
+       "scheme": [
+        {
+         "text": "A flash about twice as bright in the same pulse",
+         "marks": 1,
+         "kw": [
+          [
+           "twice|double|2x|2 ?×|brighter|bigger"
+          ]
+         ]
+        }
+       ],
+       "model": "Both A residues are added during the same dATP pulse, giving a flash about twice as bright.",
+       "lines": 1,
+       "id": "l11-q4c"
+      },
+      {
+       "type": "text",
+       "stem": "In reversible terminator sequencing, why does each fluorescent nucleotide carry a removable blocking group?",
+       "marks": 2,
+       "scheme": [
+        {
+         "text": "So only one nucleotide is added per cycle",
+         "marks": 1,
+         "kw": [
+          [
+           "one (base|nucleotide)|single|per cycle|at a time"
+          ]
+         ]
+        },
+        {
+         "text": "After imaging the colour, the label and block are removed so the next nucleotide can be added",
+         "marks": 1,
+         "kw": [
+          [
+           "remov|cleav|unblock|next"
+          ]
+         ]
+        }
+       ],
+       "model": "The blocking group stops more than one nucleotide being added in a cycle. After the fluorescent colour has been recorded, both label and block are removed so the strand can be extended by the next nucleotide.",
+       "lines": 2,
+       "id": "l11-q4d"
+      }
+     ],
+     "img": "attachments/04 Attachments/mg11_s16.jpg",
+     "id": "l11-q4"
+    },
+    {
+     "stem": "DNA sequencing technology is still evolving.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Name four developments that made sequencing large genomes possible.",
+       "marks": 4,
+       "scheme": [
+        {
+         "text": "Pure DNA polymerases",
+         "marks": 1,
+         "kw": [
+          [
+           "polymerase|enzyme"
+          ]
+         ]
+        },
+        {
+         "text": "More sensitive detection of nucleic acids",
+         "marks": 1,
+         "kw": [
+          [
+           "sensitiv|detect|fluoresc"
+          ]
+         ]
+        },
+        {
+         "text": "Automated robotics",
+         "marks": 1,
+         "kw": [
+          [
+           "automat|robot"
+          ]
+         ]
+        },
+        {
+         "text": "Improved computer power",
+         "marks": 1,
+         "kw": [
+          [
+           "comput|software|bioinformatic"
+          ]
+         ]
+        }
+       ],
+       "model": "Production of pure DNA polymerases, increased sensitivity of nucleic acid detection, automated robotic technology and improved computer power.",
+       "lines": 2,
+       "id": "l11-q5a"
+      },
+      {
+       "type": "text",
+       "stem": "Give one advantage of nanopore sequencing over Illumina sequencing.",
+       "marks": 1,
+       "scheme": [
+        {
+         "text": "Very long reads / portable / single molecule with no amplification / detects methylation",
+         "marks": 1,
+         "kw": [
+          [
+           "long|portab|usb|small|single|no amplif|methyl|real[- ]?time|field"
+          ]
+         ]
+        }
+       ],
+       "model": "Nanopore reads are very long (up to hundreds of kb), come from single molecules without amplification, can detect methylation, and the devices are portable (as small as a USB stick).",
+       "lines": 1,
+       "id": "l11-q5b"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which is <strong>not</strong> one of the uses of sequencing listed in the lecture summary?",
+       "options": [
+        "De novo genome sequencing",
+        "Targeted re-sequencing",
+        "Transcriptome profiling",
+        "Cutting DNA at restriction sites"
+       ],
+       "answer": 3,
+       "explain": "The three uses given were de novo genome sequencing, targeted re-sequencing and transcriptome profiling.",
+       "marks": 1,
+       "id": "l11-q5c"
+      }
+     ],
+     "id": "l11-q5"
+    }
+   ]
+  },
+  {
+   "id": "gen-l12",
+   "title": "Chromosomes and Genomes",
+   "lecture": "Lectures 12 to 14",
+   "hub": "01 Year 1/Molecular Biology and Genetics/Lectures/12 Chromosomes and Genomes/Chromosomes and Genomes (Lectures 12 to 14)",
+   "marks": 41,
+   "questions": [
+    {
+     "stem": "Prokaryotic and eukaryotic genetic material are organised differently.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Give three differences between the genome of <em>E. coli</em> and a eukaryotic nuclear genome.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "E. coli: one circular chromosome; eukaryotes: several linear chromosomes",
+         "marks": 1,
+         "kw": [
+          [
+           "circular|linear|single|one chromosome|several|multiple"
+          ]
+         ]
+        },
+        {
+         "text": "E. coli genes tightly packed, on both strands, can overlap; eukaryotic genes spread out",
+         "marks": 1,
+         "kw": [
+          [
+           "tight|pack|overlap|both strands|dense|gene density|spread"
+          ]
+         ]
+        },
+        {
+         "text": "E. coli gene number correlates with genome size; eukaryotes mostly repetitive / non-coding DNA",
+         "marks": 1,
+         "kw": [
+          [
+           "repetit|non-?coding|correlat|2 ?%|junk"
+          ]
+         ]
+        },
+        {
+         "text": "E. coli compacted by supercoiling; eukaryotes by histones/nucleosomes",
+         "marks": 1,
+         "kw": [
+          [
+           "histone|nucleosome|supercoil|chromatin"
+          ]
+         ]
+        }
+       ],
+       "model": "E. coli has one circular chromosome (4.6 Mb), whereas eukaryotes have several linear chromosomes. Bacterial genes are tightly packed on both strands and can overlap, and gene number tracks genome size; most eukaryotic DNA is repetitive and non-coding (about 2% is genes in humans). Bacterial DNA is compacted by supercoiling; eukaryotic DNA is wrapped around histones as nucleosomes.",
+       "lines": 3,
+       "id": "l12-q1a"
+      },
+      {
+       "type": "num",
+       "stem": "The E. coli chromosome is 4,639,221 bp and has about 4300 genes. What is the average number of base pairs per gene? (Round to the nearest whole number.)",
+       "value": 1079,
+       "marks": 1,
+       "unit": "bp",
+       "working": "4,639,221 ÷ 4300 ≈ 1079 bp per gene.",
+       "tol": 2,
+       "id": "l12-q1b"
+      },
+      {
+       "type": "text",
+       "stem": "The E. coli chromosome is about 1.2 mm long but the cell is about 1 µm long. How is the DNA compacted?",
+       "marks": 1,
+       "scheme": [
+        {
+         "text": "Supercoiling: the underwound circular DNA twists on itself",
+         "marks": 1,
+         "kw": [
+          [
+           "supercoil|coil|underwound|twist"
+          ]
+         ]
+        }
+       ],
+       "model": "By supercoiling: the circular DNA is underwound and twists on itself into compact supercoils.",
+       "lines": 1,
+       "id": "l12-q1c"
+      }
+     ],
+     "id": "l12-q1"
+    },
+    {
+     "stem": "Eukaryotic DNA is packaged into chromatin.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Describe the structure of a nucleosome.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "A histone octamer",
+         "marks": 1,
+         "kw": [
+          [
+           "octamer|eight"
+          ]
+         ]
+        },
+        {
+         "text": "Two copies each of H2A, H2B, H3 and H4",
+         "marks": 1,
+         "kw": [
+          [
+           "h2a|h2b|h3|h4"
+          ]
+         ]
+        },
+        {
+         "text": "About 147 bp of DNA wrapped around it; linker DNA with H1 between nucleosomes",
+         "marks": 1,
+         "kw": [
+          [
+           "147|wrap|wound|h1|linker"
+          ]
+         ]
+        }
+       ],
+       "model": "A nucleosome is a histone octamer, made of two copies each of H2A, H2B, H3 and H4, with 147 bp of DNA wrapped around it. Neighbouring nucleosomes are joined by linker DNA bound by histone H1.",
+       "lines": 3,
+       "id": "l12-q2a"
+      },
+      {
+       "type": "mcq",
+       "stem": "A chromosome with its centromere close to one end, giving a very short p arm, is described as:",
+       "options": [
+        "Metacentric",
+        "Submetacentric",
+        "Acrocentric",
+        "Telocentric"
+       ],
+       "answer": 2,
+       "explain": "Acrocentric: close to the end. Telocentric is at the very end; metacentric in the middle; submetacentric between the middle and the end.",
+       "marks": 1,
+       "id": "l12-q2b"
+      },
+      {
+       "type": "text",
+       "stem": "What are telomeres?",
+       "marks": 1,
+       "scheme": [
+        {
+         "text": "The repetitive DNA at the ends of linear chromosomes",
+         "marks": 1,
+         "kw": [
+          [
+           "end|tip"
+          ]
+         ]
+        }
+       ],
+       "model": "The repetitive DNA sequences at each end of a linear eukaryotic chromosome.",
+       "lines": 1,
+       "id": "l12-q2c"
+      }
+     ],
+     "img": "attachments/04 Attachments/mg12_s23.jpg",
+     "id": "l12-q2"
+    },
+    {
+     "stem": "Eukaryotic genomes vary hugely in size.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Explain what is meant by the C value paradox and why it occurs.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "The C value is the DNA content of the haploid nuclear genome",
+         "marks": 1,
+         "kw": [
+          [
+           "c ?value",
+           "haploid|dna content|amount"
+          ]
+         ]
+        },
+        {
+         "text": "Genome size does not correlate with complexity / gene number",
+         "marks": 1,
+         "kw": [
+          [
+           "not correlat|no correlat|complex|gene number|does not (match|reflect|track)"
+          ]
+         ]
+        },
+        {
+         "text": "Because most eukaryotic DNA is repetitive / non-coding",
+         "marks": 1,
+         "kw": [
+          [
+           "repetit|non-?coding|satellite|transposon|junk"
+          ]
+         ]
+        }
+       ],
+       "model": "The C value is the amount of DNA in the haploid nuclear genome. The paradox is that it does not correlate with the complexity or gene number of the organism (wheat has five times as much DNA as humans). This is because most eukaryotic DNA is repetitive, non-coding sequence.",
+       "lines": 3,
+       "id": "l12-q3a"
+      },
+      {
+       "type": "text",
+       "stem": "Distinguish between minisatellites, microsatellites and SINEs, giving an example of each.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "Minisatellites (VNTRs): 1–5 kb tandem blocks of 15–100 bp units",
+         "marks": 1,
+         "kw": [
+          [
+           "vntr|15|100|minisatellite.*(tandem|repeat)"
+          ]
+         ]
+        },
+        {
+         "text": "Microsatellites (STRs): 2–5 bp motifs repeated 5–50 times, e.g. (CA)n",
+         "marks": 1,
+         "kw": [
+          [
+           "str|ca\\)?n|2.?5 ?bp|\\bca\\b"
+          ]
+         ]
+        },
+        {
+         "text": "SINEs: short interspersed retrotransposons (< 500 bp), e.g. Alu",
+         "marks": 1,
+         "kw": [
+          [
+           "alu|interspersed|retrotranspos"
+          ]
+         ]
+        }
+       ],
+       "model": "Minisatellites (VNTRs) are tandem arrays 1–5 kb long of 15–100 bp units. Microsatellites (STRs) are 2–5 bp motifs repeated 5–50 times, such as (CA)n. SINEs are short (< 500 bp) interspersed retrotransposons, such as the ~300 bp Alu element with over a million copies in the human genome.",
+       "lines": 3,
+       "id": "l12-q3b"
+      },
+      {
+       "type": "num",
+       "stem": "Human functional genes make up about 2% of a 3.3 × 10⁹ bp haploid genome. How many base pairs is that? (Give your answer like 6.6e7.)",
+       "value": 66000000.0,
+       "marks": 1,
+       "unit": "bp",
+       "working": "0.02 × 3.3 × 10⁹ = 6.6 × 10⁷ bp.",
+       "rtol": 0.02,
+       "id": "l12-q3c"
+      }
+     ],
+     "id": "l12-q3"
+    },
+    {
+     "stem": "Chromosome number varies between and within species.",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A cell from a person with Down syndrome has trisomy 21. How many chromosomes does it contain?",
+       "value": 47,
+       "marks": 1,
+       "unit": "",
+       "working": "2n + 1 = 46 + 1 = 47.",
+       "tol": 0,
+       "id": "l12-q4a"
+      },
+      {
+       "type": "text",
+       "stem": "Distinguish aneuploidy from polyploidy.",
+       "marks": 2,
+       "scheme": [
+        {
+         "text": "Aneuploidy: 2n plus or minus whole chromosomes (e.g. trisomy 2n + 1, monosomy 2n − 1)",
+         "marks": 1,
+         "kw": [
+          [
+           "2n ?[+±-]|plus or minus|monosom|trisom|extra (single )?chromosome|missing"
+          ]
+         ]
+        },
+        {
+         "text": "Polyploidy: more than two complete sets (3n, 4n …), a form of euploidy",
+         "marks": 1,
+         "kw": [
+          [
+           "3n|4n|complete set|whole set|multiple(s)? of n|euploid"
+          ]
+         ]
+        }
+       ],
+       "model": "Aneuploidy is having the diploid number plus or minus whole chromosomes, such as monosomy (2n − 1) or trisomy (2n + 1). Polyploidy is having more than two complete chromosome sets, such as triploidy (3n) or tetraploidy (4n); it is a type of euploidy.",
+       "lines": 2,
+       "id": "l12-q4b"
+      },
+      {
+       "type": "text",
+       "stem": "<em>Brassica napus</em> (AACC) arose from <em>B. rapa</em> (AA) and <em>B. oleracea</em> (CC). What type of polyploid is it?",
+       "marks": 1,
+       "scheme": [
+        {
+         "text": "Allopolyploid (amphidiploid): it combines different genomes",
+         "marks": 1,
+         "kw": [
+          [
+           "allo|amphidiploid"
+          ]
+         ]
+        }
+       ],
+       "model": "An allopolyploid (amphidiploid), because it contains the genomes of two different species.",
+       "lines": 1,
+       "id": "l12-q4c"
+      }
+     ],
+     "id": "l12-q4"
+    },
+    {
+     "stem": "Human sex determination and dosage compensation.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Explain the evidence that SRY on the Y chromosome determines maleness.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "Klinefelter (XXY) are male and Turner (X) female, so the Y decides",
+         "marks": 1,
+         "kw": [
+          [
+           "klinefelter|turner|xxy|45|47"
+          ]
+         ]
+        },
+        {
+         "text": "XY females have a Y lacking (deleted for) SRY",
+         "marks": 1,
+         "kw": [
+          [
+           "xy female|deleted|lack|missing|without sry"
+          ]
+         ]
+        },
+        {
+         "text": "XX mice transgenic for Sry develop as males",
+         "marks": 1,
+         "kw": [
+          [
+           "transgen|xx mice|mouse|mice"
+          ]
+         ]
+        }
+       ],
+       "model": "People with Klinefelter syndrome (47, XXY) are male and those with Turner syndrome (45, X) are female, so the Y chromosome determines maleness. XY females were found to have a Y chromosome deleted for SRY, and XX mice given an Sry transgene develop as males.",
+       "lines": 3,
+       "id": "l12-q5a"
+      },
+      {
+       "type": "text",
+       "stem": "What does SRY encode and what does it do?",
+       "marks": 2,
+       "scheme": [
+        {
+         "text": "Testis-determining factor (TDF)",
+         "marks": 1,
+         "kw": [
+          [
+           "tdf|testis[- ]determining"
+          ]
+         ]
+        },
+        {
+         "text": "Expressed at 6–8 weeks, it makes the undifferentiated gonads develop into testes",
+         "marks": 1,
+         "kw": [
+          [
+           "testes|testis|gonad"
+          ]
+         ]
+        }
+       ],
+       "model": "SRY encodes testis-determining factor (TDF), expressed from 6 to 8 weeks of development, which makes the undifferentiated gonadal tissue become testes.",
+       "lines": 2,
+       "id": "l12-q5b"
+      },
+      {
+       "type": "text",
+       "stem": "Describe how one X chromosome is inactivated in female cells, and explain why female mammals are mosaics.",
+       "marks": 4,
+       "scheme": [
+        {
+         "text": "Inactivation needs the X-inactivation centre (XIC)",
+         "marks": 1,
+         "kw": [
+          [
+           "xic|inactivation cent"
+          ]
+         ]
+        },
+        {
+         "text": "XIST is transcribed from the X to be inactivated",
+         "marks": 1,
+         "kw": [
+          [
+           "xist"
+          ]
+         ]
+        },
+        {
+         "text": "XIST RNA has no ORF / is not translated and coats the chromosome, which condenses into a Barr body",
+         "marks": 1,
+         "kw": [
+          [
+           "coat|bind|orf|non-?coding|barr|condens"
+          ]
+         ]
+        },
+        {
+         "text": "Which X is inactivated is random, early in development, and kept in daughter cells (Lyon hypothesis)",
+         "marks": 1,
+         "kw": [
+          [
+           "random|lyon|either|daughter|clon|patch|calico"
+          ]
+         ]
+        }
+       ],
+       "model": "Inactivation requires the X-inactivation centre (XIC). Its XIST gene is transcribed from the X that is to be silenced; the XIST RNA has no open reading frame and instead coats that chromosome, which becomes the condensed, inactive Barr body. Early in development each cell chooses at random which X to inactivate, and the choice is inherited by its descendants (the Lyon hypothesis), so females are mosaics of patches with different active X chromosomes, as seen in calico cats.",
+       "lines": 4,
+       "id": "l12-q5c"
+      },
+      {
+       "type": "num",
+       "stem": "How many Barr bodies would be found in a cell from a 47, XXY man?",
+       "value": 1,
+       "marks": 1,
+       "unit": "",
+       "working": "Number of X chromosomes − 1 = 2 − 1 = 1.",
+       "tol": 0,
+       "id": "l12-q5d"
+      }
+     ],
+     "id": "l12-q5"
+    },
+    {
+     "stem": "Mutations create new alleles. Part of a coding sequence reads 5′-CAG GGC AAG GAT AGA-3′ (Gln Gly Lys Asp Arg).",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "The AAG codon (Lys) changes to TAG. What type of mutation is this?",
+       "options": [
+        "Missense",
+        "Nonsense",
+        "Silent",
+        "Frameshift"
+       ],
+       "answer": 1,
+       "explain": "TAG is a stop codon, so this is a nonsense mutation.",
+       "marks": 1,
+       "id": "l12-q6a"
+      },
+      {
+       "type": "mcq",
+       "stem": "An A → G change in AAG gives AGG (Arg). This is:",
+       "options": [
+        "a transversion and a missense mutation",
+        "a transition and a missense mutation",
+        "a transition and a nonsense mutation",
+        "a transversion and a frameshift"
+       ],
+       "answer": 1,
+       "explain": "A → G is purine to purine (a transition), and it changes Lys to Arg (missense).",
+       "marks": 1,
+       "id": "l12-q6b"
+      },
+      {
+       "type": "text",
+       "stem": "A G is inserted after the 6th base (CAG GGG CAA GGA TAG A). Explain the effect on the protein.",
+       "marks": 2,
+       "scheme": [
+        {
+         "text": "The reading frame shifts so every codon after the insertion changes",
+         "marks": 1,
+         "kw": [
+          [
+           "frame|shift|read"
+          ]
+         ]
+        },
+        {
+         "text": "A premature stop codon (TAG) appears, truncating the protein",
+         "marks": 1,
+         "kw": [
+          [
+           "stop|tag|truncat|premature|shorter"
+          ]
+         ]
+        }
+       ],
+       "model": "The insertion is a frameshift: every codon after it is read in a new frame (Gln Gly Gln Gly), and a TAG stop codon soon appears, so the protein is truncated.",
+       "lines": 2,
+       "id": "l12-q6c"
+      },
+      {
+       "type": "text",
+       "stem": "Ras G12V is described as a gain-of-function mutation. Explain why it is oncogenic.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "Ras is active with GTP bound and switches off by hydrolysing GTP (GTPase)",
+         "marks": 1,
+         "kw": [
+          [
+           "gtp|gtpase"
+          ]
+         ]
+        },
+        {
+         "text": "G12V lacks GTPase activity so it stays locked in the active form",
+         "marks": 1,
+         "kw": [
+          [
+           "lock|stay|always|permanent|constitut|cannot (switch|turn)|lack"
+          ]
+         ]
+        },
+        {
+         "text": "Continuous signalling causes uncontrolled cell division (cancer)",
+         "marks": 1,
+         "kw": [
+          [
+           "uncontrol|division|prolifer|cancer|tumou?r"
+          ]
+         ]
+        }
+       ],
+       "model": "Ras is active when GTP is bound and turns itself off by hydrolysing GTP to GDP. The G12V mutant lacks this GTPase activity, so it is locked in the active GTP-bound form and signals continuously, causing uncontrolled cell division.",
+       "lines": 3,
+       "id": "l12-q6d"
+      }
+     ],
+     "id": "l12-q6"
+    },
+    {
+     "stem": "Gene duplication has been important in evolution.",
+     "parts": [
+      {
+       "type": "text",
+       "stem": "Explain how gene duplication can lead to new genes, using the globins as an example.",
+       "marks": 3,
+       "scheme": [
+        {
+         "text": "Duplication (e.g. by unequal crossing over) makes two copies of a gene",
+         "marks": 1,
+         "kw": [
+          [
+           "unequal|crossing over|two copies|duplicat"
+          ]
+         ]
+        },
+        {
+         "text": "One copy keeps the original function while the other can mutate and gain a new function",
+         "marks": 1,
+         "kw": [
+          [
+           "new function|diverg|mutat|evolv|free"
+          ]
+         ]
+        },
+        {
+         "text": "Globins: one ancestral gene gave myoglobin, α- and β-globin clusters (e.g. fetal γ vs adult β)",
+         "marks": 1,
+         "kw": [
+          [
+           "myoglobin|alpha|α|beta|β|gamma|γ|fetal|globin"
+          ]
+         ]
+        }
+       ],
+       "model": "A duplication, for example by unequal crossing over, produces two copies of a gene. One copy keeps the original function, while the other is free to accumulate mutations and evolve a new one. Repeated duplications of an ancestral globin gene produced myoglobin and the α- and β-globin clusters, including fetal γ-globin and adult β-globin.",
+       "lines": 3,
+       "id": "l12-q7a"
+      }
+     ],
+     "img": "attachments/04 Attachments/mg12_s48.jpg",
+     "id": "l12-q7"
+    }
+   ]
+  },
+  {
    "id": "gen-l15",
    "title": "DNA Damage and Repair",
    "lecture": "Lecture 15",

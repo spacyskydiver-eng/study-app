@@ -543,10 +543,150 @@ L['l10'] = ('Polymerase Chain Reaction', 'Lecture 10', '01 Year 1/Molecular Biol
        'Cutting DNA at specific sequences is what restriction enzymes do.')),
 ])
 
-# ------------------------------------------------------------------ Lecture 15
 def Qi(img, stem, *parts):
     return Q(stem, *parts, img=img)
 
+# ------------------------------------------------------------------ Lecture 11
+L['l11'] = ('DNA Sequencing', 'Lecture 11', '01 Year 1/Molecular Biology and Genetics/Lectures/11 DNA Sequencing/DNA Sequencing (Lecture 11)', [
+ Qi(A + 'mg11_s05.jpg', 'PCR can be used to measure how much of an RNA is present.',
+   text('Explain how a TaqMan probe allows the amount of PCR product to be measured in real time.', 4, [
+     P('The probe binds the target between the primers', r'bind|hybridi|anneal'),
+     P('It carries a reporter dye and a quencher; while intact the quencher stops the reporter emitting', [r'reporter|dye|fluoro', r'quench']),
+     P('The polymerase extending the primer cleaves the probe / releases the reporter', r'cleav|cut|degrad|releas|5.?nuclease|exonuclease'),
+     P('Freed reporter fluoresces; the signal measured each cycle rises with the amount of product', r'fluoresc|light|emit|signal|each cycle|real[- ]?time|measur')],
+     'The TaqMan probe hybridises to the target between the two primers. It carries a reporter dye and a quencher, and while the probe is intact the quencher stops the reporter fluorescing. As Taq polymerase extends the primer it reaches the probe and cleaves it, freeing the reporter from the quencher, so it fluoresces when excited. The fluorescence is measured each cycle and increases with the amount of PCR product.', 4),
+   text('Why must the RNA first be treated with reverse transcriptase?', 1, [P('Taq/DNA polymerase needs a DNA template, so the RNA is copied into cDNA', r'cdna|copy|dna template|complementary dna|rna (in)?to dna')],
+        'PCR uses a DNA polymerase, which copies DNA, so reverse transcriptase first copies the RNA into complementary DNA (cDNA).', 1),
+   mcq('Who first developed DNA fingerprinting?', ['Kary Mullis', 'Fred Sanger', 'Alec Jeffreys', 'Craig Venter'], 2,
+       'Prof Alec Jeffreys and colleagues at the University of Leicester, in the 1980s.')),
+ Qi(A + 'mg11_s11.jpg', 'Sanger (dideoxy) sequencing was developed in 1977.',
+   text('Explain why a dideoxynucleotide (ddNTP) stops DNA synthesis.', 2, [
+     P('ddNTPs lack the 3′-OH group', r'3.?.?oh|3.?.?hydroxyl|no (3|hydroxyl|oh)|lack.*oh'),
+     P('So the polymerase cannot form a phosphodiester bond to the next nucleotide', r'phosphodiester|next nucleotide|cannot (add|join|extend)|no further|chain terminat')],
+     'A ddNTP has no hydroxyl group on its 3′ carbon. DNA polymerase adds each new nucleotide to the 3′-OH of the growing chain, so once a ddNTP is added no phosphodiester bond can be made to another nucleotide and the chain stops.', 2),
+   text('Describe how automated Sanger sequencing determines the sequence of a DNA template.', 4, [
+     P('A primer is annealed and DNA polymerase extends it with dNTPs', [r'primer', r'polymerase|extend|dntp']),
+     P('Small amounts of the four ddNTPs, each labelled with a different fluorescent dye', [r'ddntp|dideoxy', r'fluoresc|dye|colou?r|label']),
+     P('Chains stop at random positions, giving fragments ending at every base', r'every|each (position|base)|random|different length'),
+     P('Fragments separated by size (capillary electrophoresis) and the colour order read from shortest to longest', r'capillary|electrophoresis|size|length|shortest|order')],
+     'A primer is annealed to the template and extended by DNA polymerase with the four dNTPs plus small amounts of the four ddNTPs, each with a different fluorescent dye. Each chain stops wherever a ddNTP is incorporated, so fragments ending at every position are made. Capillary electrophoresis separates them by size, and a laser reads the colour of each fragment from shortest to longest, giving the sequence.', 4),
+   num('Early automated sequencers ran 24 lanes of 200 bases. How many bases is that per run?', 4800, tol=0, unit='bases', working='24 × 200 = 4800, about 5000 bases per day.')),
+ Q('The first draft human genome sequences were published in 2001.',
+   text('Compare the strategies used by the public Human Genome Project and by Celera.', 3, [
+     P('Public project (Francis Collins): hierarchical / BAC-by-BAC shotgun', [r'public|hgp|collins', r'bac|hierarch|map|clone by clone|ordered']),
+     P('Overlapping BACs from a map were each shotgun sequenced', r'overlap|map|bac|each'),
+     P('Celera (Craig Venter): whole-genome shotgun, random fragments of the whole genome assembled by computer', [r'celera|venter', r'whole[- ]genome|random|shotgun'])],
+     'The public Human Genome Project, led by Francis Collins, used a hierarchical (BAC-by-BAC) shotgun approach: a minimal set of overlapping BAC clones was chosen from a map and each was shotgun sequenced. Celera, led by J. Craig Venter, used whole-genome shotgun sequencing, breaking the entire genome into random fragments and assembling the reads by computer.', 3),
+   mcq('When was the finished human genome sequence completed?', ['1995', '2001', '2004', '2010'], 2, 'The draft came in 2001 and the finished sequence in 2004.')),
+ Qi(A + 'mg11_s16.jpg', 'Next-generation sequencing (NGS) sequences millions of fragments in parallel.',
+   text('Outline the steps of next-generation sequencing.', 4, [
+     P('Genomic DNA is fragmented and a size class selected', r'fragment|break|shear|size'),
+     P('Adapters are ligated to the ends of each fragment', r'adapt|ligat'),
+     P('Fragments are immobilised on a surface and amplified by PCR (~1000 copies, clusters), with no in vivo cloning', r'immobil|surface|chip|bead|cluster|polony|amplif|pcr|1000'),
+     P('Each is sequenced by synthesis, detecting the base added at each step', r'synthes|each step|cycle|detect|one (base|nucleotide)')],
+     'Genomic DNA is fragmented and fragments of a chosen size selected. Adapters are ligated to each end. Without any in vivo cloning, the fragments are immobilised on a surface and amplified by PCR to about 1000 copies each. Every cluster is then sequenced by synthesis, the incorporated base being detected after each step.', 4),
+   text('In pyrosequencing, explain how the incorporation of a nucleotide produces light.', 3, [
+     P('Incorporation releases pyrophosphate (PPi)', r'pyrophosphate|ppi'),
+     P('Sulfurylase converts the pyrophosphate into ATP', [r'sulfurylase|sulphurylase', r'atp']),
+     P('Luciferase uses the ATP to oxidise luciferin, giving a flash of light', r'luciferase|luciferin')],
+     'When a dNTP is incorporated, pyrophosphate is released. Sulfurylase converts the pyrophosphate into ATP, and luciferase uses that ATP to oxidise luciferin, producing a flash of light.', 3),
+   text('In pyrosequencing, how would the trace show the sequence AA compared with A?', 1, [P('A flash about twice as bright in the same pulse', r'twice|double|2x|2 ?×|brighter|bigger')],
+        'Both A residues are added during the same dATP pulse, giving a flash about twice as bright.', 1),
+   text('In reversible terminator sequencing, why does each fluorescent nucleotide carry a removable blocking group?', 2, [
+     P('So only one nucleotide is added per cycle', r'one (base|nucleotide)|single|per cycle|at a time'),
+     P('After imaging the colour, the label and block are removed so the next nucleotide can be added', r'remov|cleav|unblock|next')],
+     'The blocking group stops more than one nucleotide being added in a cycle. After the fluorescent colour has been recorded, both label and block are removed so the strand can be extended by the next nucleotide.', 2)),
+ Q('DNA sequencing technology is still evolving.',
+   text('Name four developments that made sequencing large genomes possible.', 4, [
+     P('Pure DNA polymerases', r'polymerase|enzyme'), P('More sensitive detection of nucleic acids', r'sensitiv|detect|fluoresc'),
+     P('Automated robotics', r'automat|robot'), P('Improved computer power', r'comput|software|bioinformatic')],
+     'Production of pure DNA polymerases, increased sensitivity of nucleic acid detection, automated robotic technology and improved computer power.', 2),
+   text('Give one advantage of nanopore sequencing over Illumina sequencing.', 1, [P('Very long reads / portable / single molecule with no amplification / detects methylation', r'long|portab|usb|small|single|no amplif|methyl|real[- ]?time|field')],
+        'Nanopore reads are very long (up to hundreds of kb), come from single molecules without amplification, can detect methylation, and the devices are portable (as small as a USB stick).', 1),
+   mcq('Which is <strong>not</strong> one of the uses of sequencing listed in the lecture summary?', ['De novo genome sequencing', 'Targeted re-sequencing', 'Transcriptome profiling', 'Cutting DNA at restriction sites'], 3,
+       'The three uses given were de novo genome sequencing, targeted re-sequencing and transcriptome profiling.')),
+])
+
+# ------------------------------------------------------------------ Lectures 12 to 14
+L['l12'] = ('Chromosomes and Genomes', 'Lectures 12 to 14', '01 Year 1/Molecular Biology and Genetics/Lectures/12 Chromosomes and Genomes/Chromosomes and Genomes (Lectures 12 to 14)', [
+ Q('Prokaryotic and eukaryotic genetic material are organised differently.',
+   text('Give three differences between the genome of <em>E. coli</em> and a eukaryotic nuclear genome.', 3, [
+     P('E. coli: one circular chromosome; eukaryotes: several linear chromosomes', r'circular|linear|single|one chromosome|several|multiple'),
+     P('E. coli genes tightly packed, on both strands, can overlap; eukaryotic genes spread out', r'tight|pack|overlap|both strands|dense|gene density|spread'),
+     P('E. coli gene number correlates with genome size; eukaryotes mostly repetitive / non-coding DNA', r'repetit|non-?coding|correlat|2 ?%|junk'),
+     P('E. coli compacted by supercoiling; eukaryotes by histones/nucleosomes', r'histone|nucleosome|supercoil|chromatin')],
+     'E. coli has one circular chromosome (4.6 Mb), whereas eukaryotes have several linear chromosomes. Bacterial genes are tightly packed on both strands and can overlap, and gene number tracks genome size; most eukaryotic DNA is repetitive and non-coding (about 2% is genes in humans). Bacterial DNA is compacted by supercoiling; eukaryotic DNA is wrapped around histones as nucleosomes.', 3),
+   num('The E. coli chromosome is 4,639,221 bp and has about 4300 genes. What is the average number of base pairs per gene? (Round to the nearest whole number.)', 1079, tol=2, unit='bp', working='4,639,221 ÷ 4300 ≈ 1079 bp per gene.'),
+   text('The E. coli chromosome is about 1.2 mm long but the cell is about 1 µm long. How is the DNA compacted?', 1, [P('Supercoiling: the underwound circular DNA twists on itself', r'supercoil|coil|underwound|twist')],
+        'By supercoiling: the circular DNA is underwound and twists on itself into compact supercoils.', 1)),
+ Qi(A + 'mg12_s23.jpg', 'Eukaryotic DNA is packaged into chromatin.',
+   text('Describe the structure of a nucleosome.', 3, [
+     P('A histone octamer', r'octamer|eight'),
+     P('Two copies each of H2A, H2B, H3 and H4', r'h2a|h2b|h3|h4'),
+     P('About 147 bp of DNA wrapped around it; linker DNA with H1 between nucleosomes', r'147|wrap|wound|h1|linker')],
+     'A nucleosome is a histone octamer, made of two copies each of H2A, H2B, H3 and H4, with 147 bp of DNA wrapped around it. Neighbouring nucleosomes are joined by linker DNA bound by histone H1.', 3),
+   mcq('A chromosome with its centromere close to one end, giving a very short p arm, is described as:', ['Metacentric', 'Submetacentric', 'Acrocentric', 'Telocentric'], 2,
+       'Acrocentric: close to the end. Telocentric is at the very end; metacentric in the middle; submetacentric between the middle and the end.'),
+   text('What are telomeres?', 1, [P('The repetitive DNA at the ends of linear chromosomes', r'end|tip')], 'The repetitive DNA sequences at each end of a linear eukaryotic chromosome.', 1)),
+ Q('Eukaryotic genomes vary hugely in size.',
+   text('Explain what is meant by the C value paradox and why it occurs.', 3, [
+     P('The C value is the DNA content of the haploid nuclear genome', [r'c ?value', r'haploid|dna content|amount']),
+     P('Genome size does not correlate with complexity / gene number', r'not correlat|no correlat|complex|gene number|does not (match|reflect|track)'),
+     P('Because most eukaryotic DNA is repetitive / non-coding', r'repetit|non-?coding|satellite|transposon|junk')],
+     'The C value is the amount of DNA in the haploid nuclear genome. The paradox is that it does not correlate with the complexity or gene number of the organism (wheat has five times as much DNA as humans). This is because most eukaryotic DNA is repetitive, non-coding sequence.', 3),
+   text('Distinguish between minisatellites, microsatellites and SINEs, giving an example of each.', 3, [
+     P('Minisatellites (VNTRs): 1–5 kb tandem blocks of 15–100 bp units', r'vntr|15|100|minisatellite.*(tandem|repeat)'),
+     P('Microsatellites (STRs): 2–5 bp motifs repeated 5–50 times, e.g. (CA)n', r'str|ca\)?n|2.?5 ?bp|\bca\b'),
+     P('SINEs: short interspersed retrotransposons (< 500 bp), e.g. Alu', r'alu|interspersed|retrotranspos')],
+     'Minisatellites (VNTRs) are tandem arrays 1–5 kb long of 15–100 bp units. Microsatellites (STRs) are 2–5 bp motifs repeated 5–50 times, such as (CA)n. SINEs are short (< 500 bp) interspersed retrotransposons, such as the ~300 bp Alu element with over a million copies in the human genome.', 3),
+   num('Human functional genes make up about 2% of a 3.3 × 10⁹ bp haploid genome. How many base pairs is that? (Give your answer like 6.6e7.)', 6.6e7, rtol=0.02, unit='bp', working='0.02 × 3.3 × 10⁹ = 6.6 × 10⁷ bp.')),
+ Q('Chromosome number varies between and within species.',
+   num('A cell from a person with Down syndrome has trisomy 21. How many chromosomes does it contain?', 47, tol=0, working='2n + 1 = 46 + 1 = 47.'),
+   text('Distinguish aneuploidy from polyploidy.', 2, [
+     P('Aneuploidy: 2n plus or minus whole chromosomes (e.g. trisomy 2n + 1, monosomy 2n − 1)', r'2n ?[+±-]|plus or minus|monosom|trisom|extra (single )?chromosome|missing'),
+     P('Polyploidy: more than two complete sets (3n, 4n …), a form of euploidy', r'3n|4n|complete set|whole set|multiple(s)? of n|euploid')],
+     'Aneuploidy is having the diploid number plus or minus whole chromosomes, such as monosomy (2n − 1) or trisomy (2n + 1). Polyploidy is having more than two complete chromosome sets, such as triploidy (3n) or tetraploidy (4n); it is a type of euploidy.', 2),
+   text('<em>Brassica napus</em> (AACC) arose from <em>B. rapa</em> (AA) and <em>B. oleracea</em> (CC). What type of polyploid is it?', 1, [P('Allopolyploid (amphidiploid): it combines different genomes', r'allo|amphidiploid')],
+        'An allopolyploid (amphidiploid), because it contains the genomes of two different species.', 1)),
+ Q('Human sex determination and dosage compensation.',
+   text('Explain the evidence that SRY on the Y chromosome determines maleness.', 3, [
+     P('Klinefelter (XXY) are male and Turner (X) female, so the Y decides', r'klinefelter|turner|xxy|45|47'),
+     P('XY females have a Y lacking (deleted for) SRY', r'xy female|deleted|lack|missing|without sry'),
+     P('XX mice transgenic for Sry develop as males', r'transgen|xx mice|mouse|mice')],
+     'People with Klinefelter syndrome (47, XXY) are male and those with Turner syndrome (45, X) are female, so the Y chromosome determines maleness. XY females were found to have a Y chromosome deleted for SRY, and XX mice given an Sry transgene develop as males.', 3),
+   text('What does SRY encode and what does it do?', 2, [
+     P('Testis-determining factor (TDF)', r'tdf|testis[- ]determining'),
+     P('Expressed at 6–8 weeks, it makes the undifferentiated gonads develop into testes', r'testes|testis|gonad')],
+     'SRY encodes testis-determining factor (TDF), expressed from 6 to 8 weeks of development, which makes the undifferentiated gonadal tissue become testes.', 2),
+   text('Describe how one X chromosome is inactivated in female cells, and explain why female mammals are mosaics.', 4, [
+     P('Inactivation needs the X-inactivation centre (XIC)', r'xic|inactivation cent'),
+     P('XIST is transcribed from the X to be inactivated', r'xist'),
+     P('XIST RNA has no ORF / is not translated and coats the chromosome, which condenses into a Barr body', r'coat|bind|orf|non-?coding|barr|condens'),
+     P('Which X is inactivated is random, early in development, and kept in daughter cells (Lyon hypothesis)', r'random|lyon|either|daughter|clon|patch|calico')],
+     'Inactivation requires the X-inactivation centre (XIC). Its XIST gene is transcribed from the X that is to be silenced; the XIST RNA has no open reading frame and instead coats that chromosome, which becomes the condensed, inactive Barr body. Early in development each cell chooses at random which X to inactivate, and the choice is inherited by its descendants (the Lyon hypothesis), so females are mosaics of patches with different active X chromosomes, as seen in calico cats.', 4),
+   num('How many Barr bodies would be found in a cell from a 47, XXY man?', 1, tol=0, working='Number of X chromosomes − 1 = 2 − 1 = 1.')),
+ Q('Mutations create new alleles. Part of a coding sequence reads 5′-CAG GGC AAG GAT AGA-3′ (Gln Gly Lys Asp Arg).',
+   mcq('The AAG codon (Lys) changes to TAG. What type of mutation is this?', ['Missense', 'Nonsense', 'Silent', 'Frameshift'], 1, 'TAG is a stop codon, so this is a nonsense mutation.'),
+   mcq('An A → G change in AAG gives AGG (Arg). This is:', ['a transversion and a missense mutation', 'a transition and a missense mutation', 'a transition and a nonsense mutation', 'a transversion and a frameshift'], 1,
+       'A → G is purine to purine (a transition), and it changes Lys to Arg (missense).'),
+   text('A G is inserted after the 6th base (CAG GGG CAA GGA TAG A). Explain the effect on the protein.', 2, [
+     P('The reading frame shifts so every codon after the insertion changes', r'frame|shift|read'),
+     P('A premature stop codon (TAG) appears, truncating the protein', r'stop|tag|truncat|premature|shorter')],
+     'The insertion is a frameshift: every codon after it is read in a new frame (Gln Gly Gln Gly), and a TAG stop codon soon appears, so the protein is truncated.', 2),
+   text('Ras G12V is described as a gain-of-function mutation. Explain why it is oncogenic.', 3, [
+     P('Ras is active with GTP bound and switches off by hydrolysing GTP (GTPase)', r'gtp|gtpase'),
+     P('G12V lacks GTPase activity so it stays locked in the active form', r'lock|stay|always|permanent|constitut|cannot (switch|turn)|lack'),
+     P('Continuous signalling causes uncontrolled cell division (cancer)', r'uncontrol|division|prolifer|cancer|tumou?r')],
+     'Ras is active when GTP is bound and turns itself off by hydrolysing GTP to GDP. The G12V mutant lacks this GTPase activity, so it is locked in the active GTP-bound form and signals continuously, causing uncontrolled cell division.', 3)),
+ Qi(A + 'mg12_s48.jpg', 'Gene duplication has been important in evolution.',
+   text('Explain how gene duplication can lead to new genes, using the globins as an example.', 3, [
+     P('Duplication (e.g. by unequal crossing over) makes two copies of a gene', r'unequal|crossing over|two copies|duplicat'),
+     P('One copy keeps the original function while the other can mutate and gain a new function', r'new function|diverg|mutat|evolv|free'),
+     P('Globins: one ancestral gene gave myoglobin, α- and β-globin clusters (e.g. fetal γ vs adult β)', r'myoglobin|alpha|α|beta|β|gamma|γ|fetal|globin')],
+     'A duplication, for example by unequal crossing over, produces two copies of a gene. One copy keeps the original function, while the other is free to accumulate mutations and evolve a new one. Repeated duplications of an ancestral globin gene produced myoglobin and the α- and β-globin clusters, including fetal γ-globin and adult β-globin.', 3)),
+])
+
+# ------------------------------------------------------------------ Lecture 15
 L['l15'] = ('DNA Damage and Repair', 'Lecture 15', '01 Year 1/Molecular Biology and Genetics/Lectures/15 DNA Damage and Repair/DNA Damage and Repair (Lecture 15)', [
  Q('DNA is damaged all the time, from inside and outside the cell.',
    text('Distinguish between endogenous and exogenous DNA damage, giving two causes of each.', 4, [
@@ -653,7 +793,7 @@ L['pr'] = ('Practicals', 'Practicals 1 to 3', '01 Year 1/Molecular Biology and G
      'Recovery gives transformed cells time to express the plasmid\'s ampicillin-resistance gene before meeting the antibiotic. Untransformed cells on ampicillin should not grow, confirming that any growth on the test plate comes from the plasmid.', 2)),
 ])
 
-ORDER = ['l1', 'l2', 'l3', 'l5', 'l6', 'l7', 'l8', 'l10', 'l15', 'pr']
+ORDER = ['l1', 'l2', 'l3', 'l5', 'l6', 'l7', 'l8', 'l10', 'l11', 'l12', 'l15', 'pr']
 
 
 def build():

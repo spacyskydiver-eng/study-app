@@ -7,3 +7,4 @@ Each dated folder mirrors the vault's own layout (`01 Year 1/...`, `02 Key Terms
 Rebuilding the site from the Obsidian vault without copying these in first would drop them from the site.
 
 - `2026-10-26`: Introduction to Biomedicine Lecture 3 (Stem Cells), Lecture 4 (Microbiome and Human Disease), Seminar 2 (From Bench to Bedside); Biological Chemistry Lecture 8 (Acids and Bases), Lecture 9 (Buffers); 43 new key terms.
+- `2026-11-04`: Molecular Biology and Genetics Lecture 11 (DNA Sequencing), Lectures 12 to 14 (Chromosomes and Genomes), Lecture 15 (DNA Damage and Repair); 64 new key terms.
