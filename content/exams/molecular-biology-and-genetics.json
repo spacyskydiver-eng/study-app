@@ -3,6 +3,192 @@
  "module": "BIO-4018A",
  "papers": [
   {
+   "id": "dat-ex",
+   "title": "Official example test (with the module's answers)",
+   "lecture": "In-class test (9 Nov)",
+   "hub": "01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics",
+   "marks": 20,
+   "questions": [
+    {
+     "stem": "<strong>Figure 1.</strong> Restriction enzyme digest of plasmid pBR322. Lanes 1 and 9: 1 kb ladder. Lane 2 HindIII; Lane 3 PstI; Lane 4 PvuII; Lane 5 HindIII + PstI; Lane 6 HindIII + PvuII; Lane 7 PstI + PvuII; Lane 8 HindIII + PstI + PvuII.",
+     "img": "assets/exam-img/example_fig1.png",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many HindIII sites are there in plasmid pBR322?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Plasmids are circular. Cutting a plasmid once produces one fragment, which is what lane 2 (HindIII) shows.",
+       "marks": 2,
+       "id": "dat-ex-q1a"
+      },
+      {
+       "type": "mcq",
+       "stem": "How many PstI sites are there in plasmid pBR322?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Lane 3 (PstI) shows one fragment, so PstI cuts the circle once.",
+       "marks": 2,
+       "id": "dat-ex-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the approximate size of pBR322?",
+       "options": [
+        "1300 bp",
+        "2300 bp",
+        "3300 bp",
+        "4300 bp",
+        "5300 bp"
+       ],
+       "answer": 3,
+       "explain": "The single bands in lanes 2, 3 and 4 lie between the 4000 and 5000 bp markers.",
+       "marks": 2,
+       "id": "dat-ex-q1c"
+      },
+      {
+       "type": "mcq",
+       "stem": "The shortest distance between the HindIII and PvuII sites is approximately:",
+       "options": [
+        "75 bp",
+        "800 bp",
+        "2000 bp",
+        "2300 bp",
+        "20,000 bp"
+       ],
+       "answer": 2,
+       "explain": "There is one HindIII and one PvuII site, so cutting with both (lane 6) gives two fragments. The smaller one, about 2000 bp, is the shortest distance between them.<img src=\"assets/exam-img/example_fig2.png\" alt=\"Map of the HindIII and PvuII sites\" style=\"max-width:100%;margin-top:8px\">",
+       "marks": 2,
+       "id": "dat-ex-q1d"
+      },
+      {
+       "type": "mcq",
+       "stem": "The smallest fragment in lane 8 was produced by digestion with which enzyme(s)?",
+       "options": [
+        "HindIII alone",
+        "HindIII and PstI",
+        "HindIII and PvuII",
+        "PstI and PvuII",
+        "Taq polymerase"
+       ],
+       "answer": 1,
+       "explain": "Lane 5 (HindIII + PstI) has the same small fragment (about 750 bp), so it has a HindIII site at one end and a PstI site at the other.<img src=\"assets/exam-img/example_fig3.png\" alt=\"Map of the three sites\" style=\"max-width:100%;margin-top:8px\">",
+       "marks": 2,
+       "id": "dat-ex-q1e"
+      }
+     ],
+     "id": "dat-ex-q1"
+    },
+    {
+     "stem": "HindIII cuts double-stranded DNA.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "The recognition site for HindIII on one strand is 5′-AAGCTT-3′. What is the sequence of the site on the other strand?",
+       "options": [
+        "5′-TTCGAA-3′",
+        "5′-CTGCAG-3′",
+        "5′-CAGCTG-3′",
+        "5′-AAGCTT-3′",
+        "5′-GAATTC-3′"
+       ],
+       "answer": 3,
+       "explain": "Recognition sites like this are palindromic (dyad symmetry): both strands read the same 5′ to 3′. 5′-AAGCTT-3′ pairs with 3′-TTCGAA-5′, which read 5′ to 3′ is AAGCTT.",
+       "marks": 2,
+       "id": "dat-ex-q2a"
+      }
+     ],
+     "id": "dat-ex-q2"
+    },
+    {
+     "stem": "<strong>Figure 2.</strong> Restriction map of plasmid pBR322 (4361 bp), showing the sites for AhdI, BsaI, BamHI, EcoRI, EcoRV, NheI, ScaI and StyI.",
+     "img": "assets/exam-img/example_fig4.png",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "You wish to isolate the whole of the tetracycline resistance gene (TcR) on the smallest fragment possible. Which pair of enzymes should you use?",
+       "options": [
+        "ScaI and BamHI",
+        "AhdI and EcoRI",
+        "EcoRI and EcoRV",
+        "EcoRI and StyI",
+        "BamHI and StyI"
+       ],
+       "answer": 3,
+       "explain": "EcoRI (4359) sits just before the start of TcR and StyI (1369) just after its end. The other pairs either cut inside TcR (BamHI, EcoRV) or give a larger fragment.",
+       "marks": 2,
+       "id": "dat-ex-q3a"
+      }
+     ],
+     "id": "dat-ex-q3"
+    },
+    {
+     "stem": "<strong>Figure 3.</strong> Absorbance of DNA solutions of different concentrations. Trend line y = 23.272x − 0.0007.",
+     "img": "assets/exam-img/example_fig5.png",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What absorbance would you expect for a DNA solution of 0.05 mg/mL?",
+       "options": [
+        "0.92",
+        "1.04",
+        "1.16",
+        "1.28",
+        "1.65"
+       ],
+       "answer": 2,
+       "explain": "Use the equation, not the graph: the options are too close to read off. y = (23.272 × 0.05) − 0.0007 = 1.16.",
+       "marks": 2,
+       "id": "dat-ex-q4a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What DNA concentration would you expect to give an absorbance of 1.50?",
+       "options": [
+        "0.059",
+        "0.062",
+        "0.064",
+        "0.066",
+        "0.068"
+       ],
+       "answer": 2,
+       "explain": "Rearrange to make x the subject: x = (y + 0.0007) ÷ 23.272 = (1.50 + 0.0007) ÷ 23.272 = 0.064 mg/mL.",
+       "marks": 2,
+       "id": "dat-ex-q4b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the R² value?",
+       "options": [
+        "0.0",
+        "0.1 to 0.5",
+        "0.5 to 0.9",
+        "Greater than 0.9 but less than 1.0",
+        "1.0"
+       ],
+       "answer": 3,
+       "explain": "A perfect straight line has R² = 1.0. The points lie very close to the straight trend line, so R² is close to 1 (it is actually 0.984).",
+       "marks": 2,
+       "id": "dat-ex-q4c"
+      }
+     ],
+     "id": "dat-ex-q4"
+    }
+   ]
+  },
+  {
    "id": "dat-1",
    "title": "Data analysis practice test 1",
    "lecture": "In-class test (9 Nov)",

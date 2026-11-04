@@ -801,6 +801,8 @@ def build():
     sys.path.insert(0, HERE)
     from make_datatest import papers as data_papers
     papers = data_papers()
+    from make_example import paper as example_paper
+    papers.insert(0, example_paper())
     for P in papers:
         for i, q in enumerate(P['questions']):
             q['id'] = f"{P['id']}-q{i + 1}"
