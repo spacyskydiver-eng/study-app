@@ -181,7 +181,7 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
 .fc-deck-due .svg-icon { width: 16px; height: 16px; }
 .fc-section-title { display: flex; align-items: baseline; gap: 10px; font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-faint); margin: 26px 4px 12px; }
 .fc-section-title span { font-weight: 500; letter-spacing: 0; text-transform: none; }
-.fc-evo { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.fc-evo { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
 .fc-evo-item { display: flex; flex-direction: column; align-items: center; padding: 10px 6px 12px; border-radius: 14px; border: 1px solid var(--fc-line); background: var(--fc-card); text-align: center; }
 .fc-evo-item canvas { width: 92px; height: 92px; }
 .fc-evo-item b { font-size: 12.5px; margin-top: 4px; color: var(--text-faint); }
@@ -288,7 +288,7 @@ kbd { font-family: var(--font-monospace-theme, ui-monospace, monospace); font-si
   .fc-actions { grid-template-columns: 1fr 1fr; }
   .fc-stats { grid-column: span 2; }
   .fc-deck { grid-template-columns: 1fr auto; } .fc-deck-bar { grid-column: span 2; order: 3; }
-  .fc-evo { grid-template-columns: repeat(4, 1fr); }
+  .fc-evo { grid-template-columns: repeat(3, 1fr); }
   .fc-evo-item canvas { width: 64px; height: 64px; }
   .fc-front { font-size: 18px; } .fc-term { font-size: 30px; }
   .fc-face, .fc-card { padding: 20px 18px; }

@@ -171,8 +171,29 @@ const STAGES = [
   { at: 15, name: 'Organoid' },
   { at: 21, name: 'Medusa' },
   { at: 28, name: 'Siphonophore' },
+  { at: 33, name: 'Comb Jelly' },
+  { at: 38, name: 'Sea Star' },
+  { at: 43, name: 'Trilobite' },
+  { at: 48, name: 'Nautilus' },
+  { at: 54, name: 'Octopus' },
+  { at: 60, name: 'Dragonfly' },
+  { at: 66, name: 'Butterfly' },
+  { at: 72, name: 'Anglerfish' },
+  { at: 78, name: 'Manta Ray' },
+  { at: 84, name: 'Seahorse' },
+  { at: 90, name: 'Axolotl' },
+  { at: 96, name: 'Sea Turtle' },
+  { at: 102, name: 'Archaeopteryx' },
+  { at: 108, name: 'Hummingbird' },
+  { at: 114, name: 'Humpback Whale' },
+  { at: 120, name: 'Neuron' },
+  { at: 127, name: 'Cortex' },
+  { at: 134, name: 'Coral Reef' },
+  { at: 142, name: 'Tree of Life' },
+  { at: 150, name: 'Biosphere' },
 ];
 const stageOf = L => { let i = 0; STAGES.forEach((s, k) => { if (L >= s.at) i = k; }); return i; };
+const aStage = name => (/^(?!Eu)[AEIOU]/.test(name) ? 'an ' : 'a ') + name;
 
 /* ---------------------------------------------------------------- scheduling */
 function cs(id) { return S.cards[id]; }
@@ -674,6 +695,11 @@ function specimen(canvas, opts = {}) {
   const pal = [
     ['#34D399', '#A7F3D0'], ['#38BDF8', '#BAE6FD'], ['#A78BFA', '#DDD6FE'], ['#34D399', '#FDE68A'],
     ['#F472B6', '#FBCFE8'], ['#818CF8', '#C7D2FE'], ['#FBBF24', '#FDE68A'],
+    ['#22D3EE', '#CFFAFE'], ['#FB923C', '#FED7AA'], ['#94A3B8', '#E2E8F0'], ['#F59E0B', '#FEF3C7'],
+    ['#F43F5E', '#FECDD3'], ['#2DD4BF', '#99F6E4'], ['#FB923C', '#FEF08A'], ['#6366F1', '#BEF264'],
+    ['#38BDF8', '#E0F2FE'], ['#FACC15', '#FDE68A'], ['#F9A8D4', '#FCE7F3'], ['#4ADE80', '#BBF7D0'],
+    ['#A3E635', '#ECFCCB'], ['#22C55E', '#F472B6'], ['#60A5FA', '#DBEAFE'], ['#C084FC', '#F5D0FE'],
+    ['#E879F9', '#FBCFE8'], ['#FB7185', '#67E8F9'], ['#84CC16', '#FDE047'], ['#3B82F6', '#86EFAC'],
   ];
   const size = () => { const r = canvas.getBoundingClientRect(); const d = window.devicePixelRatio || 1; canvas.width = Math.max(1, r.width * d); canvas.height = Math.max(1, r.height * d); return { w: r.width, h: r.height, d }; };
   let dim = size();
@@ -701,6 +727,28 @@ function specimen(canvas, opts = {}) {
     ctx.beginPath(); ctx.ellipse(0, 0, len, len * 0.42, 0, 0, Math.PI * 2); ctx.fillStyle = hexA(c, .18); ctx.fill(); glowStroke(c, 1.2, 4);
     ctx.beginPath(); for (let i = -2; i <= 2; i++) { ctx.moveTo(i * len * 0.32, -len * 0.3); ctx.quadraticCurveTo(i * len * 0.32 + len * 0.12, 0, i * len * 0.32, len * 0.3); } ctx.strokeStyle = hexA(c, .7); ctx.lineWidth = 0.9; ctx.stroke();
     ctx.restore();
+  }
+  const TAU = Math.PI * 2;
+  const irid = h => opts.locked ? '#8B93B8' : `hsl(${((h % 360) + 360) % 360},85%,72%)`;
+  function smooth(pts, n) {          // Catmull-Rom through [x, y, halfWidth] points
+    const out = [], at = i => pts[clamp(i, 0, pts.length - 1)];
+    for (let i = 0; i < pts.length - 1; i++) for (let k = 0; k < n; k++) {
+      const u = k / n, a = at(i - 1), b = at(i), c = at(i + 1), e = at(i + 2);
+      out.push([0, 1, 2].map(j => 0.5 * (2 * b[j] + (c[j] - a[j]) * u + (2 * a[j] - 5 * b[j] + 4 * c[j] - e[j]) * u * u + (3 * b[j] - a[j] - 3 * c[j] + e[j]) * u * u * u)));
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
+  }
+  function tube(pts, n = 6) {        // traces a body of varying width; returns its centre line
+    const p = smooth(pts, n).map(([x, y, r], i, all) => {
+      const a = all[Math.max(0, i - 1)], b = all[Math.min(all.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      return { x, y, r: Math.max(0, r), nx: -dy / l, ny: dx / l };
+    });
+    ctx.beginPath();
+    p.forEach((q, i) => { const x = q.x + q.nx * q.r, y = q.y + q.ny * q.r; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    for (let i = p.length - 1; i >= 0; i--) ctx.lineTo(p[i].x - p[i].nx * p[i].r, p[i].y - p[i].ny * p[i].r);
+    ctx.closePath();
+    return p;
   }
   const draw = {
     0(t, w, hgt, c1, c2) { // protocell
@@ -782,6 +830,356 @@ function specimen(canvas, opts = {}) {
         const s = 12 + k * 2.6, y = top + R * 1.4 + s * hgt * 0.027, x = cx + sway(s / 3);
         ctx.beginPath(); ctx.moveTo(x, y); for (let j = 1; j <= 12; j++) ctx.lineTo(x + (k % 2 ? 1 : -1) * j * 1.6 + Math.sin(t * 2 + j * 0.5 + k) * 2, y + j * 4.2); ctx.strokeStyle = hexA(c2, .45); ctx.lineWidth = 1; ctx.stroke();
         const on = (Math.sin(t * 2.5 - k) + 1) / 2; dot(x, y, 2 + on * 1.5, hexA(k % 2 ? c2 : c1, .5 + on * .5), 6 + on * 10);
+      }
+    },
+    7(t, w, hgt, c1, c2) { // comb jelly
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt * 0.43 + Math.sin(t * 0.9) * M * 0.015, rx = M * 0.2, ry = M * 0.29;
+      for (const s of [-1, 1]) {
+        ctx.beginPath(); ctx.moveTo(cx + s * rx * 0.3, cy + ry * 0.92);
+        for (let i = 1; i <= 26; i++) ctx.lineTo(cx + s * (rx * 0.3 + i * M * 0.004) + Math.sin(i * 0.4 - t * 2 + s) * i * M * 0.0016, cy + ry * 0.92 + i * M * 0.0085);
+        ctx.strokeStyle = hexA(c2, .55); ctx.lineWidth = 1; ctx.stroke();
+      }
+      ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); cellFill(cx, cy, ry, c1, 0.16); glowStroke(c1, 1.8, 12);
+      for (const f of [-0.92, -0.62, -0.25, 0.25, 0.62, 0.92]) for (let n = 0; n < 14; n++) {
+        const a = -1.3 + n / 13 * 2.6;
+        dot(cx + rx * f * Math.cos(a), cy + ry * Math.sin(a), Math.max(0.9, M * 0.008), irid(n * 28 - t * 220 + f * 90), 4);
+      }
+    },
+    8(t, w, hgt, c1, c2) { // sea star
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt / 2, R = M * 0.42, rot = t * 0.06 - Math.PI / 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 150; i++) {
+        const a = i / 150 * TAU, r = R * (0.3 + 0.7 * Math.pow(Math.abs(Math.cos(2.5 * a)), 1.5)) * (1 + 0.025 * Math.sin(3 * a + t));
+        const x = cx + Math.cos(a + rot) * r, y = cy + Math.sin(a + rot) * r;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.closePath(); cellFill(cx, cy, R * 0.7, c1, 0.24); glowStroke(c1, 2, 12);
+      for (let k = 0; k < 5; k++) {
+        const a = k / 5 * TAU + rot;
+        for (let j = 1; j <= 6; j++) for (const s of [-1, 1]) {
+          const rr = R * (0.14 + j * 0.125), off = (1 - j / 7.5) * M * 0.024 * s;
+          dot(cx + Math.cos(a) * rr - Math.sin(a) * off, cy + Math.sin(a) * rr + Math.cos(a) * off, Math.max(0.8, M * 0.0075), hexA(c2, .85), 3);
+        }
+      }
+      ctx.beginPath(); ctx.arc(cx, cy, R * 0.11, 0, TAU); glowStroke(c2, 1.4, 6);
+    },
+    9(t, w, hgt, c1, c2) { // trilobite
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt / 2, rx = M * 0.25, ry = M * 0.39, top = cy - ry * 0.42;
+      const half = y => rx * Math.sqrt(Math.max(0, 1 - ((y - cy) / ry) ** 2));
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) for (const s of [-1, 1]) {
+        const y = top + i * ry * 0.13, hw = half(y);
+        ctx.moveTo(cx + s * hw, y); ctx.lineTo(cx + s * (hw + M * 0.045), y + Math.sin(t * 5 + i * 0.8 + s) * M * 0.013);
+      }
+      ctx.strokeStyle = hexA(c2, .65); ctx.lineWidth = 1.1; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); cellFill(cx, cy, ry, c1, 0.22); glowStroke(c1, 2, 12);
+      ctx.beginPath(); ctx.moveTo(cx - half(top), top); ctx.quadraticCurveTo(cx, top + ry * 0.16, cx + half(top), top); glowStroke(c2, 1.5, 5);
+      ctx.beginPath();
+      for (let i = 1; i < 11; i++) { const y = top + i * ry * 0.13, hw = half(y); ctx.moveTo(cx - hw, y); ctx.quadraticCurveTo(cx, y + ry * 0.08, cx + hw, y); }
+      ctx.strokeStyle = hexA(c1, .75); ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath();
+      for (const s of [-1, 1]) { ctx.moveTo(cx + s * rx * 0.3, top - ry * 0.3); ctx.quadraticCurveTo(cx + s * rx * 0.4, cy, cx + s * rx * 0.08, cy + ry * 0.82); }
+      ctx.strokeStyle = hexA(c2, .7); ctx.stroke();
+      for (const s of [-1, 1]) dot(cx + s * rx * 0.52, cy - ry * 0.62, Math.max(1.2, M * 0.016), c2, 7);
+    },
+    10(t, w, hgt, c1, c2) { // nautilus
+      const M = Math.min(w, hgt), cx = w * 0.55, cy = hgt * 0.47 + Math.sin(t * 0.8) * M * 0.012, R = M * 0.37, b = 0.17, end = 4.5 * Math.PI;
+      const pt = a => { const r = R * Math.exp(b * (a - end)); return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+      const mouth = pt(end), inner = pt(end - TAU), mx = (mouth[0] + inner[0]) / 2, my = (mouth[1] + inner[1]) / 2;
+      for (let k = 0; k < 7; k++) {
+        const u = k / 6 - 0.5;
+        ctx.beginPath(); ctx.moveTo(mx, my + u * M * 0.1);
+        ctx.quadraticCurveTo(mx - M * 0.14, my + u * M * 0.16 + Math.sin(t * 1.6 + k) * M * 0.02, mx - M * (0.25 + (k % 2) * 0.05), my + u * M * 0.26 + Math.sin(t * 1.3 + k * 2) * M * 0.03);
+        ctx.strokeStyle = hexA(c2, .65); ctx.lineWidth = 1.2; ctx.stroke();
+      }
+      ctx.beginPath();
+      for (let a = end - TAU; a <= end + 0.001; a += 0.08) ctx.lineTo(...pt(a));
+      ctx.closePath(); cellFill(cx, cy, R, c1, 0.24); glowStroke(c1, 2, 12);
+      ctx.beginPath(); ctx.moveTo(...pt(end - TAU * 2.6));
+      for (let a = end - TAU * 2.6; a <= end - TAU; a += 0.1) ctx.lineTo(...pt(a));
+      glowStroke(c2, 1.4, 5);
+      ctx.beginPath();
+      for (let a = end - 0.55; a > end - TAU * 1.5; a -= 0.5) {
+        const p = pt(a), q = pt(a - TAU);
+        ctx.moveTo(...p); ctx.quadraticCurveTo((p[0] + q[0]) / 2 + Math.cos(a + 1.6) * R * 0.07, (p[1] + q[1]) / 2 + Math.sin(a + 1.6) * R * 0.07, ...q);
+      }
+      ctx.strokeStyle = hexA(c2, .55); ctx.lineWidth = 1; ctx.stroke();
+      dot(mx - M * 0.015, my - M * 0.05, Math.max(1.3, M * 0.016), c2, 7);
+    },
+    11(t, w, hgt, c1, c2) { // octopus
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt * 0.34 + Math.sin(t * 1.1) * M * 0.012, R = M * 0.2;
+      for (let k = 0; k < 8; k++) {
+        const u = k - 3.5, pts = [];
+        for (let s = 0; s <= 7; s++) {
+          const f = s / 7, curl = Math.sin(f * 5 - t * 1.8 + k * 1.1) * f * M * 0.05;
+          pts.push([cx + u * M * 0.045 + u * f * M * 0.082 + curl, cy + R * 0.7 + f * M * (0.46 - Math.abs(u) * 0.045), M * 0.028 * (1 - f * 0.9)]);
+        }
+        tube(pts, 3); ctx.fillStyle = hexA(c1, .3); ctx.fill(); glowStroke(c1, 1.1, 5);
+      }
+      ctx.beginPath(); ctx.ellipse(cx, cy, R * 0.98, R * 1.18, 0, 0, TAU); cellFill(cx, cy, R * 1.1, c1, 0.26); glowStroke(c1, 2, 13);
+      for (const s of [-1, 1]) { dot(cx + s * R * 0.46, cy + R * 0.3, Math.max(1.6, M * 0.024), c2, 7); dot(cx + s * R * 0.46, cy + R * 0.3, Math.max(0.7, M * 0.01), '#05060D', 0); }
+    },
+    12(t, w, hgt, c1, c2) { // dragonfly
+      const M = Math.min(w, hgt), cx = w / 2, ty = hgt * 0.3, L = M * 0.44;
+      for (let j = 0; j < 2; j++) for (const s of [-1, 1]) {
+        ctx.save(); ctx.translate(cx, ty + j * M * 0.05);
+        ctx.rotate(s * ((j ? 0.24 : -0.16) + Math.sin(t * 20 + j * 2) * 0.08));
+        ctx.beginPath(); ctx.ellipse(s * L * 0.52, 0, L * 0.5, M * 0.048, 0, 0, TAU); ctx.fillStyle = hexA(c2, .2); ctx.fill(); glowStroke(c1, 1.2, 6);
+        ctx.beginPath(); ctx.moveTo(s * L * 0.04, 0); ctx.lineTo(s * L, 0);
+        for (let v = 1; v < 7; v++) { const x = s * v * L * 0.145; ctx.moveTo(x, -M * 0.035); ctx.lineTo(x + s * L * 0.03, M * 0.035); }
+        ctx.strokeStyle = hexA(c2, .5); ctx.lineWidth = 0.8; ctx.stroke();
+        ctx.restore();
+      }
+      const sway = Math.sin(t * 1.2) * M * 0.025;
+      const body = tube([[cx, ty + M * 0.06, M * 0.03], [cx, ty + M * 0.2, M * 0.02], [cx + sway * 0.5, ty + M * 0.38, M * 0.017], [cx + sway, ty + M * 0.56, M * 0.012]], 8);
+      cellFill(cx, ty + M * 0.3, M * 0.3, c1, 0.4); glowStroke(c1, 1.4, 8);
+      ctx.beginPath(); body.forEach((p, i) => { if (i % 3 === 2) { ctx.moveTo(p.x - p.nx * p.r, p.y - p.ny * p.r); ctx.lineTo(p.x + p.nx * p.r, p.y + p.ny * p.r); } });
+      ctx.strokeStyle = hexA(c2, .7); ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx, ty + M * 0.02, M * 0.045, M * 0.065, 0, 0, TAU); cellFill(cx, ty, M * 0.07, c1, 0.34); glowStroke(c1, 1.6, 9);
+      for (const s of [-1, 1]) dot(cx + s * M * 0.028, ty - M * 0.07, Math.max(1.5, M * 0.024), c2, 8);
+    },
+    13(t, w, hgt, c1, c2) { // butterfly
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt * 0.5 + Math.sin(t * 1.1) * M * 0.012, open = 0.74 + 0.26 * Math.cos(t * 2.2);
+      for (const s of [-1, 1]) {
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(s * open, 1);
+        ctx.beginPath(); ctx.moveTo(0, -M * 0.03); ctx.bezierCurveTo(M * 0.1, -M * 0.38, M * 0.44, -M * 0.38, M * 0.42, -M * 0.13); ctx.bezierCurveTo(M * 0.4, -M * 0.02, M * 0.14, M * 0.02, 0, M * 0.02);
+        cellFill(M * 0.22, -M * 0.16, M * 0.28, c1, 0.3); glowStroke(c1, 1.8, 11);
+        ctx.beginPath(); ctx.moveTo(0, M * 0.02); ctx.bezierCurveTo(M * 0.14, M * 0.02, M * 0.35, M * 0.07, M * 0.3, M * 0.23); ctx.bezierCurveTo(M * 0.25, M * 0.36, M * 0.08, M * 0.26, 0, M * 0.1);
+        cellFill(M * 0.16, M * 0.14, M * 0.2, c2, 0.26); glowStroke(c2, 1.5, 9);
+        ctx.beginPath(); for (let v = 0; v < 5; v++) { ctx.moveTo(M * 0.02, -M * 0.02); ctx.lineTo(M * (0.16 + v * 0.055), -M * (0.28 - v * 0.05)); } ctx.strokeStyle = hexA(c2, .4); ctx.lineWidth = 0.9; ctx.stroke();
+        ctx.restore();
+        const ex = cx + s * open * M * 0.3;
+        dot(ex, cy - M * 0.17, Math.max(2, M * 0.042), hexA(c2, .9), 8); dot(ex, cy - M * 0.17, Math.max(1, M * 0.02), hexA(c1, 1), 0);
+        dot(cx + s * open * M * 0.19, cy + M * 0.17, Math.max(1.4, M * 0.024), hexA(c1, .9), 6);
+      }
+      ctx.beginPath(); ctx.ellipse(cx, cy + M * 0.03, M * 0.016, M * 0.13, 0, 0, TAU); ctx.fillStyle = hexA(c2, .9); ctx.fill();
+      ctx.beginPath(); for (const s of [-1, 1]) { ctx.moveTo(cx, cy - M * 0.09); ctx.quadraticCurveTo(cx + s * M * 0.03, cy - M * 0.2, cx + s * M * 0.1, cy - M * 0.24); } ctx.strokeStyle = c2; ctx.lineWidth = 1; ctx.stroke();
+    },
+    14(t, w, hgt, c1, c2) { // anglerfish
+      const M = Math.min(w, hgt), cx = w * 0.44, cy = hgt * 0.58 + Math.sin(t) * M * 0.012, R = M * 0.27, wag = Math.sin(t * 2.4) * R * 0.2;
+      ctx.beginPath(); ctx.moveTo(cx - R * 0.85, cy); ctx.quadraticCurveTo(cx - R * 1.2, cy - R * 0.1, cx - R * 1.55, cy - R * 0.5 + wag); ctx.quadraticCurveTo(cx - R * 1.32, cy + wag * 0.5, cx - R * 1.55, cy + R * 0.5 + wag); ctx.quadraticCurveTo(cx - R * 1.2, cy + R * 0.1, cx - R * 0.85, cy);
+      cellFill(cx - R * 1.2, cy, R * 0.7, c1, 0.24); glowStroke(c1, 1.5, 8);
+      blob(cx, cy, R, t, 2, 0.025, 60); cellFill(cx, cy, R, c1, 0.24); glowStroke(c1, 2, 12);
+      const a = [cx + R * 0.02, cy + R * 0.2], u = [cx + R * 1.04, cy - R * 0.2], d = [cx + R * 0.94, cy + R * 0.56];
+      ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...u); ctx.lineTo(...d); ctx.closePath(); ctx.fillStyle = 'rgba(5,6,17,.9)'; ctx.fill(); glowStroke(c1, 1.4, 5);
+      ctx.beginPath();
+      for (let i = 1; i <= 5; i++) {
+        const f = i / 5.6, tx = a[0] + (u[0] - a[0]) * f, ty = a[1] + (u[1] - a[1]) * f, bx = a[0] + (d[0] - a[0]) * f, by = a[1] + (d[1] - a[1]) * f, g = R * 0.06;
+        ctx.moveTo(tx - g, ty + g * 0.3); ctx.lineTo(tx + (bx - tx) * 0.5, ty + (by - ty) * 0.5); ctx.lineTo(tx + g, ty - g * 0.3);
+        ctx.moveTo(bx - g, by - g * 0.1); ctx.lineTo(bx + (tx - bx) * 0.36, by + (ty - by) * 0.36); ctx.lineTo(bx + g, by + g * 0.1);
+      }
+      ctx.fillStyle = hexA(c2, .95); ctx.fill();
+      dot(cx + R * 0.1, cy - R * 0.42, Math.max(1.4, M * 0.02), c2, 6); dot(cx + R * 0.1, cy - R * 0.42, Math.max(0.6, M * 0.008), '#05060D', 0);
+      const lx = cx + R * 1.28, ly = cy - R * 1.02 + Math.sin(t * 1.5) * R * 0.08, on = (Math.sin(t * 3) + 1) / 2;
+      ctx.beginPath(); ctx.moveTo(cx + R * 0.05, cy - R * 0.97); ctx.quadraticCurveTo(cx + R * 0.7, cy - R * 1.75, lx, ly); glowStroke(c1, 1.3, 4);
+      const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, M * 0.16); g.addColorStop(0, hexA(c2, .3 + on * .25)); g.addColorStop(1, hexA(c2, 0)); ctx.fillStyle = g; ctx.fillRect(lx - M * 0.16, ly - M * 0.16, M * 0.32, M * 0.32);
+      dot(lx, ly, Math.max(1.6, M * 0.022 * (1 + on * 0.3)), c2, 14 + on * 12);
+    },
+    15(t, w, hgt, c1, c2) { // manta ray
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt * 0.42 + Math.sin(t * 0.8) * M * 0.012, tip = cy + Math.sin(t * 1.5) * M * 0.09;
+      tube([[cx, cy + M * 0.2, M * 0.012], [cx + Math.sin(t) * M * 0.02, cy + M * 0.36, M * 0.006], [cx + Math.sin(t * 1.3) * M * 0.05, cy + M * 0.54, M * 0.002]], 6); glowStroke(c1, 1.2, 5);
+      ctx.beginPath(); ctx.moveTo(cx, cy - M * 0.19);
+      for (const s of [1, -1]) {
+        ctx.bezierCurveTo(cx + s * M * 0.12, cy - M * 0.21, cx + s * M * 0.32, cy - M * 0.1, cx + s * M * 0.47, tip);
+        ctx.bezierCurveTo(cx + s * M * 0.3, cy + M * 0.03, cx + s * M * 0.14, cy + M * 0.2, cx, cy + M * 0.25);
+        if (s > 0) ctx.moveTo(cx, cy - M * 0.19);
+      }
+      cellFill(cx, cy, M * 0.42, c1, 0.26); glowStroke(c1, 2, 13);
+      for (const s of [-1, 1]) {
+        ctx.beginPath(); ctx.moveTo(cx + s * M * 0.05, cy - M * 0.19); ctx.quadraticCurveTo(cx + s * M * 0.1, cy - M * 0.3, cx + s * M * 0.05, cy - M * 0.32 - Math.sin(t * 2 + s) * M * 0.01); glowStroke(c1, 2.2, 6);
+        ctx.beginPath(); for (let g = 0; g < 5; g++) { const y = cy + g * M * 0.03; ctx.moveTo(cx + s * M * 0.04, y); ctx.lineTo(cx + s * M * 0.1, y + M * 0.012); } ctx.strokeStyle = hexA(c2, .65); ctx.lineWidth = 1; ctx.stroke();
+        for (let k = 0; k < 4; k++) dot(cx + s * M * (0.16 + k * 0.06), cy - M * 0.07 + (k % 2) * M * 0.05 + (tip - cy) * k * 0.14, Math.max(0.9, M * 0.011), hexA(c2, .75), 4);
+      }
+    },
+    16(t, w, hgt, c1, c2) { // seahorse
+      const M = Math.min(w, hgt), cx = w * 0.47, cy = hgt / 2 + Math.sin(t * 1.3) * M * 0.018, fan = Math.sin(t * 9) * 0.25;
+      const P = pts => pts.map(([x, y, r]) => [cx + x * M, cy + y * M, r * M]);
+      ctx.save(); ctx.translate(cx - M * 0.075, cy - M * 0.03);
+      ctx.beginPath(); for (let i = 0; i < 7; i++) { const a = Math.PI * 0.62 + i * 0.3 + fan * 0.4; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * M * 0.14, Math.sin(a) * M * 0.14); } ctx.strokeStyle = hexA(c2, .7); ctx.lineWidth = 1.1; ctx.stroke();
+      ctx.restore();
+      tube(P([[0.02, -0.3, 0.03], [0.1, -0.28, 0.018], [0.18, -0.26, 0.019]]), 5); cellFill(cx + M * 0.1, cy - M * 0.28, M * 0.12, c1, 0.3); glowStroke(c1, 1.5, 7);
+      const body = tube(P([[-0.02, -0.33, 0.06], [-0.07, -0.23, 0.052], [-0.04, -0.12, 0.07], [0.02, -0.01, 0.1], [0.01, 0.1, 0.08], [-0.03, 0.19, 0.055], [-0.05, 0.27, 0.038], [-0.01, 0.35, 0.028], [0.07, 0.36, 0.021], [0.11, 0.3, 0.015], [0.07, 0.25, 0.01], [0.03, 0.28, 0.005]]), 6);
+      cellFill(cx, cy, M * 0.34, c1, 0.28); glowStroke(c1, 1.9, 12);
+      ctx.beginPath(); body.forEach((p, i) => { if (i % 3 === 0 && i > 3) { ctx.moveTo(p.x - p.nx * p.r, p.y - p.ny * p.r); ctx.lineTo(p.x + p.nx * p.r, p.y + p.ny * p.r); } }); ctx.strokeStyle = hexA(c2, .45); ctx.lineWidth = 0.9; ctx.stroke();
+      ctx.beginPath(); for (let i = 0; i < 4; i++) { ctx.moveTo(cx - M * (0.05 - i * 0.025), cy - M * 0.37); ctx.lineTo(cx - M * (0.07 - i * 0.03), cy - M * 0.42); } ctx.strokeStyle = c2; ctx.lineWidth = 1.2; ctx.stroke();
+      dot(cx + M * 0.005, cy - M * 0.325, Math.max(1.2, M * 0.016), c2, 6);
+    },
+    17(t, w, hgt, c1, c2) { // axolotl
+      const M = Math.min(w, hgt), cx = w / 2, hy = hgt * 0.28, sw = s => Math.sin(t * 1.8 - s * 3) * M * 0.05 * s;
+      for (const [dy, a] of [[0.2, 0.9], [0.4, 0.95]]) for (const s of [-1, 1]) {
+        ctx.beginPath(); ctx.moveTo(cx + s * M * 0.08, hy + dy * M); ctx.lineTo(cx + s * M * 0.2, hy + dy * M + Math.sin(t * 1.5 + dy * 9 + s) * M * 0.018 + M * 0.03);
+        glowStroke(c1, Math.max(2, M * 0.026 * a), 5);
+      }
+      tube([[cx, hy + M * 0.02, M * 0.01], [cx, hy + M * 0.08, M * 0.085], [cx + sw(0.2), hy + M * 0.22, M * 0.095], [cx + sw(0.45), hy + M * 0.4, M * 0.07], [cx + sw(0.7), hy + M * 0.54, M * 0.04], [cx + sw(1), hy + M * 0.67, M * 0.004]], 7);
+      cellFill(cx, hy + M * 0.3, M * 0.36, c1, 0.3); glowStroke(c1, 1.8, 11);
+      for (let k = 0; k < 3; k++) for (const s of [-1, 1]) {
+        const ang = (-0.62 + k * 0.5), bx = cx + s * M * 0.12, by = hy - M * 0.01 + k * M * 0.03, wave = Math.sin(t * 2.2 + k) * 0.12, ex = bx + s * Math.cos(ang + wave) * M * 0.21, ey = by + Math.sin(ang + wave) * M * 0.21;
+        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, ey);
+        for (let f = 1; f <= 5; f++) { const q = f / 5.4, x = bx + (ex - bx) * q, y = by + (ey - by) * q; ctx.moveTo(x, y); ctx.lineTo(x + s * M * 0.018, y - M * 0.035); ctx.moveTo(x, y); ctx.lineTo(x + s * M * 0.018, y + M * 0.035); }
+        glowStroke(c2, 1.1, 6);
+      }
+      ctx.beginPath(); ctx.ellipse(cx, hy, M * 0.15, M * 0.105, 0, 0, TAU); cellFill(cx, hy, M * 0.15, c1, 0.34); glowStroke(c1, 1.9, 11);
+      for (const s of [-1, 1]) dot(cx + s * M * 0.08, hy - M * 0.025, Math.max(1.3, M * 0.015), '#05060D', 0);
+      ctx.beginPath(); ctx.arc(cx, hy + M * 0.01, M * 0.06, 0.3, Math.PI - 0.3); ctx.strokeStyle = hexA(c2, .9); ctx.lineWidth = 1.2; ctx.stroke();
+    },
+    18(t, w, hgt, c1, c2) { // sea turtle
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt * 0.5 + Math.sin(t * 0.9) * M * 0.012, rx = M * 0.21, ry = M * 0.28, stroke = Math.sin(t * 1.4) * 0.34;
+      const flipper = (s, y, len, base, swing) => {
+        ctx.save(); ctx.translate(cx + s * rx * 0.72, y); ctx.rotate(s * (base + swing));
+        ctx.beginPath(); ctx.ellipse(s * len * 0.5, 0, len * 0.52, len * 0.17, s * 0.15, 0, TAU); cellFill(s * len * 0.5, 0, len * 0.5, c1, 0.3); glowStroke(c1, 1.5, 8); ctx.restore();
+      };
+      for (const s of [-1, 1]) { flipper(s, cy - ry * 0.55, M * 0.27, -0.35, stroke); flipper(s, cy + ry * 0.7, M * 0.14, 0.55, -stroke * 0.5); }
+      ctx.beginPath(); ctx.ellipse(cx, cy - ry * 1.12, M * 0.062, M * 0.085, 0, 0, TAU); cellFill(cx, cy - ry * 1.12, M * 0.08, c1, 0.34); glowStroke(c1, 1.5, 8);
+      for (const s of [-1, 1]) dot(cx + s * M * 0.032, cy - ry * 1.2, Math.max(0.9, M * 0.01), c2, 4);
+      ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); cellFill(cx, cy, ry, c1, 0.28); glowStroke(c1, 2.2, 13);
+      const hex = (x, y, r) => { for (let i = 0; i <= 6; i++) { const a = i / 6 * TAU + Math.PI / 6, px = x + Math.cos(a) * r * 1.1, py = y + Math.sin(a) * r; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } };
+      ctx.beginPath();
+      for (let i = -1.5; i <= 1.5; i++) hex(cx, cy + i * ry * 0.46, ry * 0.21);
+      for (const s of [-1, 1]) for (const i of [-1, 0, 1]) hex(cx + s * rx * 0.6, cy + i * ry * 0.48, ry * 0.17);
+      ctx.strokeStyle = hexA(c2, .75); ctx.lineWidth = 1.1; ctx.stroke();
+    },
+    19(t, w, hgt, c1, c2) { // archaeopteryx
+      const M = Math.min(w, hgt), cx = w * 0.53, cy = hgt * 0.56 + Math.sin(t * 2) * M * 0.012, flap = Math.sin(t * 2.6) * 0.3;
+      const P = pts => pts.map(([x, y, r]) => [cx + x * M, cy + y * M, r * M]);
+      const tail = tube(P([[-0.03, 0.02, 0.004], [-0.1, 0.05, 0.02], [-0.2, 0.1, 0.013], [-0.46, 0.13, 0.004]]), 6); glowStroke(c1, 1.1, 4);
+      tail.forEach((p, i) => { if (i < 8) return; for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(p.x + p.nx * s * M * 0.034, p.y + p.ny * s * M * 0.034, M * 0.04, M * 0.011, -0.45 * s + 0.3, 0, TAU); ctx.fillStyle = hexA(c2, .32); ctx.fill(); glowStroke(c1, 0.8, 3); } });
+      ctx.beginPath(); ctx.moveTo(cx + M * 0.01, cy + M * 0.06); ctx.lineTo(cx - M * 0.01, cy + M * 0.17); ctx.lineTo(cx + M * 0.04, cy + M * 0.18); ctx.strokeStyle = c1; ctx.lineWidth = 1.6; ctx.stroke();
+      tube(P([[0.25, -0.15, 0.024], [0.34, -0.135, 0.004]]), 4); cellFill(cx + M * 0.3, cy - M * 0.14, M * 0.06, c2, 0.4); glowStroke(c2, 1.1, 4);
+      tube(P([[-0.12, 0.05, 0.004], [-0.06, 0.04, 0.05], [0.03, 0.01, 0.078], [0.13, -0.06, 0.05], [0.19, -0.13, 0.036], [0.26, -0.15, 0.034]]), 6); cellFill(cx + M * 0.06, cy, M * 0.22, c1, 0.3); glowStroke(c1, 1.8, 11);
+      dot(cx + M * 0.235, cy - M * 0.165, Math.max(1, M * 0.012), c2, 5);
+      ctx.save(); ctx.translate(cx + M * 0.07, cy - M * 0.03);
+      for (let i = 0; i < 10; i++) {
+        const a = -2.75 + i * 0.17 + flap * (1 - i * 0.04), L = M * (0.2 + i * 0.03 - (i > 6 ? (i - 6) * 0.03 : 0));
+        ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.ellipse(L * 0.56, 0, L * 0.5, M * 0.021, 0, 0, TAU); ctx.fillStyle = hexA(i % 2 ? c1 : c2, .24); ctx.fill(); glowStroke(c1, 0.9, 4); ctx.restore();
+      }
+      ctx.restore();
+    },
+    20(t, w, hgt, c1, c2) { // hummingbird
+      const M = Math.min(w, hgt), bob = Math.sin(t * 2.4) * M * 0.012, cx = w * 0.4, cy = hgt * 0.5 + bob;
+      const P = pts => pts.map(([x, y, r]) => [cx + x * M, cy + y * M, r * M]);
+      const fx = cx + M * 0.46, fy = hgt * 0.42;
+      ctx.beginPath(); ctx.moveTo(fx + M * 0.03, fy + M * 0.04); ctx.quadraticCurveTo(fx + M * 0.08, fy + M * 0.25, fx + M * 0.04, hgt * 0.96); ctx.strokeStyle = hexA(c1, .7); ctx.lineWidth = 1.4; ctx.stroke();
+      for (let i = 0; i < 5; i++) { const a = -0.95 + i * 0.47; ctx.beginPath(); ctx.ellipse(fx + Math.cos(a) * M * 0.05 + M * 0.01, fy + Math.sin(a) * M * 0.05, M * 0.062, M * 0.024, a, 0, TAU); ctx.fillStyle = hexA(c2, .34); ctx.fill(); glowStroke(c2, 1, 6); }
+      ctx.save(); ctx.translate(cx + M * 0.01, cy - M * 0.03);
+      for (let k = 0; k < 4; k++) { const a = -2.0 + Math.sin(t * 34 + k * 1.2) * 0.62; ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.ellipse(M * 0.17, 0, M * 0.18, M * 0.035, 0, 0, TAU); ctx.fillStyle = hexA(c2, .13); ctx.fill(); ctx.strokeStyle = hexA(c2, .25); ctx.lineWidth = 0.8; ctx.stroke(); ctx.restore(); }
+      ctx.restore();
+      for (const a of [1.95, 2.2, 2.45]) { ctx.beginPath(); ctx.moveTo(cx - M * 0.12, cy + M * 0.13); ctx.lineTo(cx - M * 0.12 + Math.cos(a) * M * 0.17, cy + M * 0.13 + Math.sin(a) * M * 0.17); glowStroke(c1, 2, 5); }
+      ctx.beginPath(); ctx.moveTo(cx + M * 0.1, cy - M * 0.135); ctx.lineTo(cx + M * 0.36, cy - M * 0.09); glowStroke(c2, 1.5, 4);
+      tube(P([[-0.15, 0.17, 0.006], [-0.1, 0.1, 0.035], [-0.03, 0.02, 0.066], [0.03, -0.07, 0.056], [0.09, -0.135, 0.044], [0.13, -0.14, 0.012]]), 6); cellFill(cx, cy, M * 0.2, c1, 0.34); glowStroke(c1, 1.7, 11);
+      for (let i = 0; i < 7; i++) dot(cx + M * (0.015 + i * 0.008), cy - M * (0.01 + i * 0.015) + (i % 2) * M * 0.012, Math.max(0.9, M * 0.011), irid(i * 24 + 320 + t * 70), 5);
+      dot(cx + M * 0.09, cy - M * 0.15, Math.max(1, M * 0.011), c2, 4);
+    },
+    21(t, w, hgt, c1, c2) { // humpback whale
+      const M = Math.min(w, hgt), cx = w * 0.48, cy = hgt * 0.5, wave = x => Math.sin(t * 1.1 + x * 3) * M * 0.016;
+      const P = pts => pts.map(([x, y, r]) => [cx + x * M, cy + y * M + wave(x), r * M]);
+      for (let i = 0; i < 6; i++) { const f = ((t * 0.35 + i / 6) % 1), s = i % 2 ? 1 : -1; dot(cx - M * 0.2 + s * f * M * 0.07, cy - M * (0.16 + f * 0.22), Math.max(0.8, M * 0.009 * (1 - f * 0.5)), hexA(c2, .9 * (1 - f)), 5); }
+      const end = [cx + M * 0.39, cy - M * 0.07 + wave(0.39)], fl = Math.sin(t * 1.1 + 1) * M * 0.03;
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(...end); ctx.quadraticCurveTo(end[0] + s * M * 0.03 + M * 0.03, end[1] - M * 0.09, end[0] + s * M * 0.08 + M * 0.03, end[1] - M * 0.08 + fl); ctx.quadraticCurveTo(end[0] + s * M * 0.05 + M * 0.02, end[1] - M * 0.02, end[0], end[1] + M * 0.01); cellFill(end[0], end[1] - M * 0.05, M * 0.12, c1, 0.32); glowStroke(c1, 1.5, 8); }
+      tube(P([[-0.44, 0.05, 0.03], [-0.34, -0.01, 0.1], [-0.15, -0.04, 0.135], [0.07, -0.02, 0.1], [0.25, -0.01, 0.05], [0.39, -0.07, 0.014]]), 7); cellFill(cx - M * 0.1, cy, M * 0.4, c1, 0.28); glowStroke(c1, 2, 13);
+      tube(P([[-0.17, 0.04, 0.004], [-0.16, 0.09, 0.03], [-0.13, 0.2, 0.034], [-0.05, 0.33, 0.012]]), 6); cellFill(cx - M * 0.12, cy + M * 0.2, M * 0.16, c1, 0.34); glowStroke(c1, 1.5, 8);
+      ctx.beginPath(); for (let i = 0; i < 6; i++) { const y = cy + i * M * 0.016; ctx.moveTo(cx - M * 0.4 + i * M * 0.02, y + M * 0.052 + wave(-0.4)); ctx.quadraticCurveTo(cx - M * 0.25, y + M * 0.06 + wave(-0.25), cx - M * 0.05 - i * M * 0.02, y + M * 0.045 + wave(-0.05)); } ctx.strokeStyle = hexA(c2, .45); ctx.lineWidth = 0.9; ctx.stroke();
+      dot(cx - M * 0.31, cy - M * 0.005 + wave(-0.31), Math.max(1, M * 0.012), c2, 5);
+    },
+    22(t, w, hgt, c1, c2) { // neuron
+      const M = Math.min(w, hgt), cx = w * 0.46, cy = hgt * 0.32, dend = new Path2D();
+      const branch = (x, y, a, len, depth, seed) => {
+        const nx = x + Math.cos(a) * len, ny = y + Math.sin(a) * len;
+        dend.moveTo(x, y); dend.lineTo(nx, ny);
+        if (depth) for (const s of [-1, 1]) branch(nx, ny, a + s * (0.42 + 0.2 * Math.sin(seed * 7.1 + s)) + Math.sin(t * 0.8 + seed) * 0.03, len * 0.72, depth - 1, seed + s * 1.7 + 2);
+      };
+      for (let k = 0; k < 6; k++) branch(cx, cy, -Math.PI / 2 + (k - 2.5) * 0.82, M * 0.095, 3, k * 2.3);
+      ctx.strokeStyle = c1; ctx.lineWidth = 1.2; ctx.shadowColor = c1; ctx.shadowBlur = 6 * (1 + glowBoost); ctx.stroke(dend); ctx.shadowBlur = 0;
+      const path = f => [cx + Math.sin(f * 2.6) * M * 0.05 + f * M * 0.08, cy + f * M * 0.56];
+      const axon = []; for (let i = 0; i <= 12; i++) axon.push([...path(i / 12), M * 0.008]);
+      tube(axon, 3); glowStroke(c1, 1.1, 4);
+      for (let i = 0; i < 5; i++) {
+        const f = 0.14 + i * 0.165, a = path(f), b = path(f + 0.12);
+        ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.lineCap = 'round'; ctx.strokeStyle = hexA(c2, .5); ctx.lineWidth = Math.max(3, M * 0.034); ctx.stroke(); ctx.lineCap = 'butt';
+      }
+      const end = path(1), term = new Path2D();
+      for (let k = 0; k < 4; k++) { const a = 0.75 + k * 0.5, x = end[0] + Math.cos(a) * M * 0.085, y = end[1] + Math.sin(a) * M * 0.085 * 0.55; term.moveTo(...end); term.lineTo(x, y); }
+      ctx.strokeStyle = c1; ctx.lineWidth = 1.2; ctx.stroke(term);
+      for (let k = 0; k < 4; k++) { const a = 0.75 + k * 0.5; dot(end[0] + Math.cos(a) * M * 0.085, end[1] + Math.sin(a) * M * 0.085 * 0.55, Math.max(1, M * 0.012), c2, 5); }
+      blob(cx, cy, M * 0.085, t, 4, 0.08, 40); cellFill(cx, cy, M * 0.085, c1, 0.34); glowStroke(c1, 1.9, 13);
+      dot(cx, cy, Math.max(1.6, M * 0.028), c2, 9);
+      const f = (t * 0.45) % 1, s = path(f); dot(s[0], s[1], Math.max(1.6, M * 0.02), '#FFFFFF', 18);
+    },
+    23(t, w, hgt, c1, c2) { // cortex
+      const M = Math.min(w, hgt), cx = w * 0.5, cy = hgt * 0.45, rx = M * 0.38, ry = M * 0.28;
+      tube([[cx + rx * 0.3, cy + ry * 0.75, M * 0.05], [cx + rx * 0.38, cy + ry * 1.2, M * 0.04], [cx + rx * 0.5, cy + ry * 1.62, M * 0.03]], 5); cellFill(cx + rx * 0.4, cy + ry * 1.2, M * 0.12, c1, 0.3); glowStroke(c1, 1.4, 7);
+      ctx.beginPath(); ctx.ellipse(cx + rx * 0.68, cy + ry * 0.72, rx * 0.34, ry * 0.42, -0.25, 0, TAU); cellFill(cx + rx * 0.68, cy + ry * 0.72, rx * 0.34, c2, 0.28); glowStroke(c2, 1.4, 7);
+      ctx.beginPath(); for (let i = -2; i <= 2; i++) { const y = cy + ry * (0.72 + i * 0.13); ctx.moveTo(cx + rx * 0.43, y); ctx.quadraticCurveTo(cx + rx * 0.68, y + ry * 0.08, cx + rx * 0.97 - Math.abs(i) * rx * 0.05, y - ry * 0.08); } ctx.strokeStyle = hexA(c2, .55); ctx.lineWidth = 0.9; ctx.stroke();
+      const brain = () => { ctx.beginPath(); for (let i = 0; i <= 140; i++) { const a = i / 140 * TAU, b = 1 + 0.03 * Math.sin(a * 13), x = cx + Math.cos(a) * rx * b, y = cy + Math.sin(a) * ry * b * (Math.sin(a) > 0 ? 0.78 : 1.1); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.closePath(); };
+      brain(); cellFill(cx, cy, rx, c1, 0.28); glowStroke(c1, 2, 13);
+      ctx.save(); brain(); ctx.clip();
+      ctx.beginPath();
+      for (let r = 0; r < 6; r++) {
+        const y0 = cy - ry * 0.95 + r * ry * 0.38;
+        for (let i = 0; i <= 44; i++) { const f = i / 44, x = cx - rx * 1.05 + f * rx * 2.1, y = y0 + Math.sin(f * 15 + r * 2.1) * ry * 0.1 + Math.sin(f * 6 + r) * ry * 0.09; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      }
+      ctx.strokeStyle = hexA(c2, .5); ctx.lineWidth = 1.1; ctx.stroke();
+      ctx.restore();
+      for (let i = 0; i < 9; i++) { const on = Math.pow((Math.sin(t * 2.4 + i * 2.4) + 1) / 2, 3), a = i * 2.4; if (on > 0.05 || opts.still) dot(cx + Math.cos(a) * rx * (0.25 + (i % 4) * 0.2), cy + Math.sin(a) * ry * (0.2 + (i % 3) * 0.28), Math.max(1, M * (0.008 + on * 0.012)), hexA(c2, 0.3 + on * 0.7), 4 + on * 14); }
+    },
+    24(t, w, hgt, c1, c2) { // coral reef
+      const M = Math.min(w, hgt), base = hgt * 0.84, branches = new Path2D(), tips = [];
+      const coral = (x, y, a, len, depth, seed) => {
+        const nx = x + Math.cos(a) * len, ny = y + Math.sin(a) * len;
+        branches.moveTo(x, y); branches.lineTo(nx, ny);
+        if (!depth) { tips.push([nx, ny]); return; }
+        for (const s of [-1, 1]) coral(nx, ny, a + s * (0.36 + 0.14 * Math.sin(seed * 3.3)) + Math.sin(t * 0.9 + seed) * 0.015, len * 0.78, depth - 1, seed + s + 3);
+      };
+      coral(w / 2 - M * 0.24, base, -Math.PI / 2 - 0.12, M * 0.14, 4, 1);
+      ctx.strokeStyle = c1; ctx.lineWidth = Math.max(1.3, M * 0.011); ctx.lineCap = 'round'; ctx.shadowColor = c1; ctx.shadowBlur = 7 * (1 + glowBoost); ctx.stroke(branches); ctx.shadowBlur = 0; ctx.lineCap = 'butt';
+      ctx.beginPath(); tips.forEach(([x, y]) => { ctx.moveTo(x + M * 0.009, y); ctx.arc(x, y, Math.max(0.9, M * 0.009), 0, TAU); }); ctx.fillStyle = c2; ctx.fill();
+      const bx = w / 2 + M * 0.13, br = M * 0.16;
+      ctx.beginPath(); ctx.arc(bx, base, br, Math.PI, 0); ctx.closePath(); cellFill(bx, base - br * 0.4, br, c2, 0.3); glowStroke(c2, 1.5, 8);
+      ctx.save(); ctx.beginPath(); ctx.arc(bx, base, br, Math.PI, 0); ctx.clip(); ctx.beginPath();
+      for (let r = 1; r < 5; r++) for (let i = 0; i <= 36; i++) { const a = Math.PI + i / 36 * Math.PI, rr = br * (r / 5) + Math.sin(a * 14 + r) * br * 0.04, x = bx + Math.cos(a) * rr, y = base + Math.sin(a) * rr; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.strokeStyle = hexA(c1, .55); ctx.lineWidth = 0.9; ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.moveTo(w / 2 - M * 0.5, base + M * 0.01); ctx.quadraticCurveTo(w / 2, base - M * 0.03, w / 2 + M * 0.5, base + M * 0.01); ctx.lineTo(w / 2 + M * 0.46, base + M * 0.09); ctx.quadraticCurveTo(w / 2, base + M * 0.12, w / 2 - M * 0.46, base + M * 0.09); ctx.closePath(); ctx.fillStyle = hexA(c2, .16); ctx.fill(); glowStroke(c1, 1.2, 6);
+      for (let i = 0; i < 4; i++) {
+        const f = (t * (0.05 + i * 0.012) + i * 0.29) % 1, x = w / 2 - M * 0.46 + f * M * 0.92, y = hgt * (0.2 + i * 0.11) + Math.sin(t * 1.3 + i * 2) * M * 0.015, r = M * (0.03 + (i % 2) * 0.008);
+        ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.46, 0, 0, TAU); ctx.moveTo(x - r * 0.9, y); ctx.lineTo(x - r * 1.5, y - r * 0.45); ctx.lineTo(x - r * 1.5, y + r * 0.45); ctx.closePath(); ctx.fillStyle = hexA(i % 2 ? c2 : c1, .85); ctx.shadowColor = c1; ctx.shadowBlur = 6; ctx.fill(); ctx.shadowBlur = 0;
+      }
+    },
+    25(t, w, hgt, c1, c2) { // tree of life
+      const M = Math.min(w, hgt), cx = w / 2, base = hgt * 0.72, depths = [], leaves = new Path2D();
+      const grow = (x, y, a, len, d, seed) => {
+        const nx = x + Math.cos(a) * len, ny = y + Math.sin(a) * len, p = depths[d] = depths[d] || new Path2D();
+        p.moveTo(x, y); p.lineTo(nx, ny);
+        if (!d) { leaves.moveTo(nx + M * 0.012, ny); leaves.arc(nx, ny, Math.max(1, M * 0.012), 0, TAU); return; }
+        const sway = Math.sin(t * 0.8 + seed) * 0.018;
+        grow(nx, ny, a - 0.4 - 0.1 * Math.sin(seed * 2.1) + sway, len * 0.76, d - 1, seed * 1.3 + 1);
+        grow(nx, ny, a + 0.4 + 0.1 * Math.sin(seed * 3.7) + sway, len * 0.76, d - 1, seed * 1.7 + 2);
+      };
+      grow(cx, base, -Math.PI / 2, M * 0.17, 6, 1);
+      ctx.lineCap = 'round'; ctx.shadowColor = c1; ctx.shadowBlur = 6 * (1 + glowBoost); ctx.strokeStyle = c1;
+      depths.forEach((p, d) => { if (p) { ctx.lineWidth = Math.max(0.8, M * 0.0048 * (d + 0.7)); ctx.stroke(p); } });
+      ctx.beginPath();
+      for (const s of [-3, -1.6, -0.5, 0.5, 1.6, 3]) { ctx.moveTo(cx, base - M * 0.01); ctx.quadraticCurveTo(cx + s * M * 0.03, base + M * 0.09, cx + s * M * 0.1, base + M * (0.2 - Math.abs(s) * 0.03)); }
+      ctx.lineWidth = Math.max(1, M * 0.01); ctx.stroke(); ctx.shadowBlur = 0; ctx.lineCap = 'butt';
+      ctx.fillStyle = c2; ctx.shadowColor = c2; ctx.shadowBlur = 6 * (1 + glowBoost); ctx.fill(leaves); ctx.shadowBlur = 0;
+    },
+    26(t, w, hgt, c1, c2) { // biosphere
+      const M = Math.min(w, hgt), cx = w / 2, cy = hgt / 2, R = M * 0.33, spin = t * 0.14;
+      const air = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.32); air.addColorStop(0, hexA(c1, .4)); air.addColorStop(1, hexA(c1, 0)); ctx.fillStyle = air; ctx.beginPath(); ctx.arc(cx, cy, R * 1.32, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); cellFill(cx, cy, R, c1, 0.34); glowStroke(c1, 1.8, 16);
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
+      for (const [lon, lat, sz, seed] of [[0.2, 0.55, 0.3, 1], [0.9, 0.15, 0.27, 2], [1.9, -0.45, 0.22, 3], [3.0, 0.5, 0.34, 4], [3.7, -0.3, 0.2, 5], [4.8, 0.2, 0.28, 6], [5.6, -0.6, 0.16, 7]]) {
+        const a = lon + spin, z = Math.cos(a) * Math.cos(lat); if (z < -0.1) continue;
+        const x = cx + R * Math.sin(a) * Math.cos(lat), y = cy - R * Math.sin(lat), sq = Math.max(0.14, Math.cos(a));
+        ctx.save(); ctx.translate(x, y); ctx.scale(sq, 1); blob(0, 0, R * sz, seed, seed * 1.9, 0.2, 40); ctx.restore();
+        ctx.fillStyle = hexA(c2, .68); ctx.fill();
+      }
+      ctx.beginPath();
+      for (let k = 0; k < 4; k++) { const y = cy + R * (-0.65 + k * 0.42), x0 = cx - R + ((t * 0.04 + k * 0.31) % 1) * R * 1.6; ctx.moveTo(x0, y); ctx.bezierCurveTo(x0 + R * 0.2, y - R * 0.08, x0 + R * 0.4, y + R * 0.08, x0 + R * 0.68, y); }
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = Math.max(1, M * 0.009); ctx.lineCap = 'round'; ctx.stroke(); ctx.lineCap = 'butt';
+      ctx.restore();
+      for (let i = 0; i < 12; i++) {
+        const a = i / 12 * TAU + t * 0.4, x = cx + Math.cos(a) * R * 1.3, y = cy + Math.sin(a) * R * 0.42;
+        if (Math.sin(a) < 0 && Math.hypot(x - cx, y - cy) < R) continue;
+        dot(x, y, Math.max(0.9, M * (0.008 + 0.006 * (i % 3))), irid(i * 30 + t * 40), 7);
       }
     },
   };
@@ -1206,7 +1604,7 @@ function finishSession() {
   const acc = s.done ? Math.round(s.right / s.done * 100) : 0;
   root.innerHTML = `<div class="fc-summary">
     <div class="fc-sum-spec${evolved ? ' is-evolving' : ''}"><canvas></canvas></div>
-    ${evolved ? `<div class="fc-evolved">${icon('sparkles')} Evolved into a ${esc(STAGES[st].name)}</div>` : ''}
+    ${evolved ? `<div class="fc-evolved">${icon('sparkles')} Evolved into ${esc(aStage(STAGES[st].name))}</div>` : ''}
     <h2>${s.done ? 'Session complete' : 'Session ended'}</h2>
     <div class="fc-sum-grid"><div><b>${s.done}</b><span>reviews</span></div><div><b>${acc}%</b><span>correct</span></div><div><b>+${s.xp}</b><span>XP</span></div><div><b>${Math.round((Date.now() - s.startedAt) / 60000)}m</b><span>time</span></div></div>
     ${s.skips ? `<div class="fc-note">${s.skips} skip${s.skips === 1 ? '' : 's'}. Skipped cards are unchanged and stay in your queue.</div>` : ''}
