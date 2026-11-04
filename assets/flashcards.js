@@ -14,7 +14,7 @@ const GRADE_XP = [2, 6, 10, 12];  // again, hard, good, easy
 /* ---------------------------------------------------------------- state */
 let D = null;           // { decks, cards, byId, deckById }
 let S = load();
-function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, optional: {}, optionalAt: {}, undone: {}, plansGone: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
+function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, optional: {}, optionalAt: {}, habits: {}, undone: {}, plansGone: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
 function load() { const s = store.get(KEY, null); return s && s.v === 1 ? Object.assign(blank(), s) : blank(); }
 function save() { store.set(KEY, S); dirty = true; schedulePush(); }
 const today = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -56,6 +56,12 @@ function mergeProgress(local, remote) {
   for (const id of new Set([...Object.keys(local.optional), ...Object.keys(remote.optional), ...Object.keys(out.optionalAt)])) {
     const lt = (local.optionalAt || {})[id] || 0, rt = (remote.optionalAt || {})[id] || 0;
     if (lt === rt ? local.optional[id] || remote.optional[id] : (lt > rt ? local : remote).optional[id]) out.optional[id] = true;
+  }
+  // habits: each tick is a time, negative once cleared, so the newest change wins either way
+  out.habits = {};
+  for (const h of new Set([...Object.keys(local.habits), ...Object.keys(remote.habits)])) {
+    const a = local.habits[h] || {}, b = remote.habits[h] || {}, o = out.habits[h] = {};
+    for (const d of new Set([...Object.keys(a), ...Object.keys(b)])) o[d] = Math.abs(b[d] || 0) > Math.abs(a[d] || 0) ? b[d] : a[d];
   }
   return out;   // newPerDay, goal, name, created come from local
 }
@@ -1589,6 +1595,7 @@ function grade(id, g, fresh) {
   const c = S.cards[id];
   sess.queue.shift();
   if (c.step >= 0) sess.queue.splice(Math.min(sess.queue.length, 3 + c.step * 4), 0, id);   // learning: see it again soon
+  markPlanDays();
   save();
 }
 function advance() { keyHandler = null; nextCard(); }
@@ -1699,6 +1706,190 @@ function startSprint() {
   }, 100);
   show();
 }
+
+/* ---------------------------------------------------------------- progress page
+   A month grid modelled on a habit tracker. Exam plan rows tick themselves; with no plan running the
+   Daily goal stands in. Gym, reading and football are logged by hand against a weekly target. */
+const HABITS = [
+  { id: 'gym', name: 'Gym', per: 4 },
+  { id: 'reading', name: 'Reading, 20 mins', per: 4 },
+  { id: 'football', name: 'Football practice', per: 1, weekdays: true },
+];
+const mondayOf = t => { const s = dayStart(t); return addDays(s, -((new Date(s).getDay() + 6) % 7)); };
+const planLastDay = p => { const d = dayStart(p.due); return Math.max(dayStart(p.created), new Date(p.due).getHours() >= 15 ? d : addDays(d, -1)); };
+const planRuns = (p, t) => t >= dayStart(p.created) && t <= planLastDay(p);
+// a day's target was never stored, so past days rebuild it: cards unseen now plus those learned since
+function pastPlanDay(p, t, st) {
+  const key = today(t), lastDay = planLastDay(p), log = p.log[key] || {};
+  const buffer = Math.max(1, daysBetween(p.created, lastDay) + 1) >= 4 ? 1 : 0;
+  const newDays = Math.max(0, daysBetween(t, lastDay) + 1 - buffer);
+  if (!newDays) return { target: 0, done: (log.n || 0) > 0 };   // review only
+  let left = st.fresh; for (const [d, r] of Object.entries(p.log)) if (d >= key) left += r.fresh || 0;
+  const target = Math.ceil(left / newDays);
+  return { target, done: target > 0 && (log.fresh || 0) >= target };
+}
+function todayPlanDone(p, st) {
+  const worked = ((p.log[today()] || {}).n || 0) + ((S.days[today()] || {}).n || 0) > 0;
+  return worked && !st.due && (st.newDays ? !st.todayLeft : true);
+}
+// a tick stays once earned, so it is written into the plan's log
+function markPlanDays() {
+  const now = dayStart(Date.now());
+  for (const p of S.plans) {
+    let st = null; const stats = () => st || (st = planStats(p));
+    for (const [key, r] of Object.entries(p.log)) { const t = new Date(key + 'T12:00').getTime(); if (!r.done && dayStart(t) < now && planRuns(p, dayStart(t)) && pastPlanDay(p, dayStart(t), stats()).done) r.done = 1; }
+    if (planRuns(p, now) && !(p.log[today()] || {}).done && todayPlanDone(p, stats())) plog(p).done = 1;
+  }
+}
+function planCell(p, t, st, now) {
+  if (!planRuns(p, t)) return { state: 'off' };
+  const log = p.log[today(t)] || {};
+  if (t > now) return { state: 'future' };
+  const nums = `${log.fresh || 0} new, ${log.n || 0} reviews`;
+  if (t === now) return log.done ? { state: 'done', tip: nums } : { state: 'today', tip: `${st.todayLeft} new and ${st.due} reviews left today` };
+  const past = pastPlanDay(p, t, st);
+  return { state: log.done || past.done ? 'done' : 'miss', tip: past.target ? `${nums}, target ${past.target} new` : nums };
+}
+const firstActive = () => { const k = Object.keys(S.days).filter(d => S.days[d].n).sort()[0]; return k ? dayStart(new Date(k + 'T12:00').getTime()) : Infinity; };
+function goalCell(t, now) {
+  if (S.plans.some(p => planRuns(p, t))) return { state: 'off' };
+  if (t > now) return { state: 'future' };
+  const n = (S.days[today(t)] || {}).n || 0, tip = `${n} of ${S.goal} reviews`;
+  if (n >= S.goal) return { state: 'done', tip };
+  return t === now ? { state: 'today', tip } : t < firstActive() ? { state: 'off' } : { state: 'miss', tip };
+}
+function dailyPct(t, now, stats) {
+  if (t > now) return null;
+  const run = S.plans.filter(p => planRuns(p, t));
+  const pct = run.length ? Math.round(run.filter(p => planCell(p, t, stats(p), now).state === 'done').length / run.length * 100)
+    : t < firstActive() ? null : Math.min(100, Math.round(((S.days[today(t)] || {}).n || 0) / S.goal * 100));
+  return t === now && !pct ? null : pct;      // today isn't a zero until it's over
+}
+const habitOn = (h, t) => ((S.habits[h.id] || {})[today(t)] || 0) > 0;
+const isWeekend = t => [0, 6].includes(new Date(t).getDay());
+const weekCount = (h, monday) => { let n = 0; for (let i = 0; i < 7; i++) if (habitOn(h, addDays(monday, i))) n++; return n; };
+function habitWeeks(h, days, now) {        // weeks finished in this range or already hit, from the habit's first tick
+  const ticks = Object.keys(S.habits[h.id] || {}).filter(d => S.habits[h.id][d] > 0).sort();
+  if (!ticks.length) return { hit: 0, of: 0 };
+  const start = mondayOf(new Date(ticks[0] + 'T12:00').getTime());
+  const mondays = [...new Set(days.map(mondayOf))].filter(m => m <= now && m >= start);
+  const hit = mondays.filter(m => weekCount(h, m) >= h.per).length;
+  return { hit, of: mondays.filter(m => addDays(m, 7) <= now || weekCount(h, m) >= h.per).length };
+}
+function trendSvg(vals, labels, max, unit) {
+  const W = 640, H = 250, L = 34, R = 14, T = 14, B_ = 26, n = labels.length;
+  const x = i => L + (n > 1 ? i / (n - 1) : 0.5) * (W - L - R), y = v => T + (1 - v / max) * (H - T - B_);
+  const pts = vals.map((v, i) => v == null ? null : [x(i), y(v), i]).filter(Boolean);
+  const grid = [0, .25, .5, .75, 1].map(f => { const v = f * max; return `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 7}" y="${y(v) + 3.5}" text-anchor="end">${Math.round(v)}</text>`; }).join('');
+  const ticks = labels.map((l, i) => i % Math.ceil(n / 8) === 0 ? `<text class="pg-x" x="${x(i)}" y="${H - 7}" text-anchor="middle">${l}</text>` : '').join('');
+  if (!pts.length) return `<svg class="pg-svg" viewBox="0 0 ${W} ${H}"><g class="pg-grid">${grid}</g>${ticks}</svg><div class="pg-nodata">Nothing to show for these days yet.</div>`;
+  const yTop = T, yBot = H - B_, cl = v => Math.max(yTop, Math.min(yBot, v));
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[Math.max(0, i - 2)], b = pts[i - 1], c = pts[i], e = pts[Math.min(pts.length - 1, i + 1)];
+    d += ` C${b[0] + (c[0] - a[0]) / 6} ${cl(b[1] + (c[1] - a[1]) / 6)} ${c[0] - (e[0] - b[0]) / 6} ${cl(c[1] - (e[1] - b[1]) / 6)} ${c[0]} ${c[1]}`;
+  }
+  const last = pts[pts.length - 1], avg = vals.filter(v => v != null).reduce((s, v) => s + v, 0) / pts.length;
+  const area = `${d} L${last[0]} ${yBot} L${pts[0][0]} ${yBot} Z`;
+  const dots = pts.map(p => `<circle class="pg-hit" cx="${p[0]}" cy="${p[1]}" r="9"><title>${labels[p[2]]}: ${vals[p[2]]}${unit}</title></circle>`).join('');
+  return `<svg class="pg-svg" viewBox="0 0 ${W} ${H}"><defs><linearGradient id="pg-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34D399" stop-opacity=".42"/><stop offset="1" stop-color="#34D399" stop-opacity="0"/></linearGradient></defs>
+    <g class="pg-grid">${grid}</g>${ticks}<path d="${area}" fill="url(#pg-fill)"/><path class="pg-line" d="${d}"/>
+    <line class="pg-avg" x1="${L}" x2="${W - R}" y1="${y(avg)}" y2="${y(avg)}"/><text class="pg-avgt" x="${W - R}" y="${y(avg) - 6}" text-anchor="end">avg ${Math.round(avg)}${unit}</text>
+    <circle class="pg-end" cx="${last[0]}" cy="${last[1]}" r="5"/>${dots}</svg>`;
+}
+let pgRoot = null;
+const pg = { anchor: dayStart(Date.now()), mode: 'pct' };
+const DAYS2 = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+function pgRange() {
+  if (B.isPhone()) { const m = mondayOf(pg.anchor); return Array.from({ length: 7 }, (_, i) => addDays(m, i)); }
+  const a = new Date(pg.anchor), len = new Date(a.getFullYear(), a.getMonth() + 1, 0).getDate();
+  return Array.from({ length: len }, (_, i) => dayStart(new Date(a.getFullYear(), a.getMonth(), i + 1).getTime()));
+}
+function pgRender() {
+  const root = pgRoot; if (!root) return;
+  const old = $('.pg-scroll', root), scroll = old ? old.scrollLeft : null;
+  markPlanDays();
+  const now = dayStart(Date.now()), days = pgRange(), phone = B.isPhone();
+  const cache = new Map(), stats = p => { if (!cache.has(p)) cache.set(p, planStats(p)); return cache.get(p); };
+  const shown = days.filter(t => t <= now);
+  const plans = S.plans.filter(p => days.some(t => planRuns(p, t))).sort((a, b) => a.due - b.due);
+  const showGoal = !S.plans.some(p => planRuns(p, now)) || shown.some(t => goalCell(t, now).state !== 'off');
+  const weeks = []; days.forEach(t => { const m = mondayOf(t), w = weeks[weeks.length - 1]; if (w && w.m === m) w.n++; else weeks.push({ m, n: 1 }); });
+  let weekNo = 0;
+  const weekLabel = w => phone ? (days.includes(now) ? 'THIS WEEK' : '') : w.n > 2 ? `WEEK ${++weekNo}` : '';
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const head = days.map(t => { const d = new Date(t); return `<th class="pg-day${t === now ? ' is-today' : ''}${isWeekend(t) ? ' is-end' : ''}"><span>${DAYS2[d.getDay()]}</span><b>${d.getDate()}</b></th>`; }).join('');
+  const rate = label => `<td class="pg-rate"><b>${label}</b></td>`;
+  const cellHtml = c => `<td class="${c.today ? 'is-today' : ''}"><span class="pg-box s-${c.state}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.state === 'done' ? icon('check') : ''}</span></td>`;
+  const cardRow = (name, sub, cell) => {
+    const cells = days.map(t => Object.assign(cell(t), { today: t === now }));
+    const judged = days.map((t, i) => [t, cells[i]]).filter(([t, c]) => c.state === 'done' || c.state === 'miss');
+    const hit = judged.filter(([, c]) => c.state === 'done').length, pct = judged.length ? Math.round(hit / judged.length * 100) : 0;
+    return { html: `<tr><th class="pg-name"><b title="${esc(name)}">${esc(name)}</b><small>${esc(sub)}</small></th>${cells.map(cellHtml).join('')}${phone ? '' : rate(judged.length ? pct + '%' : '–')}</tr>`, name, sub: `${hit} of ${plural(judged.length, 'day')} · ${sub}`, pct, has: judged.length > 0 };
+  };
+  const cardRows = plans.map(p => cardRow(p.name, 'Due ' + fmtDate(p.due), t => planCell(p, t, stats(p), now)));
+  if (showGoal) cardRows.push(cardRow('Daily goal', `${S.goal} reviews a day`, t => goalCell(t, now)));
+  const thisMonday = mondayOf(now);
+  const habitRows = HABITS.map(h => {
+    const cells = days.map(t => {
+      const on = habitOn(h, t), off = t > now || (h.weekdays && isWeekend(t));
+      return `<td class="${t === now ? 'is-today' : ''}"><button class="pg-box ${off ? 's-off' : on ? 's-done' : 's-open'}" data-habit="${h.id}" data-day="${t}"${off ? ' disabled' : ''} aria-label="${esc(h.name)}, ${esc(fmtDate(t))}" aria-pressed="${on}">${on ? icon('check') : ''}</button></td>`;
+    }).join('');
+    const w = habitWeeks(h, days, now), pct = w.of ? Math.round(w.hit / w.of * 100) : 0;
+    return { html: `<tr><th class="pg-name"><b>${esc(h.name)}</b><small>${weekCount(h, thisMonday)}/${h.per} this week</small></th>${cells}${phone ? '' : rate(w.of ? `${w.hit}/${plural(w.of, 'wk')}` : '–')}</tr>`, name: h.name, sub: `${w.hit} of ${plural(w.of, 'week')} on target`, pct, has: w.of > 0 };
+  });
+  const daily = days.map(t => dailyPct(t, now, stats));
+  const known = daily.filter(v => v != null), mean = known.length ? Math.round(known.reduce((s, v) => s + v, 0) / known.length) : null;
+  const dailyRow = `<tr class="pg-daily"><th class="pg-name"><span>Daily %</span></th>${days.map((t, i) => `<td class="${t === now ? 'is-today' : ''}">${daily[i] == null ? '<em>·</em>' : daily[i]}</td>`).join('')}${phone ? '' : `<td class="pg-rate"><b>${mean == null ? '–' : mean + '%'}</b></td>`}</tr>`;
+  const section = label => `<tr class="pg-sec"><th class="pg-name">${label}</th><td colspan="${days.length + (phone ? 0 : 1)}"></td></tr>`;
+  const a = new Date(pg.anchor);
+  const title = phone ? `${fmtDate(days[0])} to ${fmtDate(days[6])}` : a.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const atNow = days.includes(now);
+  const labels = days.map(t => phone ? DAYS2[new Date(t).getDay()] : String(new Date(t).getDate()));
+  const rec = t => S.days[today(t)] || {};
+  const series = {
+    pct: { vals: days.map((t, i) => daily[i]), max: 100, unit: '%' },
+    reviews: { vals: days.map(t => t > now ? null : rec(t).n || 0), max: Math.max(10, Math.ceil(Math.max(0, ...shown.map(t => rec(t).n || 0)) / 20) * 20), unit: '' },
+    accuracy: { vals: days.map(t => rec(t).n ? Math.round((rec(t).ok || 0) / rec(t).n * 100) : null), max: 100, unit: '%' },
+  }[pg.mode];
+  const bars = [...cardRows, ...habitRows].filter(r => r.has);
+  root.innerHTML = `<div class="fc-view pg-view">
+    <div class="pg-top"><div><h2>Progress</h2><p>Plans tick themselves. ${phone ? 'Tap' : 'Click'} a square to log a habit.</p></div>
+      <div class="pg-nav"><button class="fc-mini" data-shift="-1" aria-label="Earlier">${icon('chevron-left')}</button><b>${esc(title)}</b><button class="fc-mini" data-shift="1" aria-label="Later"${atNow ? ' disabled' : ''}>${icon('chevron-right')}</button></div></div>
+    <section class="pg-card pg-scroll"><table class="pg-table">
+      <thead><tr><th class="pg-name pg-corner" rowspan="2">${days.length} days</th>${weeks.map((w, i) => `<th class="pg-week w${i % 5}" colspan="${w.n}">${weekLabel(w)}</th>`).join('')}${phone ? '' : '<th class="pg-ratehead" rowspan="2">RATE</th>'}</tr><tr>${head}</tr></thead>
+      <tbody>${section('Cards')}${cardRows.map(r => r.html).join('')}${section('Habits')}${habitRows.map(r => r.html).join('')}${dailyRow}</tbody></table></section>
+    <div class="pg-lower">
+      <section class="pg-card"><div class="pg-cardhead"><h3>Progress Trend</h3><div class="pg-modes">${[['pct', 'Daily %'], ['reviews', 'Reviews'], ['accuracy', 'Accuracy']].map(([k, l]) => `<button class="fc-mini${pg.mode === k ? ' is-on' : ''}" data-mode="${k}">${l}</button>`).join('')}</div></div>${trendSvg(series.vals, labels, series.max, series.unit)}</section>
+      <section class="pg-card"><div class="pg-cardhead"><h3>Analysis</h3><span>${phone ? 'this week' : 'this month'}</span></div>
+        ${bars.length ? bars.map(r => `<div class="pg-bar"><div><b title="${esc(r.name)}">${esc(r.name)}</b><span>${r.pct}%</span></div><i><u style="width:${r.pct}%"></u></i><small>${esc(r.sub)}</small></div>`).join('') : '<div class="pg-nodata">Nothing to rate yet.</div>'}</section>
+    </div></div>`;
+  const sc = $('.pg-scroll', root);
+  if (scroll != null) sc.scrollLeft = scroll;
+  else { const c = $('.pg-day.is-today', root); if (c) sc.scrollLeft = Math.max(0, c.offsetLeft - sc.clientWidth / 2); }
+  root.onclick = e => {
+    const hb = e.target.closest('[data-habit]');
+    if (hb && !hb.disabled) {
+      const m = S.habits[hb.dataset.habit] = S.habits[hb.dataset.habit] || {}, key = today(+hb.dataset.day);
+      m[key] = (m[key] || 0) > 0 ? -Date.now() : Date.now();   // the sign is the state, the size says which change is newest
+      save(); return pgRender();
+    }
+    const sh = e.target.closest('[data-shift]');
+    if (sh && !sh.disabled) { const n = +sh.dataset.shift, d = new Date(pg.anchor); pg.anchor = dayStart(phone ? addDays(pg.anchor, n * 7) : new Date(d.getFullYear(), d.getMonth() + n, 1).getTime()); $('.pg-scroll', root).scrollLeft = 0; return pgRender(); }
+    const md = e.target.closest('[data-mode]');
+    if (md) { pg.mode = md.dataset.mode; pgRender(); }
+  };
+}
+B.registerView('progress', {
+  title: () => 'Progress', icon: 'chart', cls: 'fc-host',
+  show(view) {
+    pgRoot = view; pg.anchor = dayStart(Date.now());
+    view.innerHTML = `<div class="fc-loading"><span class="books-spinner"></span> Loading progress…</div>`;
+    const draw = () => { if (pgRoot === view) pgRender(); };
+    loadCards().then(() => { draw(); if (account.user) sync().then(draw); }).catch(() => { view.innerHTML = '<div class="pane-empty">Could not load your progress.</div>'; });
+    return () => { pgRoot = null; };
+  },
+});
 
 // every page load while signed in: pull the server copy in
 if (account.user) sync().then(() => { if (D && root && $('.fc-account', root)) dashboard(); });

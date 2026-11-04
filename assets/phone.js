@@ -50,6 +50,7 @@ function moreSheet() {
   const row = (id, ic, label) => (id && !B.exists(id) ? '' : `<button class="ph-more-row" data-go="${esc(id)}">${icon(ic)}<span>${esc(label)}</span></button>`);
   const nova = B.isNova();
   const el = sheet('More', `
+    ${row('progress', 'chart', 'Progress')}
     ${row('exam', 'clipboard-list', 'Exam practice')}
     ${row('books', 'library', 'Book library')}
     ${row('glossary', 'book-open', 'Key terms')}

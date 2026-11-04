@@ -176,6 +176,7 @@ function navPane(root) {
     <div class="nv-nav-label nv-docked">Library</div>
     ${tool('glossary', 'book-open', 'Key terms')}
     ${tool('flashcards', 'cards', 'Flashcards')}
+    ${tool('progress', 'chart', 'Progress')}
     ${tool('exam', 'clipboard-list', 'Exam practice')}
     ${tool('books', 'library', 'Book library')}
     <button class="nv-nav-item nv-docked" data-navmap>${icon('graph')}<span>Neural map</span></button>

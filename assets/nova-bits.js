@@ -173,6 +173,7 @@ function mountDock() {
     { id: 'calendar', label: 'Calendar', ic: 'calendar' },
     { sep: true },
     { id: 'flashcards', label: 'Flashcards', ic: 'cards' },
+    { id: 'progress', label: 'Progress', ic: 'chart' },
     { id: 'exam', label: 'Exam practice', ic: 'clipboard-list' },
     { id: 'glossary', label: 'Key terms', ic: 'book-open' },
     { id: 'books', label: 'Book library', ic: 'library' },

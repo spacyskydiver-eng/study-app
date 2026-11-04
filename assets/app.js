@@ -44,6 +44,7 @@ const ICON = {
   'map': '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>',
   'key': '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/>',
   'info': '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  'chart': '<path d="M3 3v18h18"/><path d="M8 16v-5"/><path d="M13 16V7"/><path d="M18 16v-3"/>',
   'flame': '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
   'check': '<path d="M20 6 9 17l-5-5"/>',
   'check-circle': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
@@ -153,6 +154,7 @@ function shell() {
     <button class="clickable-icon" data-act="switcher" title="Quick switcher (Ctrl+O)">${icon('arrow-right')}</button>
     <button class="clickable-icon" data-act="graph" title="Graph view (Ctrl+G)">${icon('graph')}</button>
     <button class="clickable-icon" data-act="open" data-id="flashcards" title="Flashcards">${icon('cards')}</button>
+    <button class="clickable-icon" data-act="open" data-id="progress" title="Progress">${icon('chart')}</button>
     <button class="clickable-icon" data-act="open" data-id="exam" title="Exam practice">${icon('clipboard-list')}</button>
     <button class="clickable-icon" data-act="open" data-id="books" title="Book library">${icon('library')}</button>
     <button class="clickable-icon" data-act="home" title="Home">${icon('home')}</button>
@@ -323,7 +325,7 @@ let novaLoading = null;
 function loadNovaComponents() {
   if (novaLoading) return novaLoading;
   const add = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261055')).then(() => isPhone() ? null : add('assets/nova-map.js?v=20261055')).then(() => add('assets/nova-outlook.js?v=20261055')).then(() => add('assets/nova-bits.js?v=20261055')).then(() => add('assets/nova-research.js?v=20261055')).then(() => add('assets/nova-assistant.js?v=20261055')).then(relayout);
+  novaLoading = add('assets/nova-components.js?v=20261026').then(() => add('assets/nova-layout.js?v=20261107')).then(() => isPhone() ? null : add('assets/nova-map.js?v=20261055')).then(() => add('assets/nova-outlook.js?v=20261055')).then(() => add('assets/nova-bits.js?v=20261107')).then(() => add('assets/nova-research.js?v=20261055')).then(() => add('assets/nova-assistant.js?v=20261055')).then(relayout);
   return novaLoading;
 }
 function openUiModeMenu(anchorEl) {
@@ -420,7 +422,7 @@ function renderBookmarks() {
   }).join('');
   $('#bookmarks').innerHTML = `<div class="pane-header">Bookmarks</div>` + (items || '<div class="pane-empty">No bookmarks</div>') +
     `<div class="pane-header">Views</div>` +
-    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['books', 'library', 'Book library'], ['exam', 'clipboard-list', 'Exam practice']].filter(([id]) => exists(id))
+    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['progress', 'chart', 'Progress'], ['books', 'library', 'Book library'], ['exam', 'clipboard-list', 'Exam practice']].filter(([id]) => exists(id))
       .map(([id, ic, t]) => `<div class="tree-item" data-id="${id}">${icon(ic)} ${t}</div>`).join('') +
     `<a class="tree-item" href="legacy/index.html">${icon('layers')} Old study app</a>`;
   $('#bookmarks').onclick = e => { const t = e.target.closest('.tree-item[data-id]'); if (!t) return; go(t.dataset.id); if (isMobile()) setSide('left', false); };
