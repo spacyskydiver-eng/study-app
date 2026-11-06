@@ -89,6 +89,10 @@
   },
   "What isotopes did Hershey and Chase use, and why?": {
    "back": "<p>³²P labels DNA (phosphorus is in the DNA backbone, not protein). ³⁵S labels protein (sulfur is in cysteine and methionine, not DNA). After infection and blending, ³²P was inside the bacteria in the pellet and passed to progeny phage; ³⁵S stayed outside with the empty phage coats. So DNA is what enters the cell and carries the genetic information.</p>"
+  },
+  "Why do two different arrangements (Option 1 and Option 2) both fit a double digest's fragment sizes equally well?": {
+   "front": "A 6000 bp plasmid has BamHI at 0. The BamHI + HindIII double digest gives 2500 + 3500 bp. Where could HindIII be, and why can't the double digest alone tell you which?",
+   "back": "<p>HindIII could be at <b>2500</b> or at <b>3500</b>. Both give fragments of 2500 + 3500 bp, because a double digest only tells you the two distances round the circle between the sites, not which way round they go.</p>\n<p>To decide, use the <b>triple digest</b> (BamHI + EcoRI + HindIII = 1000 + 1500 + 3500, with EcoRI at 1000). HindIII at 2500 predicts 1000 + 1500 + 3500, which matches. HindIII at 3500 would predict 1000 + 2500 + 2500, which doesn't. So HindIII is at 2500.</p>\n"
   }
  },
  "add": [
