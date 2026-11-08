@@ -229,10 +229,22 @@ async function newsFor(env, c, first) {
   return stmts.length;
 }
 
+// the hand-written and researched events; rewritten only when those files change
 async function seed(env) {
-  const stmts = [];
-  for (const e of [...(CFG.events || []), ...(HISTORY.events || [])]) stmts.push(evStmt(env, true, { ...e, id: "key:" + (await hashId(e.symbol + e.date + e.title)), url: e.url || "", source: e.source || "Watchlist notes" }));
-  if (stmts.length) await env.DB.batch(stmts);
+  const all = [...(CFG.events || []), ...(HISTORY.events || [])];
+  const version = await hashId(JSON.stringify(all));
+  const was = await cacheGet(env, "seed");
+  if (was && was.v === version) return;
+  const stmts = [], ids = [];
+  for (const e of all) {
+    const id = "key:" + (await hashId(e.symbol + e.date + e.title)); ids.push(id);
+    stmts.push(evStmt(env, true, { ...e, id, url: e.url || "", source: e.source || "Watchlist notes" }));
+  }
+  const keep = new Set(ids);
+  const old = (await env.DB.prepare("SELECT id FROM inv_events WHERE id LIKE 'key:%'").all()).results || [];
+  for (const r of old) if (!keep.has(r.id)) stmts.push(env.DB.prepare("DELETE FROM inv_events WHERE id = ?").bind(r.id));
+  await env.DB.batch(stmts);
+  await cachePut(env, "seed", version);
 }
 
 // The work is split into small jobs (one source for one company), because the free plan stops a
