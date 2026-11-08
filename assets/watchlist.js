@@ -550,13 +550,33 @@ const KIND = { guide: ['How-to', '#60A5FA'], buy: ['Buy-side', '#10B981'], wait:
 function allLessons() {
   if (lessonsCache) return lessonsCache;
   const T = window.WLTeach; if (!T || !allBars) return [];
-  lessonsCache = CFG.companies.flatMap(c => T.daily(c.symbol, c.short, allBars[c.symbol], events)).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.score - a.score));
+  const order = { support: 0, breakout: 1, pullback: 2, trend: 3, breakdown: 4, none: 9 };
+  lessonsCache = CFG.companies.flatMap(c => T.setups(c.symbol, c.short, allBars[c.symbol], events)).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : (order[a.key] - order[b.key])));
   return lessonsCache;
+}
+// [[term]] or [[term|words]] → a tappable word that opens a short definition with a picture
+function terms(text) {
+  const T = window.WLTeach ? window.WLTeach.TERMS : {};
+  return esc(text).replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, k, w) => T[k.toLowerCase()] ? `<button class="wl-term" data-term="${esc(k.toLowerCase())}">${w || k}</button>` : (w || k));
+}
+function termPop(btn) {
+  document.querySelectorAll('.wl-termpop').forEach(x => x.remove());
+  const T = window.WLTeach.TERMS[btn.dataset.term]; if (!T) return;
+  const pop = document.createElement('div'); pop.className = 'wl-termpop';
+  pop.innerHTML = `<b>${esc(btn.dataset.term)}</b>${T[1] ? `<div class="wl-termpic">${T[1]}</div>` : ''}<p>${esc(T[0])}</p>`;
+  document.body.appendChild(pop);
+  const r = btn.getBoundingClientRect(), w = Math.min(300, window.innerWidth - 24);
+  pop.style.width = w + 'px';
+  pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + 'px';
+  const below = r.bottom + 8 + pop.offsetHeight < window.innerHeight;
+  pop.style.top = (below ? r.bottom + 8 : r.top - pop.offsetHeight - 8) + 'px';
+  const close = e => { if (!pop.contains(e.target) && e.target !== btn) { pop.remove(); document.removeEventListener('pointerdown', close, true); } };
+  setTimeout(() => document.addEventListener('pointerdown', close, true), 0);
 }
 function lessonsPanel(view) {
   const el = q(view, '[data-lessons]'); if (!el) return;
   const T = window.WLTeach;
-  const tabs = [['today', 'Lessons from recent days'], ['replay', 'Rule replays'], ['cases', 'Case studies']];
+  const tabs = [['today', 'Today\'s setups'], ['replay', 'Rule replays'], ['cases', 'Case studies']];
   let side = '', body = '', drawn = null;
   const ready = T && allBars && window.LightweightCharts;
   if (!ready) body = '<div class="wl-empty"><span class="books-spinner"></span> Loading price history…</div>';
@@ -564,11 +584,26 @@ function lessonsPanel(view) {
     const L = allLessons();
     if (!L.length) body = '<div class="wl-empty">Price history for the companies is still loading. It fills in over the next few minutes; open this page again shortly.</div>';
     else {
-      const cur = L[Math.min(LS.lesson, L.length - 1)], c = co(cur.sym);
-      side = `<div class="wl-lessonlist">${L.slice(0, 18).map((l, k) => { const cc = co(l.sym); return `<button data-lesson="${k}" class="${k === LS.lesson ? 'is-active' : ''}" style="--co:${cc.color}"><span><b class="wl-tick-s">${l.sym}</b><i>${esc(l.kind)}</i></span><small>${fmtDate(l.d)} · ${esc(l.when)}</small></button>`; }).join('')}</div>`;
-      body = `<div class="wl-lesson" style="--co:${c.color}"><h4>${esc(cur.title)}</h4>
-        <div class="wl-lgrid"><div><span>What happened</span><p>${esc(cur.what)}</p></div><div><span>How a trader reads it</span><p>${esc(cur.read)}</p></div><div><span>What a disciplined investor does</span><p>${esc(cur.act)}</p></div></div>
-        <p class="wl-dim wl-small">Read from real prices after the fact. It shows how to think about a move like this, not what the price will do next.</p></div>`;
+      const cur = L[Math.min(LS.lesson, L.length - 1)], c = co(cur.sym), R = cur.rec;
+      const tag = l => l.key === 'none' ? 'No trade' : l.side === 'sell' ? 'Warning' : 'Buy setup';
+      side = `<div class="wl-lessonlist">${L.slice(0, 20).map((l, k) => { const cc = co(l.sym); return `<button data-lesson="${k}" class="${k === LS.lesson ? 'is-active' : ''}" style="--co:${cc.color}"><span><b class="wl-tick-s">${l.sym}</b><i class="wl-k-${l.side}">${tag(l)}</i></span><strong>${esc(l.name)}</strong><small>${esc(l.when)} · ${fmtDate(l.d)}</small></button>`; }).join('')}</div>`;
+      const size = cur.key !== 'none' && cur.side === 'buy' ? (() => { const e = evaluate(cur.sym); return e.size ? `<div class="wl-plan-size">Your rules allow up to <b>${gbp(e.size)}</b> in ${cur.sym}. If the stop-loss is hit you'd lose about <b class="is-down">${gbp(e.size * (cur.risk / 100 + 2 * window.WLTeach.COST / 100))}</b> (the ${cur.risk.toFixed(1)}% drop plus fees); if the target is hit you'd make about <b class="is-up">${gbp(e.size * (cur.reward / 100 - 2 * window.WLTeach.COST / 100))}</b>.${e.state !== 'ok' ? ` <span class="is-down">Your decision check says "${e.state === 'wait' ? 'wait' : 'not allowed'}" for ${cur.sym} right now (see Pipeline and decision check), so this setup clashes with your rules.</span>` : ''}</div>` : ''; })() : '';
+      const recTxt = !R ? '' : R.n === 0 ? `<p class="wl-dim">This setup hasn't appeared in ${cur.sym}'s last two years of prices, so there's no track record to go on. Treat it with extra caution.</p>`
+        : `<div class="wl-rstats"><div><span>Times it appeared</span><b>${R.n}</b></div><div><span>Hit the target</span><b class="is-up">${R.targets}</b></div><div><span>Hit the stop</span><b class="is-down">${R.stops}</b></div><div><span>Average result</span><b class="${dir(R.avg)}">${signed(R.avg)}</b></div></div>
+           <p class="wl-small">${R.avg > 0 ? `Over the past two years this setup made money on average in ${cur.sym}, after fees.` : `Over the past two years this setup lost money on average in ${cur.sym}, after fees. A disciplined trader takes that seriously: a pattern that hasn't worked on this share isn't a reason to buy it.`} ${R.n < 5 ? 'With fewer than 5 examples, that record could easily be luck.' : ''} Best ${signed(R.best)}, worst ${signed(R.worst)}.</p>
+           <details class="wl-trades"><summary>Every past example</summary><div class="wl-tradelist">${R.list.map(o => `<div><span>${fmtDate(o.entryD)}</span><span>${money(o.entry)} → ${money(o.exit)}</span><span>${esc(o.why)}</span><b class="${dir(o.net)}">${signed(o.net)}</b></div>`).join('')}</div></details>`;
+      body = `<div class="wl-lesson" style="--co:${c.color}">
+        <h4>${terms(cur.headline)}</h4>
+        ${cur.key !== 'none' ? `<div class="wl-plan"><div><span>${cur.side === 'sell' ? 'Price now' : 'Buy at'}</span><b>${money(cur.entry)}</b></div><div><span>${cur.side === 'sell' ? 'Cancel level' : 'Stop-loss'}</span><b class="is-down">${money(cur.stop)}</b><small>${signed((cur.stop - cur.entry) / cur.entry * 100)}</small></div>${cur.side === 'buy' ? `<div><span>Target</span><b class="is-up">${money(cur.target)}</b><small>${signed(cur.reward)}</small></div><div><span>Reward : risk</span><b>${cur.rr.toFixed(1)} : 1</b><small>${cur.rr >= 2 ? 'good' : cur.rr >= 1.5 ? 'OK' : 'too low'}</small></div>` : ''}</div>` : ''}
+        <p class="wl-when"><b>When:</b> ${esc(cur.timing)}${cur.live ? '' : ' (past signal, shown for practice)'}</p>
+        ${cur.skip ? `<p class="wl-skip">${esc(cur.skip)}</p>` : ''}
+        <h5>The plan, step by step</h5><ol class="wl-steps2">${cur.steps.map(x => `<li>${terms(x)}</li>`).join('')}</ol>
+        ${size}
+        <h5>Why these levels</h5><ol class="wl-steps2">${cur.why.map(x => `<li>${terms(x)}</li>`).join('')}</ol>
+        ${cur.fail.length ? `<h5>How it can go wrong</h5><ul class="wl-steps2">${cur.fail.map(x => `<li>${terms(x)}</li>`).join('')}</ul>` : ''}
+        ${cur.news && cur.news.length ? `<p class="wl-small"><b>News that day:</b> ${esc(cur.news[0])}</p>` : ''}
+        ${cur.key !== 'none' ? `<h5>Track record of this setup on ${cur.sym}</h5>${recTxt}` : ''}
+        <p class="wl-dim wl-small">Setups are textbook patterns with fixed rules, worked out from real prices; the track record replays the same rules over the past two years (buy at the next day's open, then whichever of stop or target comes first, fees included). Nobody knows the next move: this shows how disciplined traders plan, not what will happen. Practise it in the Trading 212 practice account first.</p></div>`;
       drawn = { bars: allBars[cur.sym], anns: cur.anns, view: cur.view };
     }
   } else if (LS.tab === 'replay') {
@@ -614,7 +649,7 @@ function lessonsPanel(view) {
   }
   if (teachChart) { teachChart.destroy(); teachChart = null; }
   el.innerHTML = `<h2>Lessons</h2>
-    <p class="wl-ex">A second chart just for teaching, with the lesson drawn on it: arrows where a trader would buy (green, pointing up) or sell (red, pointing down), dashed lines for important price levels, and shaded zones for periods that matter. "Lessons from recent days" reads the latest real sessions of all six companies and picks out what's worth learning; "Rule replays" shows every buy and sell a simple trading rule would have made and whether it beat just holding; "Case studies" walks through big events step by step.</p>
+    <p class="wl-ex">A second chart just for teaching. "Today's setups" checks the latest real trading sessions of all six companies for textbook trade setups and, for each, gives an exact plan: buy price, stop-loss (where you'd sell to cap a loss) and target (where you'd take profit), drawn as a green profit box and a red loss box, plus how that setup has done on the same company over the past two years. Words underlined with dots can be tapped for a plain explanation and a picture. "Rule replays" shows every buy and sell a simple rule would have made; "Case studies" walks through big events.</p>
     <div class="wl-ltabs">${tabs.map(([k, l]) => `<button data-ltab="${k}" class="${LS.tab === k ? 'is-active' : ''}">${l}</button>`).join('')}</div>
     <div class="wl-lwrap${side ? ' has-side' : ''}">${side ? `<div class="wl-lside">${side}</div>` : ''}<div class="wl-lmain">${LS.tab === 'cases' ? body : ''}${drawn ? '<div class="wl-tchart" data-tchart></div>' : ''}${LS.tab === 'cases' ? '' : body}</div></div>`;
   if (drawn && drawn.bars) { teachChart = T.chart(q(view, '[data-tchart]')); teachChart.set(drawn.bars, drawn.anns, drawn.view); }
@@ -628,7 +663,7 @@ function stepScroll(view) {
   if (st.scroll) { target.classList.remove('wl-flash'); void target.offsetWidth; target.classList.add('wl-flash'); }
 }
 async function loadLessons(view) {
-  const libs = [lib(), window.WLTeach ? null : new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'assets/teach.js?v=20261108'; s.onload = res; s.onerror = rej; document.head.appendChild(s); })];
+  const libs = [lib(), window.WLTeach ? null : new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'assets/teach.js?v=20261109'; s.onload = res; s.onerror = rej; document.head.appendChild(s); })];
   const [r, c] = await Promise.all([api('bars-all').catch(() => null), fetch('data/cases.json', { cache: 'no-cache' }).then(x => x.json()).catch(() => null), ...libs].map(p => Promise.resolve(p).catch(() => null)));
   if (r && r.bars) { allBars = r.bars; lessonsCache = null; }
   if (c) CASES = c.cases || [];
@@ -725,6 +760,7 @@ function show(view) {
       const t = e.target;
       const card = t.closest('[data-sym]');
       if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); chartTop(view); decidePanel(view); loadBars(view); return; }
+      const tb = t.closest('.wl-term'); if (tb) { termPop(tb); return; }
       const lp = () => { lessonsPanel(view); };
       const ci = t.closest('[data-case]'); if (ci) { cs = { id: ci.dataset.case, step: 0 }; lp(); stepScroll(view); return; }
       const cg = t.closest('[data-casego]'); if (cg) { cs.step = Math.max(0, cs.step + +cg.dataset.casego); lp(); stepScroll(view); return; }
@@ -773,6 +809,6 @@ B.registerView('watchlist', { title: () => 'Live watchlist', icon: 'trending-up'
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261113'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261114'; document.head.appendChild(l);
 }
 })();

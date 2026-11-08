@@ -88,6 +88,21 @@ function chart(host, opts = {}) {
         const px = x(a.d), py = y(priceOf(a.p, a.d)); if (px == null || py == null) continue;
         el('circle', { cx: px, cy: py, r: 5, fill: 'none', stroke: col, 'stroke-width': 2 });
         if (a.label) later.push(() => label(px, py, a.label, col));
+      } else if (a.t === 'pos') {
+        // a planned trade, like TradingView's position tool: green from entry up to the target, red from entry down to the stop
+        const i0 = barAt(a.d), x1 = c.timeScale().logicalToCoordinate(i0), x2 = c.timeScale().logicalToCoordinate(i0 + (a.k || 15));
+        const ye = y(a.entry), ys = y(a.stop), yt = a.target != null ? y(a.target) : null;
+        if (x1 == null || x2 == null || ye == null || ys == null) continue;
+        const w = Math.max(30, x2 - x1);
+        if (yt != null) el('rect', { x: x1, y: Math.min(ye, yt), width: w, height: Math.abs(yt - ye), fill: UP, opacity: .16, stroke: UP, 'stroke-opacity': .5 });
+        el('rect', { x: x1, y: Math.min(ye, ys), width: w, height: Math.abs(ys - ye), fill: DOWN, opacity: .16, stroke: DOWN, 'stroke-opacity': .5 });
+        el('line', { x1, x2: x1 + w, y1: ye, y2: ye, stroke: '#E5E7EB', 'stroke-width': 1.5 });
+        const pct = v => ((v - a.entry) / a.entry * 100);
+        later.push(() => {
+          label(x1 + w + 4, ye + 9, `${a.entryLabel || 'Buy'} ${usd(a.entry)}`, '#E5E7EB', 'start', true);
+          label(x1 + w + 4, ys, `Stop ${usd(a.stop)} (${pc(pct(a.stop))})`, DOWN, 'start', ys < ye);
+          if (yt != null) label(x1 + w + 4, yt, `Target ${usd(a.target)} (${pc(pct(a.target))})`, UP, 'start', yt < ye);
+        });
       } else if (a.t === 'box') {
         const x1 = x(a.d1), x2 = x(a.d2), y1 = y(priceOf(a.p1, a.d1)), y2 = y(priceOf(a.p2, a.d2)); if ([x1, x2, y1, y2].some(v => v == null)) continue;
         el('rect', { x: Math.min(x1, x2), y: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1), fill: col, opacity: .08, stroke: col, 'stroke-dasharray': '4 4' });
@@ -105,7 +120,10 @@ function chart(host, opts = {}) {
       candles.setData(b.map(r => ({ time: day(r), open: r[1], high: r[2], low: r[3], close: r[4] })));
       for (const s of extra) c.removeSeries(s); extra = [];
       for (const ln of (view && view.lines) || []) { const s = c.addLineSeries({ color: ln.color, lineWidth: ln.width || 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, lineStyle: ln.style || 0 }); s.setData(ln.data); extra.push(s); }
-      if (view && view.from) c.timeScale().setVisibleRange({ from: view.from, to: view.to || days[days.length - 1] }); else c.timeScale().fitContent();
+      c.timeScale().applyOptions({ rightOffset: (view && view.rightOffset) || 3 });
+      // a plan box reaches into the future, so leave that much empty space on the right
+      if (view && view.from && view.rightOffset > 5) { const f = Math.max(0, days.findIndex(x => x >= view.from)); c.timeScale().setVisibleLogicalRange({ from: f, to: days.length - 1 + view.rightOffset }); }
+      else if (view && view.from) c.timeScale().setVisibleRange({ from: view.from, to: view.to || days[days.length - 1] }); else c.timeScale().fitContent();
       redraw(); setTimeout(redraw, 60);
     },
     destroy() { ro.disconnect(); cancelAnimationFrame(raf); c.remove(); host.innerHTML = ''; },
@@ -123,83 +141,193 @@ function stats(bars, i) {
 }
 const hiLo = (bars, a, b) => { let hi = -Infinity, lo = Infinity, hd = '', ld = ''; for (let k = Math.max(0, a); k <= b; k++) { if (bars[k][2] > hi) { hi = bars[k][2]; hd = day(bars[k]); } if (bars[k][3] < lo) { lo = bars[k][3]; ld = day(bars[k]); } } return { hi, lo, hd, ld }; };
 
-/* ------------------------------------------------------------ lessons from recent trading days */
-// Looks at each of the last few sessions and explains the most useful thing in it. All of it is hindsight
-// reading of real prices, written the way a disciplined trader would think about it.
-function daily(sym, name, bars, events) {
-  if (!bars || bars.length < 80) return [];
-  const out = [], ma50 = sma(bars, 50), ma200 = sma(bars, 200), N = bars.length;
-  const evOn = d => (events || []).filter(e => e.symbol === sym && e.date >= d && e.date <= d).map(e => e.title);
-  for (let i = N - 1; i >= N - 5 && i > 60; i--) {
-    const b = bars[i], d = day(b), st = stats(bars, i), prev = bars[i - 1][4];
-    const r60 = hiLo(bars, i - 61, i - 1), news = evOn(d), from = day(bars[Math.max(0, i - 90)]);
-    const when = i === N - 1 ? 'Last session' : `${N - 1 - i} session${N - 1 - i > 1 ? 's' : ''} earlier`;
-    const lines = [{ color: BLUE, data: lineData(bars, ma50) }, { color: PURPLE, data: lineData(bars, ma200) }];
-    const view = { from, lines };
-    const big = Math.abs(st.ret) > Math.max(2 * st.avgAbs, 4);
-    const newsTxt = news.length ? ` That day's news on the watchlist: "${news[0]}".` : ' There was no company news on the watchlist that day, so the move was probably market-wide or a reaction to sector news.';
-    if (Math.abs(st.gap) > 3) {
-      const up = st.gap > 0, filled = up ? b[3] <= prev : b[2] >= prev;
-      out.push({ sym, d, when, kind: up ? 'Gap up' : 'Gap down', score: Math.abs(st.gap) + 5,
-        title: `${name}: ${up ? 'gapped up' : 'gapped down'} ${pc(st.gap)} at the open`,
-        what: `On ${fmtD(d)} ${sym} opened at ${usd(b[1])}, ${pc(st.gap)} from the previous close of ${usd(prev)}, then closed at ${usd(b[4])} (${pc(st.ret)} on the day) on ${st.volRatio.toFixed(1)}× its usual volume.${newsTxt}`,
-        read: `A gap means news or orders arrived while the market was shut. ${filled ? 'The price came back to the previous close during the day ("gap filled"): the opening reaction was overdone.' : `The gap didn't fill: buyers and sellers accepted the new level${st.volRatio > 1.5 ? ', and the high volume says many agreed' : ''}.`}`,
-        act: up ? 'Chasing a gap up at the open is how people buy the top of the day. A disciplined buyer waits a session or two to see whether the new level holds, then decides using the news, not the excitement.' : 'Selling into a gap down locks in the worst price of the day. A holder re-checks the reason they bought: if the news broke it, sell calmly; if not, a gap on no real news often recovers.',
-        anns: [{ t: 'hline', p: prev, d1: day(bars[i - 8]), d2: d, color: GREY, label: `Previous close ${usd(prev)}` }, { t: 'arrow', d, dir: up ? 'up' : 'down', color: up ? UP : DOWN, label: `Gap ${pc(st.gap)}` }], view });
+/* ------------------------------------------------------------ trade setups */
+// Each setup is a textbook pattern with exact rules for spotting it and for the entry, stop-loss and
+// target. The same rules find it in the latest session (today's plan) and in the past two years
+// (its track record on this company), so every plan comes with evidence of how it has done.
+// Text uses [[term|words]] for tappable explanations.
+const NEXT_OPEN = d => { const t = new Date(d + 'T12:00:00Z'); do { t.setUTCDate(t.getUTCDate() + 1); } while (t.getUTCDay() === 0 || t.getUTCDay() === 6); return t.toISOString().slice(0, 10); };
+const WEEKDAY = d => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(d + 'T12:00:00Z').getUTCDay()];
+const touchesOf = (bars, lvl, a, b, side) => { const out = []; let last = -9; for (let k = Math.max(0, a); k <= b; k++) { const v = side === 'low' ? bars[k][3] : bars[k][2]; if (Math.abs(v - lvl) / lvl < .02 && k - last > 3) { out.push(k); last = k; } } return out; };
+
+const SETUPS = {
+  support: {
+    name: 'Support bounce', side: 'buy',
+    find(bars, i) {
+      const r = hiLo(bars, i - 60, i - 1), c = bars[i][4];
+      if (!(c >= r.lo && c <= r.lo * 1.03)) return null;
+      const t = touchesOf(bars, r.lo, i - 60, i - 1, 'low'); if (t.length < 2) return null;
+      const entry = c, stop = r.lo * .97, target = Math.min(r.hi * .97, entry + 2.5 * (entry - stop));
+      return { entry, stop, target, lvl: r.lo, top: r.hi, touches: t };
+    },
+  },
+  breakout: {
+    name: 'Breakout', side: 'buy',
+    find(bars, i) {
+      const r = hiLo(bars, i - 60, i - 1), c = bars[i][4], st = stats(bars, i);
+      if (!(c > r.hi && st.volRatio >= 1.2)) return null;
+      const entry = c, stop = r.hi * .97, target = entry + (r.hi - r.lo);
+      return { entry, stop, target, lvl: r.hi, bottom: r.lo, vol: st.volRatio };
+    },
+  },
+  pullback: {
+    name: 'Buy the pullback after a jump', side: 'buy',
+    find(bars, i) {
+      // a big up day within the last 6 sessions, and the price has since come back near the close before the jump
+      for (let k = i - 1; k >= i - 6 && k > 21; k--) {
+        const st = stats(bars, k);
+        if (st.ret > Math.max(2.5 * st.avgAbs, 6) && st.volRatio >= 1.5) {
+          const base = bars[k - 1][4], c = bars[i][4];
+          if (c <= base + (bars[k][4] - base) * .4 && c > base * .97) {
+            let low = Infinity; for (let m = k; m <= i; m++) low = Math.min(low, bars[m][3]);
+            const stop = Math.min(base * .96, low * .99), target = bars[k][2];
+            return { entry: c, stop, target, jumpDay: day(bars[k]), jump: st.ret, base };
+          }
+          return null;
+        }
+      }
+      return null;
+    },
+  },
+  trend: {
+    name: 'Trend turn (back above the 50-day average)', side: 'buy',
+    find(bars, i, m) {
+      const ma = m.ma50; if (!ma[i] || !ma[i - 1] || !ma[i - 5]) return null;
+      if (!(bars[i - 1][4] < ma[i - 1] && bars[i][4] > ma[i] && ma[i] >= ma[i - 5] * .99)) return null;
+      const entry = bars[i][4], stop = Math.min(ma[i] * .95, hiLo(bars, i - 10, i).lo), target = entry + 2 * (entry - stop);
+      return { entry, stop, target, ma: ma[i] };
+    },
+  },
+  breakdown: {
+    name: 'Breakdown (a warning for holders)', side: 'sell',
+    find(bars, i) {
+      const r = hiLo(bars, i - 60, i - 1), c = bars[i][4];
+      if (!(c < r.lo * .99)) return null;
+      return { entry: c, stop: r.lo * 1.03, target: c - (r.hi - r.lo) * .5, lvl: r.lo, top: r.hi };
+    },
+  },
+};
+
+// replays one setup through history: enter at the next session's open, then whichever of stop or target is
+// touched first decides it (a gap past the stop fills at the open); after 30 sessions it's closed at the price then
+function record(key, bars, m) {
+  const S = SETUPS[key], out = [];
+  let k = 70;
+  while (k < bars.length - 1) {
+    const f = S.find(bars, k, m);
+    if (!f) { k++; continue; }
+    const e = k + 1, long = S.side === 'buy';
+    let entry = bars[e][1], res = null, exitK = null;
+    // keep the planned distances, measured from the actual fill
+    const stop = entry * f.stop / f.entry, target = entry * f.target / f.entry;
+    for (let t = e; t < Math.min(bars.length, e + 30); t++) {
+      const [, o, h, l, cl] = bars[t];
+      if (long) {
+        if (o <= stop) { res = { why: 'stop (gapped)', px: o }; } else if (l <= stop) { res = { why: 'stop', px: stop }; } else if (h >= target) { res = { why: 'target', px: target }; }
+      } else {
+        if (o >= stop) { res = { why: 'stop (gapped)', px: o }; } else if (h >= stop) { res = { why: 'stop', px: stop }; } else if (l <= target) { res = { why: 'target', px: target }; }
+      }
+      if (res) { exitK = t; break; }
+      if (t === Math.min(bars.length, e + 30) - 1) { res = { why: t === bars.length - 1 ? 'still open' : 'time (30 sessions)', px: cl }; exitK = t; }
     }
-    if (big) {
-      const up = st.ret > 0, conv = st.volRatio >= 1.5;
-      out.push({ sym, d, when, kind: up ? 'Big up day' : 'Big down day', score: Math.abs(st.ret) / Math.max(st.avgAbs, .5) + (conv ? 2 : 0),
-        title: `${name}: ${pc(st.ret)} in one day on ${st.volRatio.toFixed(1)}× normal volume`,
-        what: `On ${fmtD(d)} ${sym} closed at ${usd(b[4])}, ${pc(st.ret)}. Its usual daily move over the previous month was about ${st.avgAbs.toFixed(1)}%, so this was ${(Math.abs(st.ret) / st.avgAbs).toFixed(1)}× a normal day.${newsTxt}`,
-        read: conv ? 'Volume well above normal confirms the move: many traders acted, so it reflects real information or a real change of mind.' : 'Volume was not much above normal, so fewer traders took part. Moves on light volume reverse more often.',
-        act: up ? 'Don\'t buy just because it jumped. Ask what changed in the company\'s value. If you already hold, check whether the position has grown past your one-company limit and trim back if so.' : 'Don\'t panic-sell, and don\'t buy just because it\'s cheaper. If you hold, ask whether the reason you bought is broken. If you were waiting to buy, wait for the price to stop falling (a few days without new lows).',
-        anns: [{ t: 'arrow', d, dir: up ? 'up' : 'down', color: up ? UP : DOWN, label: `${pc(st.ret)}\n${st.volRatio.toFixed(1)}× volume` }, { t: 'hline', p: prev, d1: day(bars[i - 10]), d2: d, color: GREY, label: `Close before ${usd(prev)}` }], view });
-    }
-    if (b[4] > r60.hi) out.push({ sym, d, when, kind: 'Breakout', score: 6,
-      title: `${name}: closed above its 3-month high`,
-      what: `${sym} closed at ${usd(b[4])}, above the highest price of the previous 60 sessions (${usd(r60.hi)} on ${fmtD(r60.hd)}) on ${st.volRatio.toFixed(1)}× usual volume.`,
-      read: 'A breakout through resistance means sellers who had been capping the price have been absorbed. Breakouts on high volume hold more often than on low volume, and an old resistance often turns into support.',
-      act: 'Trend traders buy breakouts, with a sell rule just below the old resistance. For a biotech, check first whether a readout is near: a breakout before a binary event is mostly hope.',
-      anns: [{ t: 'hline', p: r60.hi, d1: r60.hd, d2: d, color: AMBER, label: `Old resistance ${usd(r60.hi)}` }, { t: 'arrow', d, dir: 'up', color: UP, label: 'Breakout' }], view });
-    if (b[4] < r60.lo) out.push({ sym, d, when, kind: 'Breakdown', score: 6,
-      title: `${name}: closed below its 3-month low`,
-      what: `${sym} closed at ${usd(b[4])}, below the lowest price of the previous 60 sessions (${usd(r60.lo)} on ${fmtD(r60.ld)}).`,
-      read: 'Support broke: the buyers who had stepped in at that level didn\'t this time. Old support often becomes resistance on the way back up.',
-      act: 'Many traders treat a close below support as their sell signal ("the reason the floor held has gone"). Buyers looking for value usually wait for a new floor to form rather than catching a falling price.',
-      anns: [{ t: 'hline', p: r60.lo, d1: r60.ld, d2: d, color: AMBER, label: `Old support ${usd(r60.lo)}` }, { t: 'arrow', d, dir: 'down', color: DOWN, label: 'Breakdown' }], view });
-    if (ma50[i] && ma50[i - 1] && (bars[i - 1][4] - ma50[i - 1]) * (b[4] - ma50[i]) < 0) {
-      const up = b[4] > ma50[i];
-      out.push({ sym, d, when, kind: up ? 'Crossed above MA50' : 'Crossed below MA50', score: 4,
-        title: `${name}: closed ${up ? 'above' : 'below'} its 50-day average`,
-        what: `${sym} closed at ${usd(b[4])}, ${up ? 'above' : 'below'} its 50-day average of ${usd(ma50[i])} (blue line); the day before it was on the other side.`,
-        read: `The 50-day average is the medium-term trend. Crossing it ${up ? 'upwards suggests the downtrend may be ending' : 'downwards suggests the uptrend may be ending'}. In a sideways market the price crosses it back and forth ("whipsaw"), so one cross means little on its own.`,
-        act: 'Trend-following rules buy above the average and sell below it. Use the Rule replays tab to see how often that would have worked for this company.',
-        anns: [{ t: 'dot', d, p: ma50[i], color: BLUE, label: `MA50 ${usd(ma50[i])}` }, { t: 'arrow', d, dir: up ? 'up' : 'down', color: up ? UP : DOWN, label: up ? 'Above trend' : 'Below trend' }], view });
-    }
-    const near = (b[4] - r60.lo) / r60.lo * 100;
-    if (near >= 0 && near < 3 && !big) {
-      const touches = []; for (let k = i - 60; k < i; k++) if (Math.abs(bars[k][3] - r60.lo) / r60.lo < .02) touches.push(day(bars[k]));
-      out.push({ sym, d, when, kind: 'Testing support', score: 3 + touches.length,
-        title: `${name}: sitting just above its 3-month support`,
-        what: `${sym} closed at ${usd(b[4])}, ${near.toFixed(1)}% above the 60-session low of ${usd(r60.lo)}, a level it has bounced from ${touches.length} time${touches.length === 1 ? '' : 's'}.`,
-        read: 'Support is a floor where buyers have appeared before. The more times it holds, the more traders watch it, and the bigger the move when it finally breaks.',
-        act: 'Range traders buy near support with a sell rule just below it (e.g. 5% under), so a wrong call costs little. A close below the level is the signal the floor has gone.',
-        anns: [{ t: 'hline', p: r60.lo, d1: day(bars[i - 60]), d2: d, color: UP, label: `Support ${usd(r60.lo)}` }].concat(touches.slice(-3).map(t => ({ t: 'dot', d: t, p: 'low', color: UP }))), view });
+    if (!res) break;
+    const gross = (res.px - entry) / entry * 100 * (long ? 1 : -1), net = gross - 2 * COST;
+    out.push({ d: day(bars[k]), entryD: day(bars[e]), exitD: day(bars[exitK]), entry, exit: res.px, why: res.why, net });
+    k = exitK + 1;
+  }
+  const done = out.filter(o => o.why !== 'still open');
+  const wins = done.filter(o => o.net > 0);
+  return { list: out, n: done.length, wins: wins.length, targets: done.filter(o => o.why === 'target').length, stops: done.filter(o => o.why.startsWith('stop')).length, avg: done.length ? done.reduce((a, o) => a + o.net, 0) / done.length : null, best: done.length ? Math.max(...done.map(o => o.net)) : null, worst: done.length ? Math.min(...done.map(o => o.net)) : null };
+}
+
+function setups(sym, name, bars, events) {
+  if (!bars || bars.length < 120) return [];
+  const m = { ma50: sma(bars, 50), ma200: sma(bars, 200) };
+  const N = bars.length, out = [];
+  const evOn = d => (events || []).filter(e => e.symbol === sym && e.date === d).map(e => e.title);
+  const lines = [{ color: BLUE, data: lineData(bars, m.ma50) }];
+  for (let i = N - 1; i >= N - 5; i--) {
+    const d = day(bars[i]), when = i === N - 1 ? 'Last session' : `${N - 1 - i} session${N - 1 - i > 1 ? 's' : ''} before the last`;
+    const nxt = i === N - 1 ? NEXT_OPEN(d) : day(bars[i + 1]);
+    for (const key of Object.keys(SETUPS)) {
+      const S = SETUPS[key], f = S.find(bars, i, m); if (!f) continue;
+      const rec = record(key, bars.slice(0, i + 1), m);
+      const risk = Math.abs(f.entry - f.stop) / f.entry * 100, reward = Math.abs(f.target - f.entry) / f.entry * 100, rr = reward / risk;
+      const news = evOn(d);
+      const st = stats(bars, i);
+      const base = { sym, d, when, key, side: S.side, name: S.name, entry: f.entry, stop: f.stop, target: f.target, risk, reward, rr, rec, nextOpen: nxt, live: i === N - 1,
+        view: { from: day(bars[Math.max(0, i - 100)]), lines, rightOffset: 22 },
+        anns: [{ t: 'pos', d, k: 16, entry: f.entry, stop: f.stop, target: f.target, entryLabel: S.side === 'buy' ? 'Buy' : 'Sell' }] };
+      const timing = i === N - 1
+        ? `The next session opens at 14:30 UK time on ${WEEKDAY(nxt)} ${fmtD(nxt)}.`
+        : `This signal came on ${fmtD(d)}; the plan would have started at the open on ${fmtD(nxt)}.`;
+      const skip = rr < 1.5 ? ` The possible gain (${reward.toFixed(1)}%) is less than 1.5 times the possible loss (${risk.toFixed(1)}%), so a disciplined trader would skip this one: small wins, big losses don't add up.` : '';
+      let x;
+      if (key === 'support') x = {
+        headline: `${name} is sitting on [[support]] at ${usd(f.lvl)}`,
+        steps: [`Before 14:30 UK on ${fmtD(nxt)}: place a [[limit order]] to buy at ${usd(f.entry)} (the last [[close]]). If it isn't filled by the end of that day, cancel it.`, `As soon as it fills: set a [[stop-loss]] at ${usd(f.stop)}, 3% under the support level (${pc(-risk)} from entry).`, `Take profit with a limit sell at ${usd(f.target)} (${pc(reward)}), just under the top of the 3-month range at ${usd(f.top)}.`, `If neither happens within 30 sessions, sell at the price then: the idea hasn't worked.`],
+        why: [`Over the last 60 sessions the price has dropped to about ${usd(f.lvl)} and bounced ${f.touches.length} times (circled). Buyers keep appearing there, so it acts as a floor.`, `Buying right on the floor means the stop can sit close underneath: if the floor breaks, you're out with a small loss.`, `The target is the other side of the range, where sellers have appeared before (the [[resistance]]).`],
+        fail: [`Floors break. If the company has news coming (a readout, results), the level means nothing.`, `The more times a level is tested, the weaker it can get: each bounce uses up buyers.`],
+        anns: base.anns.concat([{ t: 'hline', p: f.lvl, d1: day(bars[i - 60]), d2: d, color: UP, label: `Support ${usd(f.lvl)}` }, { t: 'hline', p: f.top, d1: day(bars[i - 60]), d2: d, color: AMBER, label: `Resistance ${usd(f.top)}` }], f.touches.map(k => ({ t: 'dot', d: day(bars[k]), p: 'low', color: UP }))) };
+      else if (key === 'breakout') x = {
+        headline: `${name} closed above its 3-month high: a [[breakout]]`,
+        steps: [`At 14:30 UK on ${fmtD(nxt)}: buy with a limit order at about ${usd(f.entry)}. Don't pay more than 2% above it; if it opens much higher, skip (the move has gone without you).`, `Set the [[stop-loss]] at ${usd(f.stop)}, 3% back under the old high (${pc(-risk)}). Falling back below it would mean the breakout failed.`, `Target ${usd(f.target)} (${pc(reward)}): the height of the old range added on top, a classic "measured move".`, `If neither happens within 30 sessions, sell.`],
+        why: [`For 60 sessions sellers stopped every rise at about ${usd(f.lvl)} (the [[resistance]]). On ${fmtD(d)} the price closed above it.`, `[[volume]] was ${f.vol.toFixed(1)}× the usual, so many traders took part: breakouts on heavy volume hold more often.`, `Old resistance often turns into the new [[support]], which is why the stop sits just under it.`],
+        fail: [`Many breakouts fail and fall back ("false breakout"); the stop keeps that loss small.`, `In biotech, a breakout before a known readout is mostly hope; check Coming up first.`],
+        anns: base.anns.concat([{ t: 'hline', p: f.lvl, d1: day(bars[i - 60]), d2: d, color: AMBER, label: `Old resistance ${usd(f.lvl)}` }]) };
+      else if (key === 'pullback') x = {
+        headline: `${name} jumped ${pc(f.jump)} on ${fmtD(f.jumpDay)} and has pulled back`,
+        steps: [`Before 14:30 UK on ${fmtD(nxt)}: limit buy at ${usd(f.entry)}.`, `Stop-loss at ${usd(f.stop)} (${pc(-risk)}), under where the jump started.`, `Target ${usd(f.target)} (${pc(reward)}): the high of the jump day.`, `Sell after 30 sessions if neither is hit.`],
+        why: [`On ${fmtD(f.jumpDay)} the price jumped ${pc(f.jump)} on heavy volume: real buying interest.`, `Chasing it that day would have meant buying at the top. Waiting for the price to drift back towards ${usd(f.base)} (the close before the jump) gets a better price.`, `If the jump was real news, buyers usually return at that level; if the price falls through it, the jump was a false start and the stop gets you out.`],
+        fail: [`Sometimes the whole jump disappears, especially when it came from a short-lived rumour.`],
+        anns: base.anns.concat([{ t: 'arrow', d: f.jumpDay, dir: 'up', color: UP, label: `Jump ${pc(f.jump)}` }, { t: 'hline', p: f.base, d1: f.jumpDay, d2: d, color: GREY, label: `Close before the jump ${usd(f.base)}` }]) };
+      else if (key === 'trend') x = {
+        headline: `${name} closed back above its 50-day average (a trend turn)`,
+        steps: [`At 14:30 UK on ${fmtD(nxt)}: limit buy at about ${usd(f.entry)}.`, `Stop-loss at ${usd(f.stop)} (${pc(-risk)}), under the [[moving average]] and the recent low.`, `Target ${usd(f.target)} (${pc(reward)}), twice the risk. Trend followers often instead stay in until the price closes back below the average.`],
+        why: [`The [[moving average]] (blue line) is the average close of the last 50 sessions: ${usd(f.ma)} now. Above it, the medium-term trend is up.`, `The average itself has stopped falling, so this cross is more likely a real turn than a blip.`],
+        fail: [`In a sideways market the price crosses the average back and forth ([[whipsaw]]), and each false signal costs a small loss.`],
+        anns: base.anns.concat([{ t: 'dot', d, p: f.ma, color: BLUE, label: `50-day average ${usd(f.ma)}` }]) };
+      else x = {
+        headline: `${name} broke below its 3-month low (a [[breakdown]])`,
+        steps: [`If you own it: your sell rule probably triggers. Sell at the 14:30 UK open on ${fmtD(nxt)} with a limit a little under the last close (${usd(f.entry)}).`, `If you don't own it: don't buy yet. Wait until the price stops making new lows for at least 5 sessions and a new floor forms.`, `The level it broke (${usd(f.lvl)}) is now the line to watch: getting back above ${usd(f.stop)} would cancel the warning.`],
+        why: [`For 60 sessions buyers defended about ${usd(f.lvl)} (the [[support]]). On ${fmtD(d)} they didn't, and it closed below.`, `When a floor breaks, people who bought near it start selling to limit losses, which can push the price lower.`, `Professional traders sometimes "sell short" here (betting on a fall); that's risky and not something to do while learning.`],
+        fail: [`Some breakdowns reverse fast ("shakeouts"), which is why the cancel level is there.`],
+        anns: base.anns.concat([{ t: 'hline', p: f.lvl, d1: day(bars[i - 60]), d2: d, color: AMBER, label: `Broken support ${usd(f.lvl)}` }]) };
+      out.push(Object.assign(base, x, { timing, skip, news, vol: st.volRatio }));
     }
   }
-  // nothing notable: the most useful lesson is that most days are quiet
+  // nothing set up: say what would, with exact levels to watch
   if (!out.length) {
-    const i = N - 1, r20 = hiLo(bars, N - 21, N - 1), st = stats(bars, i);
-    out.push({ sym, d: day(bars[i]), when: 'Last session', kind: 'Quiet', score: 1,
-      title: `${name}: a normal day (${pc(st.ret)})`,
-      what: `${sym} closed at ${usd(bars[i][4])}, ${pc(st.ret)}, on ${st.volRatio.toFixed(1)}× normal volume. Over the last 20 sessions it has stayed between ${usd(r20.lo)} and ${usd(r20.hi)}.`,
-      read: 'Most trading days carry no information: prices drift with the market. Reading meaning into every small move is how people overtrade and pay fees for nothing.',
-      act: 'On quiet days the useful work is preparation: check Coming up, update your journal, and decide in advance what you would do if the price reached the top or bottom of its range.',
-      anns: [{ t: 'box', d1: r20.ld < r20.hd ? r20.ld : r20.hd, d2: day(bars[i]), p1: r20.hi, p2: r20.lo, color: GREY, label: '20-day range' }], view: { from: day(bars[Math.max(0, N - 90)]), lines: [{ color: BLUE, data: lineData(bars, ma50) }] } });
+    const i = N - 1, r = hiLo(bars, i - 60, i), d = day(bars[i]), c = bars[i][4], nxt = NEXT_OPEN(d);
+    out.push({ sym, d, when: 'Last session', key: 'none', side: 'none', name: 'No setup', live: true, nextOpen: nxt,
+      headline: `${name}: no setup today, so no trade`,
+      steps: [`Do nothing on ${fmtD(nxt)}. No trade is a position too.`, `Set price alerts in Trading 212: one at ${usd(r.hi)} (a close above it would be a [[breakout]]) and one at ${usd(r.lo * 1.03)} (near [[support]]: the bounce setup).`, `Use the time to read the company's next catalyst in Coming up.`],
+      why: [`The last close (${usd(c)}) is in the middle of the 3-month range (${usd(r.lo)} to ${usd(r.hi)}). In the middle, a stop-loss would be far from the entry, so the possible loss is big compared with the possible gain.`, `Most days look like this. Trading them anyway is how beginners pay fees and lose money slowly.`],
+      fail: [], timing: `The next session opens at 14:30 UK time on ${WEEKDAY(nxt)} ${fmtD(nxt)}.`, skip: '', news: [],
+      view: { from: day(bars[Math.max(0, i - 100)]), lines, rightOffset: 8 },
+      anns: [{ t: 'hline', p: r.hi, d1: day(bars[i - 60]), d2: d, color: AMBER, label: `Breakout above ${usd(r.hi)}` }, { t: 'hline', p: r.lo, d1: day(bars[i - 60]), d2: d, color: UP, label: `Support ${usd(r.lo)}` }, { t: 'arrow', d, dir: 'up', color: GREY, label: 'Middle of the range' }] });
   }
   return out;
 }
+
+/* ------------------------------------------------------------ plain-English terms with a small picture */
+const pic = inner => `<svg viewBox="0 0 120 60" width="120" height="60">${inner}</svg>`;
+const cdl = (x, o, c, h, l, col) => `<line x1="${x}" x2="${x}" y1="${h}" y2="${l}" stroke="${col}" stroke-width="1.5"/><rect x="${x - 3}" y="${Math.min(o, c)}" width="6" height="${Math.max(2, Math.abs(c - o))}" fill="${col}"/>`;
+const TERMS = {
+  'support': ['A price level where the share has stopped falling several times, because buyers keep stepping in there. Like a floor.', pic(`<line x1="5" x2="115" y1="48" y2="48" stroke="${UP}" stroke-dasharray="4 3"/><polyline points="5,15 25,47 40,25 60,47 75,20 95,47 115,22" fill="none" stroke="#9AA3B8" stroke-width="2"/>`)],
+  'resistance': ['A price level where the share has stopped rising several times, because sellers keep appearing there. Like a ceiling.', pic(`<line x1="5" x2="115" y1="12" y2="12" stroke="${AMBER}" stroke-dasharray="4 3"/><polyline points="5,45 25,13 40,38 60,13 75,40 95,13 115,35" fill="none" stroke="#9AA3B8" stroke-width="2"/>`)],
+  'gap up': ['The share opens noticeably higher than the previous day\'s close, with no trades in between, usually after news released while the market was shut.', pic(cdl(30, 40, 30, 27, 45, UP) + cdl(55, 32, 28, 26, 36, DOWN) + `<rect x="68" y="10" width="44" height="12" fill="${UP}" opacity=".15"/>` + cdl(85, 18, 10, 6, 21, UP) + `<text x="60" y="56" font-size="9" fill="#9AA3B8">gap</text>`)],
+  'gap down': ['The share opens noticeably lower than the previous day\'s close, with no trades in between, usually after bad news.', pic(cdl(30, 15, 25, 12, 28, DOWN) + cdl(55, 22, 28, 20, 31, DOWN) + cdl(85, 42, 50, 40, 55, DOWN))],
+  'breakout': ['The price closes above a ceiling (resistance) it couldn\'t get past before. Often followed by more rise if lots of shares traded.', pic(`<line x1="5" x2="115" y1="25" y2="25" stroke="${AMBER}" stroke-dasharray="4 3"/><polyline points="5,45 25,26 40,40 60,26 75,38 92,24 115,6" fill="none" stroke="${UP}" stroke-width="2"/>`)],
+  'breakdown': ['The price closes below a floor (support) that held before. A warning sign for holders.', pic(`<line x1="5" x2="115" y1="35" y2="35" stroke="${AMBER}" stroke-dasharray="4 3"/><polyline points="5,10 25,34 40,18 60,34 75,20 92,36 115,55" fill="none" stroke="${DOWN}" stroke-width="2"/>`)],
+  'stop-loss': ['A sell order you set in advance at a lower price. If the share falls to it, you sell automatically, so one bad trade can\'t lose more than you planned. It can\'t protect you from a gap: it then sells at the next available price.', pic(`<rect x="10" y="30" width="100" height="18" fill="${DOWN}" opacity=".2"/><line x1="10" x2="110" y1="30" y2="30" stroke="#E5E7EB"/><line x1="10" x2="110" y1="48" y2="48" stroke="${DOWN}"/><text x="14" y="27" font-size="9" fill="#E5E7EB">buy</text><text x="14" y="58" font-size="9" fill="${DOWN}">stop</text>`)],
+  'target': ['The price where you plan to take your profit, decided before you buy.', pic(`<rect x="10" y="10" width="100" height="20" fill="${UP}" opacity=".2"/><line x1="10" x2="110" y1="30" y2="30" stroke="#E5E7EB"/><line x1="10" x2="110" y1="10" y2="10" stroke="${UP}"/><text x="14" y="22" font-size="9" fill="${UP}">target</text><text x="14" y="40" font-size="9" fill="#E5E7EB">buy</text>`)],
+  'limit order': ['An order with a price on it: "buy at $3.25 or less". It only fills at your price or better, so you never pay more than you meant to.', ''],
+  'close': ['The last price of the trading day (21:00 UK). Charts, averages and these setups all use closes, because that\'s the price everyone agreed to hold overnight.', ''],
+  'volume': ['How many shares changed hands. The bars along the bottom of a chart. A move on several times the usual volume means lots of traders agreed; a move on low volume is less trustworthy.', pic(`${[8, 14, 10, 12, 9, 40, 16].map((h, k) => `<rect x="${8 + k * 15}" y="${55 - h}" width="10" height="${h}" fill="${k === 5 ? UP : '#4B5563'}"/>`).join('')}`)],
+  'moving average': ['The average closing price over the last N days (50 here), redrawn every day. It smooths out the noise: above it, the trend is up; below it, down.', pic(`<polyline points="5,40 18,30 30,38 42,25 55,32 68,20 80,28 95,15 115,20" fill="none" stroke="#9AA3B8" stroke-width="1.5"/><polyline points="5,42 30,36 55,30 80,24 115,18" fill="none" stroke="${BLUE}" stroke-width="2"/>`)],
+  'whipsaw': ['When the price keeps crossing a line back and forth in a sideways market, so a rule buys and sells repeatedly and loses a little (plus fees) each time.', pic(`<line x1="5" x2="115" y1="30" y2="30" stroke="${BLUE}"/><polyline points="5,30 15,22 25,36 35,24 45,37 55,23 65,38 75,25 85,35 95,26 115,33" fill="none" stroke="#9AA3B8" stroke-width="1.5"/>`)],
+};
 
 /* ------------------------------------------------------------ rule replays */
 const COST = 0.4;   // % per buy or sell: Trading 212's 0.15% currency fee plus a typical small-cap spread
@@ -244,5 +372,5 @@ function replay(rule, bars, events, sym, startDay) {
   return { trades, anns, lines, ret: (val - 1) * 100, holdRet, maxDD, n: trades.length, wins, closed: done.length, inPos, from: day(bars[s0]) };
 }
 
-window.WLTeach = { chart, daily, replay, RULES, COST, colors: { UP, DOWN, AMBER, BLUE, PURPLE, GREY } };
+window.WLTeach = { chart, setups, replay, RULES, COST, TERMS, colors: { UP, DOWN, AMBER, BLUE, PURPLE, GREY } };
 })();
