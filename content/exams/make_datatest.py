@@ -287,6 +287,34 @@ def papers():
           mcq('What is the R² value?', ['0.0', '0.1 to 0.5', '0.5 to 0.9', 'Greater than 0.9 but less than 1.0', '1.0'], 3, 'The points sit very close to the trend line but not exactly on it, so R² is just below 1.0.'),
           img=cv4),
     ]})
+    # ============================================================== Mock 5 (wider: question types the example did not use)
+    L5, E5, B5 = 6000, [0, 1500], 4000
+    f5 = lambda *sites: frags(L5, list(sites))
+    assert f5(*E5) == [4500, 1500] and f5(*E5, B5) == [2500, 2000, 1500]
+    g5 = gel('dat5_gel.png', ['L', f5(*E5), f5(B5), f5(*E5, B5), 'L'], '')
+    out.append({'id': 'dat-5', 'title': 'Data analysis practice test 5 (wider)', 'lecture': 'In-class test (9 Nov)', 'marks': 20,
+                'hub': '01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics', 'note': 'Calculator allowed. Question types the official example did not use: an enzyme that cuts twice, linear DNA, sizing from the ladder line, anomalies, dilutions back to the original, and the transformation practical.',
+                'questions': [
+        Q('<strong>Figure 12.</strong> Digests of plasmid pQR. Lanes 1 and 5: 1 kb ladder. Lane 2 EcoRI; lane 3 BamHI; lane 4 EcoRI + BamHI.',
+          mcq('How many EcoRI sites are there in pQR?', ['0', '1', '2', '3', '4'], 2, 'Lane 2 (EcoRI alone) has two bands. On a circle, number of bands = number of cuts, so EcoRI cuts twice. The two bands (4500 and 1500) are the two gaps between its own two sites.'),
+          mcq('Which EcoRI fragment contains the BamHI site?', ['The 1500 bp fragment', 'The 4500 bp fragment', 'Both fragments', 'Neither fragment', 'It cannot be worked out'], 1, 'Adding BamHI (lane 4) leaves the 1500 band unchanged but the 4500 band disappears and 2500 + 2000 appear. 2500 + 2000 = 4500, so BamHI cut the 4500 fragment.'),
+          img=g5),
+        Q('A <strong>linear</strong> 8000 bp piece of DNA (not a plasmid) was cut with HindIII and gave three bands.',
+          mcq('How many HindIII sites does it have?', ['1', '2', '3', '4', '6'], 1, 'Linear DNA has two free ends, so bands = cuts + 1. Three bands means two cuts. (On a circle, three bands would mean three cuts.)')),
+        Q('For the 1 kb ladder on a gel, distance migrated (mm) against log₁₀(size in bp) gave the line y = −40x + 165.',
+          mcq('A fragment migrated 25 mm. What is its approximate size?', ['350 bp', '1000 bp', '2000 bp', '3200 bp', '5000 bp'], 3, 'y = 25, so 25 = −40x + 165 → x = (25 − 165) ÷ −40 = 3.5. x is log₁₀(size), so size = 10³·⁵ ≈ 3162, about 3200 bp. Remember the final step: undo the log with 10 to the power.')),
+        Q('Three absorbance readings for one standard were 0.62, 0.64 and 0.91.',
+          mcq('What is the best value to use for this standard?', ['0.63', '0.72', '0.76', '0.78', '0.91'], 0, '0.91 is far from the other two, so it is anomalous (probably a pipetting error) and is left out. Mean of the rest: (0.62 + 0.64) ÷ 2 = 0.63. Including it would give 0.72, which is dragged up by the error.')),
+        Q('An unknown DNA sample was diluted 1 in 50 (20 µL made up to 1000 µL). The standard curve gives the diluted sample as 0.020 mg/mL.',
+          mcq('What was the concentration of the original sample?', ['0.0004 mg/mL', '0.020 mg/mL', '0.40 mg/mL', '1.0 mg/mL', '2.5 mg/mL'], 3, 'The curve gives the diluted concentration, so multiply back by the dilution factor: 0.020 × 50 = 1.0 mg/mL. Check: 20 µL in 1000 µL is 1 in 50.')),
+        Q('In the transformation practical, 100 µL from each dilution of untransformed <em>E. coli</em> was spread on LB plates (no antibiotic). Colony counts: 10⁻⁴ too many to count; 10⁻⁵ 312; 10⁻⁶ 47; 10⁻⁷ 4.',
+          mcq('Which plate should be used to work out the number of cells?', ['10⁻⁴', '10⁻⁵', '10⁻⁶', '10⁻⁷', 'The average of all four'], 2, 'Only plates with 10 to 200 colonies are counted reliably: above 200 colonies merge, below 10 random chance has too big an effect. Only 10⁻⁶ (47) is in range.'),
+          mcq('How many cells per mL were in the original suspension?', ['4.7 × 10⁶', '4.7 × 10⁷', '4.7 × 10⁸', '3.1 × 10⁸', '4.7 × 10⁹'], 2, 'Cells per mL = colonies × 10^(dilution number) × 10. The × 10 is because only 100 µL (0.1 mL) was spread. 47 × 10⁶ × 10 = 4.7 × 10⁸ CFU/mL.')),
+        Q('The ampicillin plate gave 8 × 10³ transformed cells per mL; the total was 4 × 10⁸ cells per mL.',
+          mcq('What is the frequency of transformation?', ['2 × 10⁻⁵', '2 × 10⁻⁴', '5 × 10⁴', '2 × 10⁵', '3.2 × 10¹²'], 0, 'Transformed ÷ total: 8 × 10³ ÷ 4 × 10⁸ = 2 × 10⁻⁵ (divide the numbers, subtract the powers). That is 1 cell in every 50,000.')),
+        Q('BamHI cuts G^GATCC and BglII cuts A^GATCT, both leaving a 5′-GATC overhang.',
+          mcq('A fragment cut with BamHI is mixed with a plasmid cut with BglII, plus DNA ligase. What happens?', ['Nothing: different enzymes never join', 'They join, because the sticky ends are complementary', 'They join only if blunt', 'The ligase cuts them again', 'Only the plasmid re-closes'], 1, 'Ligation only needs matching overhangs, not the same enzyme. Both leave GATC, which pairs with GATC, so the ends anneal and ligase seals them.')),
+    ]})
     for p in out:
         assert sum(len(q['parts']) for q in p['questions']) == 10, p['id']
     return out
