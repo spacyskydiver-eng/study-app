@@ -1541,3 +1541,21 @@ async function boot() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else setTimeout(boot, 0);
 })();
+
+/* iPad (Safari and Chrome): stop pinch and double-tap zooming the whole app, which left it scaled with a
+   dead strip down the side; and after rotating, snap the layout back to the full screen width */
+(() => {
+  const vp = document.getElementById('vp');
+  document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+  document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
+  // double-tap zoom is switched off in CSS (touch-action: manipulation), so quick repeated taps still count
+  const reset = () => {
+    if (!vp) return;
+    const c = vp.getAttribute('content');
+    vp.setAttribute('content', c.replace('initial-scale=1', 'initial-scale=1.0001'));
+    requestAnimationFrame(() => { vp.setAttribute('content', c); window.scrollTo(0, 0); window.dispatchEvent(new Event('resize')); });
+  };
+  window.addEventListener('orientationchange', () => setTimeout(reset, 250));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => { if (Math.abs(window.visualViewport.scale - 1) > 0.01) reset(); });
+  window.addEventListener('pageshow', () => setTimeout(reset, 50));
+})();

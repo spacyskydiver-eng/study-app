@@ -4,6 +4,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; }
 /* the app is the screen: pin the page so iPad Safari/Chrome can't scroll or pan the whole page (a second,
    outer scroll) when something pokes a pixel past the edge; each pane scrolls on its own */
 body { position: fixed; inset: 0; width: auto; height: auto; overscroll-behavior: none; }
+/* it's an app, not a page: no double-tap zoom on buttons, no text resizing on rotate */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .app-container { overflow: hidden; }
 body {
   --font-text: var(--font-text-theme, 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif);
