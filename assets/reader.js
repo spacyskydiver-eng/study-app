@@ -1,7 +1,10 @@
-/* Read aloud: select text (or press Listen) and the device's speech voice reads it, with a player bar:
+/* Read aloud: select text (or press Listen) and it is read to you, with a player bar:
    play/pause, previous/next sentence, a scrubber you can drag anywhere, speed, voice.
    The sentence and word being read are highlighted in the page (CSS Custom Highlight API, no DOM changes).
-   Defaults to a calm British male voice ("Jarvis style"): the best one the device has.
+   Default voice: a natural AI voice from the site's server (/api/tts: Deepgram Aura through Workers AI),
+   "Draco", a warm British baritone, as the Jarvis-style voice. Each sentence is fetched as audio, the next
+   ones are fetched ahead, and they are cached. If the AI voice is unavailable it falls back to the
+   device's own voices, which can also be picked by hand.
    window.BVReader.play(rootOrRange, { skip }) and BVReader.selectable(root, { skip }). */
 (() => {
 'use strict';
@@ -27,9 +30,12 @@ function jarvisVoice() {
   for (const re of JARVIS) { const v = voices.find(x => re.test(x.name) && /GB|UK/i.test(x.lang + x.name)); if (v) return v; }
   return voices.find(v => /en-GB/i.test(v.lang)) || voices.find(v => v.default) || voices[0] || null;
 }
+const AI_VOICES = [['ai:draco', 'Jarvis style: Draco (AI, British)'], ['ai:helios', 'Helios (AI, British)'], ['ai:pandora', 'Pandora (AI, British, female)']];
+const voicePref = () => { const v = ls.get('voice', 'ai:draco'); return v === 'jarvis' ? 'ai:draco' : v; };
+const useAI = () => voicePref().startsWith('ai:') && !P.aiDown;
 function pickVoice() {
-  const want = ls.get('voice', 'jarvis');
-  return (want !== 'jarvis' && voices.find(v => v.voiceURI === want)) || jarvisVoice();
+  const want = voicePref();
+  return voices.find(v => v.voiceURI === want) || jarvisVoice();
 }
 
 /* ---------------------------------------------------------------- text from the page */
@@ -113,18 +119,68 @@ function wordAt(pos) {
 const wordStart = pos => { let a = Math.min(pos, P.text.length); while (a > 0 && /\S/.test(P.text[a - 1])) a--; return a; };
 
 /* ---------------------------------------------------------------- speaking */
+/* ---- AI voice: one audio clip per sentence */
+const audio = new Audio();
+audio.preload = 'auto';
+const SILENT = (() => {   // 0.05 s of silence as a WAV, built here so it is certainly valid
+  const n = 400, b = new Uint8Array(44 + n * 2), d = new DataView(b.buffer), w = (o, t) => [...t].forEach((c, k) => b[o + k] = c.charCodeAt(0));
+  w(0, 'RIFF'); d.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+  d.setUint32(24, 8000, true); d.setUint32(28, 16000, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, 'data'); d.setUint32(40, n * 2, true);
+  let bin = ''; b.forEach(x => bin += String.fromCharCode(x)); return 'data:audio/wav;base64,' + btoa(bin);
+})();
+const clips = new Map();   // text → Promise<object URL>
+function clip(text) {
+  const voice = voicePref().slice(3), k = voice + '|' + text;
+  if (!clips.has(k)) {
+    clips.set(k, fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, voice }) })
+      .then(r => { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
+      .then(b => URL.createObjectURL(b))
+      .catch(e => { clips.delete(k); throw e; }));
+  }
+  return clips.get(k);
+}
+const sentText = i => P.text.slice(P.sents[i].s, P.sents[i].e).trim();
+function prefetch(si) { for (let i = si + 1; i <= si + 2 && i < P.sents.length; i++) if (sentText(i)) clip(sentText(i)).catch(() => {}); }
+function speakAI(pos, tok) {
+  const si = sentIndex(pos), st = P.sents[si], t = sentText(si);
+  if (!t) { speakFrom(st.e); return; }
+  P.aiSent = si; P.aiLoading = true; paint();
+  clip(t).then(url => {
+    if (tok !== P.token) return;
+    P.aiLoading = false;
+    audio.onloadedmetadata = () => {
+      if (tok !== P.token) return;
+      const frac = Math.max(0, Math.min(.98, (pos - st.s) / Math.max(1, st.e - st.s)));
+      if (frac > 0.02 && isFinite(audio.duration)) audio.currentTime = frac * audio.duration;
+      audio.playbackRate = P.rate;
+      audio.play().catch(() => { if (tok === P.token) pause(); });
+    };
+    audio.onended = () => { if (tok === P.token && P.playing) speakFrom(st.e); };
+    audio.src = url;
+    prefetch(si);
+  }).catch(() => {
+    if (tok !== P.token) return;
+    P.aiDown = true; P.aiLoading = false;   // no AI voice (offline, or the day's free allowance used): carry on with the device's voice
+    note('The AI voice is unavailable right now, so this is the device voice.');
+    if (P.playing) speakFrom(pos);
+  });
+}
+let noteTimer = 0;
+function note(msg) { P.note = msg; clearTimeout(noteTimer); noteTimer = setTimeout(() => { P.note = ''; paint(); }, 6000); paint(); }
+
 function speakFrom(pos) {
-  synth.cancel();
+  synth.cancel(); audio.pause();
   const tok = ++P.token;
   P.pos = Math.max(0, Math.min(pos, P.text.length));
   if (P.pos >= P.text.length - 1) { stopAtEnd(); return; }
   const si = sentIndex(P.pos), st = P.sents[si];
   const from = Math.max(P.pos, st.s), chunk = P.text.slice(from, st.e);
   if (!chunk.trim()) { speakFrom(st.e); return; }
+  if (useAI()) { speakAI(P.pos, tok); return; }
   const u = new SpeechSynthesisUtterance(chunk);
   const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; }
   u.rate = P.rate;
-  u.pitch = ls.get('voice', 'jarvis') === 'jarvis' ? 0.92 : 1;   // a touch lower and steadier for the butler voice
+  u.pitch = voicePref().startsWith('ai:') ? 0.92 : 1;   // fallback for the Jarvis voice: a touch lower and steadier
   u.onstart = () => { if (tok !== P.token) return; P.utterStart = from; P.t0 = performance.now(); };
   u.onboundary = e => { if (tok !== P.token || e.name === 'sentence') return; P.timed = true; if (P.dragging) return; P.pos = from + e.charIndex; paint(); };
   u.onend = () => { if (tok !== P.token) return; if (P.playing) speakFrom(st.e); };
@@ -135,14 +191,17 @@ function speakFrom(pos) {
 }
 function play() {
   if (!P.text) return;
+  // iPad only lets a page play sound that starts from a tap: start (silent) audio now, inside the tap,
+  // so the AI voice clips that arrive a moment later are allowed to play
+  if (useAI() && !P.unlocked) { audio.onended = audio.onloadedmetadata = null; audio.src = SILENT; audio.play().then(() => { P.unlocked = true; }).catch(() => {}); }
   if (P.pos >= P.text.length - 1) P.pos = 0;
   P.playing = true; speakFrom(wordStart(P.pos)); startTick(); drawButtons();
 }
-function pause() { P.playing = false; P.token++; synth.cancel(); stopTick(); drawButtons(); paint(); }
+function pause() { P.playing = false; P.token++; synth.cancel(); audio.pause(); stopTick(); drawButtons(); paint(); }
 function stopAtEnd() { P.playing = false; P.pos = P.text.length; stopTick(); drawButtons(); paint(); }
 function seek(pos, keepPlaying = P.playing) {
   P.pos = wordStart(Math.max(0, Math.min(pos, P.text.length)));
-  if (keepPlaying) { P.playing = true; speakFrom(P.pos); startTick(); } else { P.token++; synth.cancel(); }
+  if (keepPlaying) { P.playing = true; speakFrom(P.pos); startTick(); } else { P.token++; synth.cancel(); audio.pause(); }
   drawButtons(); paint();
 }
 function prevSentence() {
@@ -151,15 +210,26 @@ function prevSentence() {
   seek(P.pos - st.s > 12 || si === 0 ? st.s : P.sents[si - 1].s);
 }
 function nextSentence() { const si = sentIndex(P.pos); if (si < P.sents.length - 1) seek(P.sents[si + 1].s); else stopAtEnd(); }
-function setRate(r) { P.rate = r; ls.set('rate', r); if (P.playing) speakFrom(wordStart(P.pos)); drawButtons(); paint(); }
+function setRate(r) {
+  P.rate = r; ls.set('rate', r);
+  if (P.playing && useAI()) audio.playbackRate = r;   // the AI clip just speeds up, no restart
+  else if (P.playing) speakFrom(wordStart(P.pos));
+  drawButtons(); paint();
+}
 
 // voices that give no word timings (some online voices): estimate where they are from the clock
 function startTick() { stopTick(); P.tick = setInterval(() => {
-  if (!P.playing || P.timed || P.dragging) return;
+  if (!P.playing || P.dragging) return;
+  if (useAI()) {   // follow the clip: position = how far through the sentence's audio we are
+    const st = P.sents[P.aiSent];
+    if (st && !P.aiLoading && audio.duration && isFinite(audio.duration)) { P.pos = st.s + (audio.currentTime / audio.duration) * (st.e - st.s); paint(); }
+    return;
+  }
+  if (P.timed) return;
   const st = P.sents[sentIndex(P.utterStart)];
   const est = P.utterStart + (performance.now() - P.t0) / 1000 * CPS * P.rate;
   P.pos = Math.min(est, st ? st.e - 1 : est); paint();
-}, 200); }
+}, 120); }
 function stopTick() { clearInterval(P.tick); }
 
 /* ---------------------------------------------------------------- player bar */
@@ -209,16 +279,16 @@ function build() {
     paint(true);
   });
   scrub.addEventListener('change', () => { P.dragging = false; seek(Math.round(scrub.value / 1000 * P.text.length), wasPlaying || P.playing); });
-  el.querySelector('[data-rd-voice]').addEventListener('change', e => { ls.set('voice', e.target.value); if (P.playing) speakFrom(wordStart(P.pos)); });
+  el.querySelector('[data-rd-voice]').addEventListener('change', e => { ls.set('voice', e.target.value); P.aiDown = false; if (P.playing) { if (useAI()) { audio.src = SILENT; audio.play().catch(() => {}); } speakFrom(wordStart(P.pos)); } });
   drawVoices();
 }
 const nearestRate = () => RATES.reduce((a, b) => Math.abs(b - P.rate) < Math.abs(a - P.rate) ? b : a);
 function drawVoices() {
   const s = P.el && P.el.querySelector('[data-rd-voice]'); if (!s) return;
-  const want = ls.get('voice', 'jarvis'), j = jarvisVoice();
-  s.innerHTML = `<option value="jarvis">Jarvis style${j ? ' (' + j.name.replace(/\s*\(.*\)\s*/, '') + ')' : ''}</option>` +
-    voices.map(v => `<option value="${v.voiceURI.replace(/"/g, '&quot;')}">${v.name} · ${v.lang}</option>`).join('');
-  s.value = voices.some(v => v.voiceURI === want) ? want : 'jarvis';
+  const want = voicePref();
+  s.innerHTML = AI_VOICES.map(([v, l]) => `<option value="${v}">${l}</option>`).join('') +
+    (voices.length ? '<optgroup label="This device\'s voices">' + voices.map(v => `<option value="${v.voiceURI.replace(/"/g, '&quot;')}">${v.name} · ${v.lang}</option>`).join('') + '</optgroup>' : '');
+  s.value = [...s.options].some(o => o.value === want) ? want : 'ai:draco';
 }
 function drawButtons() {
   if (!P.el) return;
@@ -233,7 +303,7 @@ function paint(fromDrag) {
   if (!fromDrag) P.el.querySelector('[data-rd-scrub]').value = Math.round(P.pos / N * 1000);
   P.el.querySelector('[data-rd-time]').textContent = fmt(secs(P.pos)) + ' / ' + fmt(secs(N));
   const st = P.sents[sentIndex(P.pos)];
-  P.el.querySelector('[data-rd-now]').textContent = st ? P.text.slice(st.s, st.e).trim() : '';
+  P.el.querySelector('[data-rd-now]').textContent = P.note || (P.playing && P.aiLoading ? 'Loading the voice…' : st ? P.text.slice(st.s, st.e).trim() : '');
   highlight(P.pos);
 }
 function close() { pause(); clearHighlight(); if (P.el) { P.el.remove(); P.el = null; } document.body.classList.remove('rd-open'); P.text = ''; }
