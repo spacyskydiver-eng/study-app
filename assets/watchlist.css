@@ -312,3 +312,71 @@
 .wl-steps2 li { margin: 3px 0; }
 .wl-plan-size { margin: 10px 0; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--background-modifier-border); font-size: .86em; line-height: 1.55; }
 @container (max-width: 760px) { .wl-plan { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* tabs and calmer layout */
+.wl-wtabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 16px; padding: 4px; border-radius: 12px; background: var(--bg1, #0D1120); border: 1px solid var(--background-modifier-border); position: sticky; top: 0; z-index: 20; }
+.wl-wtabs button { font: inherit; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 6px; border: 0; border-radius: 9px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: .92em; }
+.wl-wtabs button svg { width: 16px; height: 16px; }
+.wl-wtabs button.is-active { background: var(--background-modifier-hover); color: var(--text-normal); font-weight: 650; box-shadow: inset 0 -2px 0 #60A5FA; }
+.wl-iconbtn { font-weight: 700; }
+.wl-sechead { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+.wl-sechead h2 { margin: 0; }
+.wl-small-btn { padding: 4px 9px; font-size: .78em; }
+.wl-pane[hidden] { display: none !important; }
+.wl-picker { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; scrollbar-width: none; }
+.wl-picker button { font: inherit; flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-muted); cursor: pointer; border-top: 3px solid var(--co); }
+.wl-picker button b { color: var(--co); font-size: .9em; } .wl-picker span { font-size: .74em; } .wl-picker small { font-size: .74em; font-weight: 600; }
+.wl-picker button.is-active { border-color: var(--co); color: var(--text-normal); }
+
+/* course */
+.wl-cprog { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px; }
+.wl-cprog > div { flex: 1; min-width: 200px; }
+.wl-cbar { height: 6px; border-radius: 6px; background: var(--background-modifier-border); margin-top: 6px; overflow: hidden; }
+.wl-cbar i { display: block; height: 100%; background: linear-gradient(90deg, #2DD4BF, #60A5FA); border-radius: 6px; }
+.wl-primary { background: #2563EB; border-color: #2563EB; color: #fff; font-weight: 600; }
+.wl-primary:hover { background: #1D4ED8; border-color: #1D4ED8; }
+.wl-primary:disabled { background: var(--background-modifier-border); border-color: var(--background-modifier-border); color: var(--text-faint); }
+.wl-cwrap { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; }
+.wl-clist { display: flex; flex-direction: column; gap: 6px; }
+.wl-clevel summary { cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; padding: 6px 4px; font-size: .86em; list-style: none; }
+.wl-clevel summary::-webkit-details-marker { display: none; }
+.wl-clevel small { color: var(--text-faint); }
+.wl-clevel button { font: inherit; width: 100%; text-align: left; display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 8px; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: .84em; }
+.wl-clevel button i { font-style: normal; flex: none; width: 26px; font-size: .86em; color: var(--text-faint); }
+.wl-clevel button.is-done i { color: #10B981; font-weight: 700; }
+.wl-clevel button.is-active { background: var(--background-modifier-hover); color: var(--text-normal); font-weight: 600; }
+.wl-clesson { min-width: 0; font-size: .96em; line-height: 1.65; }
+.wl-clesson h2 { font-size: 1.35em; margin: 2px 0 12px; }
+.wl-clesson h3 { margin: 22px 0 8px; font-size: 1em; }
+.wl-clesson > p { margin: 0 0 12px; }
+.wl-cmeta { font-size: .76em; color: var(--text-faint); text-transform: uppercase; letter-spacing: .05em; }
+.wl-ctip { margin: 12px 0; padding: 10px 14px; border-radius: 10px; background: rgba(45,212,191,.08); border: 1px solid rgba(45,212,191,.3); font-size: .92em; }
+.wl-ctip::before { content: "Tip  "; font-weight: 700; color: #2DD4BF; }
+.wl-cpic { margin: 10px 0 14px; text-align: center; padding: 10px; border-radius: 10px; background: var(--background-primary); }
+.wl-cpic img, .wl-cpic svg { max-width: 100%; height: auto; }
+.wl-cpic svg { width: 240px; height: 120px; }
+.wl-cpic img { background: #F8FAFC; border-radius: 8px; padding: 6px; }
+.wl-cchart { height: 320px; margin: 10px 0 14px; }
+.wl-go { margin: 6px 6px 10px 0; }
+.wl-cmore { font-size: .88em; color: var(--text-muted); }
+.wl-q { margin: 10px 0 14px; padding: 12px 14px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); }
+.wl-q p { margin: 0 0 8px; }
+.wl-q button { font: inherit; display: block; width: 100%; text-align: left; margin: 5px 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-normal); cursor: pointer; font-size: .92em; }
+.wl-q button:hover:not(:disabled) { border-color: #60A5FA; }
+.wl-q button.is-right { border-color: #10B981; background: rgba(16,185,129,.1); }
+.wl-q button.is-wrong { border-color: #F43F5E; background: rgba(244,63,94,.1); }
+.wl-q button:disabled { cursor: default; }
+.wl-qwhy { font-size: .88em; margin: 8px 0 0 !important; }
+.wl-cnav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--background-modifier-border); }
+@container (max-width: 760px) {
+  .wl-cwrap { grid-template-columns: 1fr; }
+  .wl-clist { order: 2; }
+  .wl-wtabs button span { font-size: .86em; }
+  .wl-cchart { height: 260px; }
+}
+@container (max-width: 420px) { .wl-wtabs button { flex-direction: column; gap: 2px; padding: 7px 2px; font-size: .8em; } }
+
+.wl-more { margin: 10px 0; border: 1px solid var(--background-modifier-border); border-radius: 10px; padding: 8px 12px; background: var(--background-primary); }
+.wl-more summary { cursor: pointer; font-weight: 600; font-size: .88em; }
+.wl-more[open] summary { margin-bottom: 6px; }
+.wl-pipe.is-short .wl-prog:nth-child(n+7) { display: none; }

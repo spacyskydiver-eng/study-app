@@ -351,6 +351,20 @@ export async function investApi(request, env, url, ctx) {
       if (missing && hasKey) { try { await series(env, missing, "1day"); return json(await metrics(env)); } catch (e) { /* shown as unknown */ } }
       return json(m);
     }
+    // Learn tab progress: which lessons are done, kept on the site so phone and laptop agree
+    if (p === "course") {
+      if (request.method === "PUT") {
+        const b = await request.json().catch(() => null);
+        const done = b && b.done && typeof b.done === "object" ? b.done : null;
+        if (!done) return json({ error: "bad request" }, 400);
+        const clean = {};
+        for (const [k, v] of Object.entries(done)) if (/^[0-9.]{1,6}$/.test(k) && typeof v === "number") clean[k] = v;
+        await cachePut(env, "course", { done: clean });
+        return json({ ok: true });
+      }
+      const r = await cacheGet(env, "course");
+      return json({ done: r ? r.v.done : {} });
+    }
     if (p === "rules") {
       if (request.method === "PUT") {
         const b = await request.json().catch(() => null);

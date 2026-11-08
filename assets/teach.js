@@ -31,7 +31,7 @@ function chart(host, opts = {}) {
     handleScale: { axisPressedMouseMove: { time: true, price: true } },
   });
   const candles = c.addCandlestickSeries({ upColor: UP, downColor: DOWN, wickUpColor: UP, wickDownColor: DOWN, borderVisible: false, priceLineVisible: false, lastValueVisible: true });
-  let extra = [], bars = [], anns = [], days = [];
+  let extra = [], bars = [], anns = [], days = [], main = candles, lineS = null;
   const barAt = d => { let i = days.findIndex(x => x >= d); if (i < 0) i = days.length - 1; return i; };
   const priceOf = (p, d) => {
     if (typeof p === 'number') return p;
@@ -40,7 +40,7 @@ function chart(host, opts = {}) {
     return b[{ open: 1, high: 2, low: 3, close: 4 }[p || 'close']];
   };
   const x = d => c.timeScale().timeToCoordinate(days[barAt(d)]);
-  const y = p => candles.priceToCoordinate(p);
+  const y = p => main.priceToCoordinate(p);
   const el = (tag, attrs, text) => { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; svg.appendChild(e); return e; };
   function label(px, py, text, color, align = 'middle', above = true) {
     if (!text || px == null || py == null) return;
@@ -117,8 +117,18 @@ function chart(host, opts = {}) {
   return {
     set(b, a, view) {
       bars = b; anns = a || []; days = b.map(day);
-      candles.setData(b.map(r => ({ time: day(r), open: r[1], high: r[2], low: r[3], close: r[4] })));
+      if (lineS) { c.removeSeries(lineS); lineS = null; }
+      if (view && view.line) {   // a plain line of closing prices, for the very first chart lessons
+        candles.setData([]);
+        lineS = c.addLineSeries({ color: BLUE, lineWidth: 2, priceLineVisible: false });
+        lineS.setData(b.map(r => ({ time: day(r), value: r[4] }))); main = lineS;
+      } else { candles.setData(b.map(r => ({ time: day(r), open: r[1], high: r[2], low: r[3], close: r[4] }))); main = candles; }
       for (const s of extra) c.removeSeries(s); extra = [];
+      if (view && view.volume) {
+        const v = c.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol', lastValueVisible: false, priceLineVisible: false });
+        c.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+        v.setData(b.map((r, k) => ({ time: day(r), value: r[5], color: (r[4] >= (k ? b[k - 1][4] : r[1]) ? UP : DOWN) + '66' }))); extra.push(v);
+      }
       for (const ln of (view && view.lines) || []) { const s = c.addLineSeries({ color: ln.color, lineWidth: ln.width || 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, lineStyle: ln.style || 0 }); s.setData(ln.data); extra.push(s); }
       c.timeScale().applyOptions({ rightOffset: (view && view.rightOffset) || 3 });
       // a plan box reaches into the future, so leave that much empty space on the right
@@ -322,6 +332,12 @@ const TERMS = {
   'breakdown': ['The price closes below a floor (support) that held before. A warning sign for holders.', pic(`<line x1="5" x2="115" y1="35" y2="35" stroke="${AMBER}" stroke-dasharray="4 3"/><polyline points="5,10 25,34 40,18 60,34 75,20 92,36 115,55" fill="none" stroke="${DOWN}" stroke-width="2"/>`)],
   'stop-loss': ['A sell order you set in advance at a lower price. If the share falls to it, you sell automatically, so one bad trade can\'t lose more than you planned. It can\'t protect you from a gap: it then sells at the next available price.', pic(`<rect x="10" y="30" width="100" height="18" fill="${DOWN}" opacity=".2"/><line x1="10" x2="110" y1="30" y2="30" stroke="#E5E7EB"/><line x1="10" x2="110" y1="48" y2="48" stroke="${DOWN}"/><text x="14" y="27" font-size="9" fill="#E5E7EB">buy</text><text x="14" y="58" font-size="9" fill="${DOWN}">stop</text>`)],
   'target': ['The price where you plan to take your profit, decided before you buy.', pic(`<rect x="10" y="10" width="100" height="20" fill="${UP}" opacity=".2"/><line x1="10" x2="110" y1="30" y2="30" stroke="#E5E7EB"/><line x1="10" x2="110" y1="10" y2="10" stroke="${UP}"/><text x="14" y="22" font-size="9" fill="${UP}">target</text><text x="14" y="40" font-size="9" fill="#E5E7EB">buy</text>`)],
+  'candle': ['One bar on a price chart that shows four prices for its period (usually a day): where it opened, the highest, the lowest, and where it closed. Green if it closed higher than it opened, red if lower.', pic(cdl(30, 45, 20, 10, 52, UP) + cdl(70, 18, 42, 8, 50, DOWN) + `<text x="40" y="20" font-size="9" fill="#9AA3B8">up day</text><text x="80" y="58" font-size="9" fill="#9AA3B8">down day</text>`)],
+  'catalyst': ['A scheduled event that could move a share a lot: trial results, an FDA decision, quarterly results.', ''],
+  'binary event': ['A single result that a small company\'s value largely depends on, like a key trial readout. It either works or it doesn\'t, so the share can jump or collapse overnight.', pic(`<polyline points="5,30 50,30" fill="none" stroke="#9AA3B8" stroke-width="2"/><polyline points="50,30 115,6" fill="none" stroke="${UP}" stroke-width="2" stroke-dasharray="4 3"/><polyline points="50,30 115,55" fill="none" stroke="${DOWN}" stroke-width="2" stroke-dasharray="4 3"/><circle cx="50" cy="30" r="3" fill="${AMBER}"/>`)],
+  'cash runway': ['How long a company\'s cash will last at its current spending rate, e.g. "into 2028". Under about 18 months, it will probably need to raise money soon.', ''],
+  'dilution': ['When a company sells new shares, each existing share owns a smaller slice of the company. The price usually falls when it happens.', ''],
+  'index fund': ['A fund that buys hundreds or thousands of companies at once to copy a whole market (like the world\'s biggest companies). Cheap, spread out, and the benchmark every stock picker is compared with.', ''],
   'limit order': ['An order with a price on it: "buy at $3.25 or less". It only fills at your price or better, so you never pay more than you meant to.', ''],
   'close': ['The last price of the trading day (21:00 UK). Charts, averages and these setups all use closes, because that\'s the price everyone agreed to hold overnight.', ''],
   'volume': ['How many shares changed hands. The bars along the bottom of a chart. A move on several times the usual volume means lots of traders agreed; a move on low volume is less trustworthy.', pic(`${[8, 14, 10, 12, 9, 40, 16].map((h, k) => `<rect x="${8 + k * 15}" y="${55 - h}" width="10" height="${h}" fill="${k === 5 ? UP : '#4B5563'}"/>`).join('')}`)],
@@ -372,5 +388,5 @@ function replay(rule, bars, events, sym, startDay) {
   return { trades, anns, lines, ret: (val - 1) * 100, holdRet, maxDD, n: trades.length, wins, closed: done.length, inPos, from: day(bars[s0]) };
 }
 
-window.WLTeach = { chart, setups, replay, RULES, COST, TERMS, colors: { UP, DOWN, AMBER, BLUE, PURPLE, GREY } };
+window.WLTeach = { chart, setups, replay, RULES, COST, TERMS, sma, lineData, colors: { UP, DOWN, AMBER, BLUE, PURPLE, GREY } };
 })();

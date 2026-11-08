@@ -1,0 +1,317 @@
+{
+  "_about": "The Learn tab's course on the live watchlist. Blocks: p (text, [[term]] is tappable), list, pic (a term's picture or an image path), chart (a real price chart drawn with the teaching chart), tip, go (button that opens a tool). Quiz answers are the index of the right option.",
+  "levels": [
+    {
+      "id": "L1", "title": "Level 1: How the market works",
+      "lessons": [
+        {
+          "id": "1.1", "title": "What a share is and why its price moves", "mins": 4,
+          "blocks": [
+            { "p": "A share is a tiny slice of a company. Own one Vertex share and you own about 1/250,000,000th of Vertex: its drugs, its cash, its future profits." },
+            { "p": "The price is simply the last price at which a buyer and a seller agreed to trade. Millions of trades a day set it. It moves when people change their minds about what the company will be worth in the future." },
+            { "list": ["Good news (a drug works, sales grow) → more people want to buy → the price rises", "Bad news (a trial fails, cash runs out) → more people want to sell → the price falls", "Prices move on surprises: if everyone already expected the news, the price barely moves. This is called news being \"priced in\""] },
+            { "tip": "US shares trade 14:30 to 21:00 UK time, Monday to Friday. Nothing trades at weekends, which is why a chart's last candle on a Sunday is Friday's." }
+          ],
+          "note": "03 Biotech Investing/01 Investing Foundations/01 How shares and markets work",
+          "quiz": [
+            { "q": "What sets a share's price?", "o": ["The company decides it each morning", "The last price a buyer and seller agreed to trade at", "The government"], "a": 1, "why": "The price is just the latest trade. It changes all day as people buy and sell." },
+            { "q": "A company announces results that are exactly what everyone expected. What usually happens to the price?", "o": ["It jumps", "It barely moves", "It crashes"], "a": 1, "why": "Expected news is already priced in. Prices move on surprises." }
+          ]
+        },
+        {
+          "id": "1.2", "title": "Reading a price chart", "mins": 4,
+          "blocks": [
+            { "p": "A price chart shows the price over time: time runs left to right along the bottom, price goes up the right-hand side." },
+            { "chart": { "sym": "VRTX", "from": "2025-11-07", "to": "2026-11-06", "style": "line", "anns": [ { "t": "arrow", "d": "2026-11-06", "dir": "down", "color": "#60A5FA", "label": "Latest price\n(right edge)" } ] } },
+            { "p": "That's Vertex over the last year as a simple line joining each day's closing price. Read it like any graph: where did it start, where is it now, what were the big ups and downs?" },
+            { "list": ["Time setting (5m, 1H, 1D, 1W): how much time each point or candle covers", "Zoom (1M to All): how much history is on screen", "The last price is the coloured label on the right edge"] }
+          ],
+          "note": "03 Biotech Investing/03 Reading Charts and Trading/01 Reading a price chart",
+          "quiz": [
+            { "q": "On a 1D chart, what does each candle or point represent?", "o": ["One minute", "One day", "One week"], "a": 1, "why": "1D means one day per candle." },
+            { "q": "Which side of the chart is the most recent price?", "o": ["Left", "Right"], "a": 1, "why": "Time runs left to right, so the latest price is at the right edge." }
+          ]
+        },
+        {
+          "id": "1.3", "title": "Candles: four prices in one shape", "mins": 5,
+          "blocks": [
+            { "p": "Traders use [[candle|candles]] instead of a line, because each candle shows four prices for its period: where it opened, the highest, the lowest, and where it closed." },
+            { "pic": "attachments/04 Attachments/inv_candle_anatomy.svg" },
+            { "list": ["Green candle: closed higher than it opened (buyers won that day)", "Red candle: closed lower than it opened (sellers won)", "Thick body: from the open to the [[close]]", "Thin wicks: how far the price stretched up and down during the day"] },
+            { "chart": { "sym": "SION", "from": "2026-09-20", "to": "2026-11-06", "anns": [ { "t": "arrow", "d": "2026-11-06", "dir": "down", "color": "#60A5FA", "label": "Friday's candle" } ] } },
+            { "p": "Point at any candle on the Market tab's chart: the top line reads out its open (O), high (H), low (L) and close (C)." }
+          ],
+          "note": "03 Biotech Investing/03 Reading Charts and Trading/02 Candlesticks from the ground up",
+          "quiz": [
+            { "q": "A candle is red. What does that tell you?", "o": ["The share lost money for everyone", "It closed lower than it opened", "Volume was low"], "a": 1, "why": "Colour compares that period's close with its open." },
+            { "q": "What does a long wick sticking up from a candle mean?", "o": ["The price reached much higher during the day, then fell back before the close", "The company announced good news", "The market was closed"], "a": 0, "why": "Wicks show the extremes reached during the period. A long upper wick means higher prices were rejected." }
+          ]
+        },
+        {
+          "id": "1.4", "title": "Volume and gaps", "mins": 4,
+          "blocks": [
+            { "p": "[[volume]] is how many shares were traded: the bars along the bottom of a chart. Huge volume means lots of people acted, so the move reflects something real." },
+            { "p": "A [[gap down|gap]] is when the price jumps from one day's close to a very different price the next morning, with no trades in between. It happens when news comes out while the market is shut." },
+            { "chart": { "sym": "SION", "from": "2026-07-01", "to": "2026-09-30", "volume": true, "anns": [ { "t": "arrow", "d": "2026-08-10", "dir": "down", "color": "#F43F5E", "label": "Trial failed overnight:\ngapped ~90% lower" } ] } },
+            { "p": "That's Sionna on 10 August 2026. Its trial result came out before the market opened. Nobody could sell at the old price: the first trade was already about 90% lower." },
+            { "tip": "This is why a [[stop-loss]] doesn't protect you from overnight news: it can only sell at the next available price." }
+          ],
+          "note": "03 Biotech Investing/03 Reading Charts and Trading/03 Volume, gaps and liquidity",
+          "quiz": [
+            { "q": "Why did Sionna's shares 'gap' instead of falling gradually?", "o": ["The news came out while the market was closed", "Trading 212 was down", "Volume was low"], "a": 0, "why": "When news lands overnight, the first trade next morning happens at a very different price." },
+            { "q": "A share rises 8% on 5 times its normal volume. Compared with the same rise on low volume, this move is…", "o": ["Less trustworthy", "More trustworthy", "The same"], "a": 1, "why": "Heavy volume means many traders agreed, so the move is more likely to hold." }
+          ]
+        },
+        {
+          "id": "1.5", "title": "Support and resistance", "mins": 4,
+          "blocks": [
+            { "p": "Prices often bounce off the same levels again and again, because people remember prices." },
+            { "pic": "support" },
+            { "p": "[[support]] is a floor: a price where the share keeps stopping falling, because buyers step in there." },
+            { "pic": "resistance" },
+            { "p": "[[resistance]] is a ceiling: a price where it keeps stopping rising, often because people who bought there earlier sell to get their money back." },
+            { "list": ["Close above resistance = a [[breakout]] (often followed by more rise)", "Close below support = a [[breakdown]] (a warning for holders)", "Traders put their [[stop-loss]] just beyond these levels, so a wrong call costs little"] }
+          ],
+          "note": "03 Biotech Investing/03 Reading Charts and Trading/04 Trends, support and resistance, and moving averages",
+          "quiz": [
+            { "q": "A share has bounced off $12 four times this year. $12 is its…", "o": ["Resistance", "Support", "Moving average"], "a": 1, "why": "A level it keeps bouncing up from is a floor: support." },
+            { "q": "Where would a trader who buys at support usually put their stop-loss?", "o": ["Just below the support level", "Far above the price", "At the resistance"], "a": 0, "why": "If the floor breaks, the reason for buying is gone, so the stop goes just under it." }
+          ]
+        },
+        {
+          "id": "1.6", "title": "Trends and moving averages", "mins": 4,
+          "blocks": [
+            { "p": "A [[moving average]] is the average closing price over the last few weeks or months, redrawn every day. It smooths out the noise so you can see the trend." },
+            { "chart": { "sym": "VRTX", "from": "2025-11-07", "to": "2026-11-06", "ma": true, "anns": [] } },
+            { "list": ["Blue line: the 50-day average, the medium-term trend (about 2.5 months)", "Purple line: the 200-day average, the long-term trend (about 10 months)", "Price above a rising average = uptrend; below a falling one = downtrend", "When the price keeps crossing back and forth, that's [[whipsaw]]: the trend is unclear"] },
+            { "tip": "Averages lag: they only move after the price has. They describe the trend; they don't predict it." }
+          ],
+          "note": "03 Biotech Investing/03 Reading Charts and Trading/04 Trends, support and resistance, and moving averages",
+          "quiz": [
+            { "q": "The price is above its 200-day average, and the average is rising. The long-term trend is…", "o": ["Up", "Down", "Unknown"], "a": 0, "why": "Above a rising long-term average is the textbook uptrend." },
+            { "q": "Why are moving averages slow to react to sudden news?", "o": ["They're updated weekly", "They average old prices, so they lag", "They ignore big moves"], "a": 1, "why": "An average of the last 50 days only shifts gradually after a sudden jump or crash." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L2", "title": "Level 2: How biotech investing works",
+      "lessons": [
+        {
+          "id": "2.1", "title": "How a drug gets to market", "mins": 5,
+          "blocks": [
+            { "p": "A drug goes through a series of stages before it can be sold. Each stage is a chance to fail." },
+            { "list": ["Preclinical: cells and animals", "Phase 1: first humans, is it safe? (about 52% move on)", "Phase 2: does it work in patients? (only about 29% move on: the biggest hurdle)", "Phase 3: large trial proving benefit (about 58% move on)", "Filed → approved: regulators decide (about 91% approved)"] },
+            { "p": "Overall, only about 8% of drugs that start Phase 1 are ever approved. That's why a company with only early-stage drugs is a much riskier bet than one with an approved product." },
+            { "tip": "In the Decide tab, each company's pipeline shows how far right its drugs have got. Further right = more likely to make money." }
+          ],
+          "note": "03 Biotech Investing/01 Investing Foundations/02 How a drug gets to market",
+          "quiz": [
+            { "q": "Which stage do most drugs fail at?", "o": ["Phase 1", "Phase 2", "Approval"], "a": 1, "why": "Only about 29% of drugs make it from Phase 2 to Phase 3." },
+            { "q": "Roughly what share of drugs entering Phase 1 get approved?", "o": ["About 8%", "About 50%", "About 90%"], "a": 0, "why": "Around 8 in 100, using industry data for 2011 to 2020." }
+          ]
+        },
+        {
+          "id": "2.2", "title": "Catalysts and coin-flip events", "mins": 5,
+          "blocks": [
+            { "p": "A [[catalyst]] is a scheduled event that can move a share sharply: trial results, an FDA decision, quarterly results." },
+            { "p": "When a small company's whole value rests on one result, that's a [[binary event]]: it either works (shares can jump 30 to 100%) or fails (shares can lose 70 to 90% overnight)." },
+            { "list": ["Before: shares often rise as people hope (a \"run-up\")", "After good news: the price can still fall as early buyers take profits (\"sell the news\")", "After failure: there's no time to sell, because the price gaps"] },
+            { "tip": "The rule disciplined investors follow: before a binary event, only hold an amount you could lose 90% of without minding." }
+          ],
+          "note": "03 Biotech Investing/01 Investing Foundations/03 Biotech catalysts and binary events",
+          "quiz": [
+            { "q": "What makes an event 'binary'?", "o": ["It happens twice", "The company's value largely depends on a yes-or-no result", "It's announced in binary code"], "a": 1, "why": "Binary means two very different outcomes, like a trial working or failing." },
+            { "q": "What's the only real protection against a failed trial result?", "o": ["A stop-loss", "A small position size", "Buying more after it falls"], "a": 1, "why": "Stops get skipped by overnight gaps. Holding only what you could lose is the protection." }
+          ]
+        },
+        {
+          "id": "2.3", "title": "Cash, runway and share sales", "mins": 5,
+          "blocks": [
+            { "p": "Most small biotechs make no money yet. They spend cash on trials. [[cash runway]] is how long their cash lasts at the current spending rate." },
+            { "p": "When cash runs low, they sell new shares to raise money. More shares means each existing share owns a smaller slice: that's [[dilution]], and the price usually drops when it happens." },
+            { "chart": { "sym": "FDMT", "from": "2025-10-01", "to": "2026-01-31", "anns": [ { "t": "arrow", "d": "2025-11-06", "dir": "down", "color": "#F59E0B", "label": "Good data AND a\n$100M share sale same day" }, { "t": "hline", "p": 10.51, "d1": "2025-10-20", "d2": "2026-01-31", "color": "#60A5FA", "label": "Share sale price $10.51" } ] } },
+            { "list": ["Runway under ~18 months → expect a share sale soon", "Companies often sell shares right after good news, while the price is high (4DMT, above)", "A filing that mentions \"going concern\" doubt (Prime Medicine in 2026) means the company itself warns it needs money within a year"] }
+          ],
+          "note": "03 Biotech Investing/01 Investing Foundations/04 Reading a biotech company’s finances",
+          "quiz": [
+            { "q": "A company has 10 months of cash left and no profits. What's likely soon?", "o": ["A share sale (dilution)", "A dividend", "A share price guarantee"], "a": 0, "why": "It needs money to keep running trials, and selling new shares is the usual way." },
+            { "q": "Why do companies often sell shares right after good news?", "o": ["It's required by law", "The price is high, so they raise more money for fewer new shares", "To punish shareholders"], "a": 1, "why": "A higher price means less dilution for the same amount of cash." }
+          ]
+        },
+        {
+          "id": "2.4", "title": "Reading a trial result", "mins": 6,
+          "blocks": [
+            { "p": "Your degree is your edge here. When a CF trial reports, check these in order:" },
+            { "list": ["Did it hit its primary endpoint (the main thing it was designed to measure)?", "How big was the effect? For CF: sweat chloride falls of 10+ mmol/L, or ppFEV1 gains of several points, matter", "Compared with what? Placebo, or on top of Trikafta (much harder)?", "How many patients? 15 people can't prove much", "Any safety problems?"] },
+            { "p": "Sionna's SION-719 failed on most of these: added on top of Trikafta, in 15 people, with a −1.0 mmol/L effect (p=0.7). The design was a high bar from the start." },
+            { "tip": "Write down what counts as good and bad BEFORE a result comes out, so the company's wording can't sway you." }
+          ],
+          "note": "03 Biotech Investing/01 Investing Foundations/08 Reading a trial press release",
+          "quiz": [
+            { "q": "What's the 'primary endpoint'?", "o": ["The last day of the trial", "The main outcome the trial was designed to test", "The share price target"], "a": 1, "why": "It's the one result the trial is judged on." },
+            { "q": "Why is testing a drug 'on top of Trikafta' a harder test?", "o": ["Trikafta is already highly effective, so there's less room to show extra benefit", "Trikafta is cheap", "It isn't harder"], "a": 0, "why": "Showing an extra improvement on top of an excellent drug is much harder than beating placebo." }
+          ]
+        },
+        {
+          "id": "2.5", "title": "Your six CF companies", "mins": 8,
+          "blocks": [
+            { "p": "The watchlist follows six companies working on cystic fibrosis, from safest to riskiest:" },
+            { "list": ["Vertex (VRTX): sells Trikafta and Alyftrek, very profitable. The giant that sets the bar", "Krystal (KRYS): profitable from a skin gene therapy, testing inhaled KB407 for CF", "4DMT (FDMT): inhaled gene therapy 4D-710; most of its value is an eye drug in Phase 3", "Arcturus (ARCT): inhaled mRNA ARCT-032, 12-week data due Q2 2027", "Sionna (SION): crashed after a failed trial; new combination starting Phase 2a", "Prime Medicine (PRME): gene editing, early stage, short of cash"] },
+            { "go": { "tab": "decide", "label": "Open the Decide tab and look at each company's pipeline" } },
+            { "tip": "For each company, find: its most advanced drug, its next big date, and its runway. That's all you need to start." }
+          ],
+          "note": "03 Biotech Investing/02 Cystic Fibrosis Pipeline/07 Watchlist and catalyst calendar",
+          "quiz": [
+            { "q": "Which watchlist company is profitable from a non-CF product and testing an inhaled CF gene therapy?", "o": ["Sionna", "Krystal", "Prime"], "a": 1, "why": "Krystal's Vyjuvek sales fund its pipeline, including KB407 for CF." },
+            { "q": "Which is the riskiest, with early-stage drugs and short cash?", "o": ["Vertex", "Prime Medicine", "Krystal"], "a": 1, "why": "Prime's drugs are early-stage and its own filing raised going-concern doubt." }
+          ]
+        },
+        {
+          "id": "2.6", "title": "Can you actually make money from this?", "mins": 5,
+          "blocks": [
+            { "p": "Honest answer: most people who trade a lot lose money compared with simply holding an index fund. Professionals' computers react to news within milliseconds, so knowing news fast is never an edge." },
+            { "list": ["Your real edge: judging the science better than general investors (your degree)", "Patience: holding for years when professionals are judged every quarter", "Small positions: so being wrong never hurts much"] },
+            { "p": "That's why the plan is \"core and satellite\": most money in a cheap global index fund (the core), and a small slice (the satellite, around 20%) in companies you understand." },
+            { "tip": "Success isn't doubling your money. It's beating the index over a few years, without big losses, while learning." }
+          ],
+          "note": "03 Biotech Investing/03 Reading Charts and Trading/07 Do events give you an edge?",
+          "quiz": [
+            { "q": "Where is a biomedicine student's realistic edge?", "o": ["Reacting to news faster", "Judging trial science better than general investors", "Trading every day"], "a": 1, "why": "Speed is impossible to beat; understanding the science is where you can know more." },
+            { "q": "In 'core and satellite', what's the core?", "o": ["A cheap global index fund", "Your favourite biotech", "Cash under the bed"], "a": 0, "why": "The core is low-cost, diversified and does most of the long-term work." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L3", "title": "Level 3: Using the tools",
+      "lessons": [
+        {
+          "id": "3.1", "title": "Tour: the Market tab", "mins": 5,
+          "blocks": [
+            { "p": "The Market tab is where you watch. Do this now:" },
+            { "list": ["Tap the Vertex card. The chart switches to Vertex", "Press 1Y, then switch between Candles and Line", "Turn on MA to see the 50 and 200-day averages", "Tap an orange K marker: what happened that day, and how did the price react?", "Scroll down to Coming up: what's the next big date?"] },
+            { "go": { "tab": "market", "label": "Open the Market tab" } }
+          ],
+          "quiz": [
+            { "q": "On the chart, what does a K marker show?", "o": ["A key event like results or a trial readout", "A buy signal", "Krystal's price"], "a": 0, "why": "K is for key events. Tap it to see what happened and the price reaction." }
+          ]
+        },
+        {
+          "id": "3.2", "title": "The decision check and your rules", "mins": 6,
+          "blocks": [
+            { "p": "Professional investors decide their rules before they look at a share, so excitement can't make the decision. The Decide tab does that for you." },
+            { "list": ["Pick a company at the top", "Read the verdict: OK to consider, wait, or not allowed", "Tap each line to see the reason: binary event close, cash runway, run-up, and so on", "Open 'Your rules' and read each setting. Change any you disagree with", "The size box shows the most your rules allow, and the worst case"] },
+            { "go": { "tab": "decide", "label": "Open the Decide tab" } },
+            { "tip": "'Wait' isn't 'bad company'. It means now is a risky moment." }
+          ],
+          "quiz": [
+            { "q": "The decision check says 'wait' because a trial result is 9 days away. What does that mean?", "o": ["Sell everything", "Now is a risky moment; size smaller or wait until after the result", "The company is bad"], "a": 1, "why": "The rule flags timing risk, not company quality." }
+          ]
+        },
+        {
+          "id": "3.3", "title": "Case study: Sionna's crash", "mins": 7,
+          "blocks": [
+            { "p": "Walk through the biggest lesson on the watchlist step by step, with the chart marked up: what was visible beforehand, what the tools said, and what happened." },
+            { "go": { "tab": "practice", "ltab": "cases", "case": "sion-binary", "label": "Start the Sionna case study" } }
+          ],
+          "quiz": [
+            { "q": "What would have protected a Sionna holder on 10 August 2026?", "o": ["A 10% stop-loss", "Holding only an amount they could lose", "Buying more on the day"], "a": 1, "why": "The price gapped past any stop. Only position size limited the damage." }
+          ]
+        },
+        {
+          "id": "3.4", "title": "Case studies: good news that still hurt", "mins": 8,
+          "blocks": [
+            { "p": "Two cases where the headline was good but the share price wasn't: 4DMT's data with a share sale, and Krystal's results beat that still fell. They teach when NOT to buy, and when to sell (only when your reason breaks)." },
+            { "go": { "tab": "practice", "ltab": "cases", "case": "fdmt-raise", "label": "Start the 4DMT case" } },
+            { "go": { "tab": "practice", "ltab": "cases", "case": "krys-beat", "label": "Start the Krystal case" } }
+          ],
+          "quiz": [
+            { "q": "You own Krystal because 'Vyjuvek sales keep growing'. Results show sales +30% but a CF trial is delayed. By your own reason, you should…", "o": ["Sell immediately", "Hold: your reason is intact", "Buy double"], "a": 1, "why": "Sell when YOUR reason breaks. Your reason was Vyjuvek growth, which was confirmed." }
+          ]
+        },
+        {
+          "id": "3.5", "title": "Today's setups: exact plans", "mins": 6,
+          "blocks": [
+            { "p": "This is how a trader turns a chart into a plan: a buy price, a [[stop-loss]] (where you get out if wrong) and a [[target]] (where you take profit), all decided before buying." },
+            { "list": ["Open Today's setups and pick one", "Read the plan: buy at, stop, target, and reward : risk (aim for 2 : 1 or better)", "Check the track record: has this setup actually worked on this company before?", "Note whether your decision check agrees"] },
+            { "go": { "tab": "practice", "ltab": "today", "label": "Open Today's setups" } },
+            { "tip": "A setup with a losing track record on that share is a reason NOT to buy it." }
+          ],
+          "quiz": [
+            { "q": "Buy at $10, stop at $9.50, target at $11. What's the reward : risk?", "o": ["1 : 1", "2 : 1", "0.5 : 1"], "a": 1, "why": "Possible gain $1, possible loss $0.50, so 2 : 1." }
+          ]
+        },
+        {
+          "id": "3.6", "title": "Rule replays: does a simple rule beat holding?", "mins": 5,
+          "blocks": [
+            { "p": "Pick a rule and a company: the chart marks every buy and sell that rule would have made over the past year, and compares the result with just holding." },
+            { "list": ["Try 'Follow the 50-day trend' on each company", "Then 'Hold, but step aside for readouts' on Sionna", "Count how often trading beat simply holding, after fees"] },
+            { "go": { "tab": "practice", "ltab": "replay", "label": "Open Rule replays" } }
+          ],
+          "quiz": [
+            { "q": "A rule makes 20 trades a year and ends 2% behind holding. What's the likely reason?", "o": ["Whipsaw and fees", "It was too cautious", "Holding always loses"], "a": 0, "why": "Lots of trading in a sideways market means many small losses and fees." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L4", "title": "Level 4: Your first practice investment",
+      "lessons": [
+        {
+          "id": "4.1", "title": "Set up the Trading 212 practice account", "mins": 10,
+          "blocks": [
+            { "list": ["In the Trading 212 app, tap the ☰ menu, then the switch to practice at the bottom", "Choose Invest (real shares). Not CFD: CFDs use borrowed money and most people using them lose", "Decide your pretend size: £1,000. Ignore the huge virtual balance; practise with what you'd really have", "Plan the split: about £800 core (a global index fund) and £200 satellite (biotech)"] },
+            { "tip": "Practice teaches the process. Profits and losses here are pretend, but the habits are real." }
+          ],
+          "note": "03 Biotech Investing/03 Reading Charts and Trading/10 Practising on Trading 212",
+          "quiz": [
+            { "q": "Why practise with a pretend £1,000 instead of the full virtual balance?", "o": ["To make sizes realistic", "Trading 212 requires it", "It earns more"], "a": 0, "why": "Your position sizes and risk need to match real life to teach you anything." }
+          ]
+        },
+        {
+          "id": "4.2", "title": "Link Trading 212 to the site (optional)", "mins": 10,
+          "blocks": [
+            { "p": "Linking shows your practice holdings, your buys and sells on the chart, and fills in your journal by itself. It's read-only: the site can't trade." },
+            { "go": { "tab": "practice", "scroll": "[data-t212]", "label": "Show the linking steps" } }
+          ],
+          "quiz": []
+        },
+        {
+          "id": "4.3", "title": "Your first practice buy: the core", "mins": 5,
+          "blocks": [
+            { "p": "Start with the boring part, because it does most of the work: put the practice core (£800) into a global [[index fund]]. Trading 212 lists several; a common one is the Vanguard FTSE All-World (ticker VWRP)." },
+            { "list": ["Search the fund in the practice account", "Use a [[limit order]] near the current price", "Note it in the journal on the Practice tab: 'Core: global index fund, held long term'"] },
+            { "tip": "This becomes your benchmark: every satellite pick is judged against how this fund does." }
+          ],
+          "quiz": [
+            { "q": "Why buy the index fund first?", "o": ["It's the core that does most of the long-term work, and the benchmark for your picks", "It's guaranteed to rise", "Trading 212 requires it"], "a": 0, "why": "The core is the foundation and the yardstick. Nothing is guaranteed." }
+          ]
+        },
+        {
+          "id": "4.4", "title": "Your first satellite position: the checklist", "mins": 15,
+          "blocks": [
+            { "p": "Only when every box is ticked do you place a practice satellite order:" },
+            { "list": ["I can explain in one sentence why this company's drug could work", "I know its next big date and what a good or bad result would be", "The decision check says OK, or I understand exactly why it says wait and I'm sizing smaller", "The size is at or below what my rules allow (and I'd be fine losing 90% of it)", "I've written my reason and my sell rule in the journal", "I'm using a limit order, during market hours (14:30 to 21:00 UK)"] },
+            { "go": { "tab": "decide", "label": "Run the decision check" } },
+            { "tip": "Not buying is a valid outcome. Write it in the journal as a skip, with your reason." }
+          ],
+          "quiz": [
+            { "q": "What must be written down before placing the order?", "o": ["Your reason and your sell rule", "Nothing", "A price prediction"], "a": 0, "why": "The reason tells you later when to sell: when it breaks." }
+          ]
+        },
+        {
+          "id": "4.5", "title": "The weekly routine and the 4-week review", "mins": 5,
+          "blocks": [
+            { "list": ["Every week (10 minutes): check Coming up, glance at Today's setups, read new key events, update the journal", "After 4 weeks: fill in the lesson for each decision, compare satellite against the index fund, count how often you broke your own rules", "After 8 weeks of following your rules, you can consider real money in a Stocks and Shares ISA, small amounts first"] },
+            { "go": { "tab": "practice", "scroll": "[data-t212]", "label": "Open the journal" } },
+            { "tip": "You've finished the course. From here, the case studies and setups refresh with new real events, so there's always something new to learn." }
+          ],
+          "quiz": [
+            { "q": "After a few months your picks trail the index fund. What does that tell you?", "o": ["Keep more money in the core", "Trade more often", "Nothing"], "a": 0, "why": "That's the honest test: if picking doesn't beat the index, the index deserves more of the money." }
+          ]
+        }
+      ]
+    }
+  ]
+}

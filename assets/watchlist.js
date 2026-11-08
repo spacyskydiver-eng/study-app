@@ -26,7 +26,7 @@ let CFG = null;
 const S = {
   sym: store.get('wl:sym', 'VRTX'), iv: store.get('wl:iv', '1day'), zoom: store.get('wl:zoom', '1y'),
   style: store.get('wl:style', 'candles'), ma: store.get('wl:ma', true), show: store.get('wl:show', { key: true, trial: true, paper: true, news: true }),
-  fSym: 'all', fType: 'all', shown: 40, sel: null, explain: store.get('wl:explain', true),
+  fSym: 'all', fType: 'all', shown: 40, sel: null, explain: store.get('wl:explain', false), wtab: store.get('wl:wtab', 'learn'),
 };
 let tz = { status: null, account: null, accErr: null, orders: [], journal: [], mine: [] };   // Trading 212
 let quotes = null, quoteErr = null, events = [], bars = null, barsErr = null, jobs = null, checking = null;
@@ -58,35 +58,134 @@ function lib() {
 }
 
 /* ------------------------------------------------------------ page */
+const WTABS = [['learn', 'Learn', 'graduation-cap'], ['market', 'Market', 'trending-up'], ['decide', 'Decide', 'check-square'], ['practice', 'Practice', 'target']];
 function shell(view) {
   view.innerHTML = `<div class="wl${S.explain ? ' is-explain' : ''}">
     <header class="wl-head">
-      <div><h1>Live watchlist</h1><p class="wl-sub">Cystic fibrosis companies. Prices from Twelve Data; trials, papers and news collected by the site every few hours.${B.exists(GUIDE) ? ` <a class="internal-link" data-note="${esc(GUIDE)}" href="${B.hashFor(GUIDE)}">How to read all of this</a>` : ''}</p></div>
-      <div class="wl-headbtns"><button class="wl-btn${S.explain ? ' is-on' : ''}" data-explain title="Show or hide the explanations">${icon('book-open')}<span>Explanations</span></button>
-      <button class="wl-btn" data-refresh title="Check every source now">${icon('refresh')}<span>Check now</span></button></div>
+      <div><h1>Biotech investing</h1><p class="wl-sub">Learn, watch your six CF companies, decide, and practise.</p></div>
+      <div class="wl-headbtns"><button class="wl-btn wl-iconbtn${S.explain ? ' is-on' : ''}" data-explain title="Show or hide explanations under every part of the page">ⓘ<span>Explain</span></button></div>
     </header>
+    <nav class="wl-wtabs">${WTABS.map(([k, l, ic]) => `<button data-wtab="${k}" class="${S.wtab === k ? 'is-active' : ''}">${icon(ic)}<span>${l}</span></button>`).join('')}</nav>
     <div class="wl-notice" data-notice hidden></div>
-    <p class="wl-ex">Each card is one company. The big number is the latest share price in US dollars, then today's change since yesterday's close (green up, red down). "Live" means the US market is open now (14:30 to 21:00 UK time). The bar shows the 52-week range: lowest price of the past year on the left, highest on the right, and the dot is today. Stage is the furthest point the company's most advanced CF drug has reached. Next is the next milestone the company has given. Runway is how long its cash lasts at the current spending rate. Risk is a rough label from the company notes: how much of the company rides on unproven drugs. Tap a card to chart it and see its pipeline and decision check.</p>
-    <div class="wl-cards" data-cards></div>
-    <section class="wl-panel wl-chartpanel">
-      <div class="wl-chart-top" data-charttop></div>
-      <div class="wl-tools" data-tools></div>
-      <div class="wl-chartwrap"><div class="wl-ohlc" data-ohlc></div><div class="wl-chart" data-chart></div></div>
-      <div class="wl-hint wl-dim">Drag to move, scroll or pinch to zoom, double-click to reset. Tap a marker to see what happened that day.</div>
-      <p class="wl-ex">Each candle is one period (one day on 1D): the thick body runs from the opening to the closing price, the thin wicks reach the highest and lowest prices. Green means it closed higher than it opened, red lower. The bars along the bottom are volume, the number of shares traded. The top line reads out open (O), high (H), low (L), close (C), the change and volume for whichever candle you point at. MA draws the 50-day (blue) and 200-day (purple) averages, which show the medium and long-term trend. The 5m/1H/1D/1W buttons set how long each candle covers; 1M to All set how much history is on screen. Markers: K key event, T trial, P paper, N news, B and S your own buys and sells. The full guide is under Reading Charts and Trading.</p>
-      <div class="wl-pin" data-pinbox></div>
-    </section>
-    <section class="wl-panel wl-lessons" data-lessons></section>
-    <section class="wl-panel wl-decide" data-decide></section>
-    <section class="wl-panel wl-t212" data-t212></section>
-    <section class="wl-panel"><h2>Coming up</h2><p class="wl-ex">Dated events still ahead: FDA decision dates, investor conferences and the dates trials are expected to finish collecting their main results (primary completion). Below them, what each company itself says is next. These are the moments a price is most likely to move sharply.</p><div data-upcoming></div></section>
-    <section class="wl-panel"><h2>Updates</h2><p class="wl-ex">Everything that has happened, newest first: key events (results, FDA decisions, trial readouts, researched by hand), trial registry changes from ClinicalTrials.gov, new papers from PubMed and news stories. Filter by company or type; tap a ticker to see that day on the chart. New items are collected automatically every few hours.</p>
-      <div class="wl-chips" data-fsym></div><div class="wl-chips" data-ftype></div>
-      <div class="wl-feed" data-feed></div>
-      <details class="wl-sources" data-sources></details>
-    </section>
-    <p class="wl-foot">${TERMS.map(termLink).filter(Boolean).join(' · ')}${TERMS.some(t => B.exists('02 Key Terms/' + t)) ? '<br>' : ''}Research and learning, not financial advice. Each price is as of the time shown on it, and the free plan's prices can lag.</p>
+
+    <div class="wl-pane" data-pane="learn"><section class="wl-panel wl-course" data-course></section></div>
+
+    <div class="wl-pane" data-pane="market">
+      <p class="wl-ex">Each card is one company. The big number is the latest share price in US dollars, then today's change since yesterday's close (green up, red down). "Live" means the US market is open now (14:30 to 21:00 UK time). The bar shows the 52-week range: lowest price of the past year on the left, highest on the right, and the dot is today. Tap a card to chart it.</p>
+      <div class="wl-cards" data-cards></div>
+      <section class="wl-panel wl-chartpanel">
+        <div class="wl-chart-top" data-charttop></div>
+        <div class="wl-tools" data-tools></div>
+        <div class="wl-chartwrap"><div class="wl-ohlc" data-ohlc></div><div class="wl-chart" data-chart></div></div>
+        <div class="wl-hint wl-dim">Drag to move, pinch or scroll to zoom, double-tap to reset. Tap a marker to see what happened that day.</div>
+        <p class="wl-ex">Each candle is one day (on 1D): green closed higher than it opened, red lower; the thin wicks show the day's high and low. The bars along the bottom are volume. MA draws the 50-day (blue) and 200-day (purple) averages. Markers: K key event, T trial, P paper, N news, B and S your own buys and sells.</p>
+        <div class="wl-pin" data-pinbox></div>
+      </section>
+      <section class="wl-panel"><div class="wl-sechead"><h2>Coming up</h2></div><p class="wl-ex">Dated events still ahead, and what each company says is next. These are the days a price is most likely to move sharply.</p><div data-upcoming></div></section>
+      <section class="wl-panel"><div class="wl-sechead"><h2>Updates</h2><button class="wl-btn wl-small-btn" data-refresh title="Check every source now">${icon('refresh')}<span>Check now</span></button></div>
+        <p class="wl-ex">Everything that has happened, newest first: key events, trial registry changes, new papers and news. Tap a ticker to see that day on the chart.</p>
+        <div class="wl-chips" data-fsym></div><div class="wl-chips" data-ftype></div>
+        <div class="wl-feed" data-feed></div>
+        <details class="wl-sources" data-sources></details>
+      </section>
+    </div>
+
+    <div class="wl-pane" data-pane="decide">
+      <div class="wl-picker" data-picker></div>
+      <section class="wl-panel wl-decide" data-decide></section>
+    </div>
+
+    <div class="wl-pane" data-pane="practice">
+      <section class="wl-panel wl-lessons" data-lessons></section>
+      <section class="wl-panel wl-t212" data-t212></section>
+    </div>
+    <p class="wl-foot">Research and learning, not financial advice. Each price is as of the time shown on it, and the free plan's prices can lag.</p>
   </div>`;
+  showPane(view);
+}
+function showPane(view) {
+  view.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== S.wtab; });
+  view.querySelectorAll('[data-wtab]').forEach(b => b.classList.toggle('is-active', b.dataset.wtab === S.wtab));
+  const n = q(view, '[data-notice]'); if (n) n.style.display = S.wtab === 'market' || S.wtab === 'decide' ? '' : 'none';
+}
+function picker(view) {
+  const el = q(view, '[data-picker]'); if (!el) return;
+  el.innerHTML = CFG.companies.map(c => { const x = quotes && quotes.quotes ? quotes.quotes[c.symbol] : null;
+    return `<button data-sym="${c.symbol}" class="${S.sym === c.symbol ? 'is-active' : ''}" style="--co:${c.color}"><b>${c.symbol}</b><span>${esc(c.short)}</span>${x ? `<small class="${dir(x.pct)}">${money(x.price)}</small>` : ''}</button>`; }).join('');
+}
+
+/* ------------------------------------------------------------ Learn: the course */
+let COURSE = null, cdone = {}, cur = null, cquiz = {}, courseChart = null;
+const allCourse = () => COURSE ? COURSE.levels.flatMap(L => L.lessons.map(l => Object.assign(l, { level: L.title }))) : [];
+const nextLesson = () => allCourse().find(l => !cdone[l.id]) || null;
+function courseBlocks(l) {
+  return l.blocks.map((b, k) => {
+    if (b.p) return `<p>${terms(b.p)}</p>`;
+    if (b.list) return `<ul class="wl-steps2">${b.list.map(x => `<li>${terms(x)}</li>`).join('')}</ul>`;
+    if (b.tip) return `<div class="wl-ctip">${terms(b.tip)}</div>`;
+    if (b.pic) { const T = window.WLTeach && window.WLTeach.TERMS[b.pic]; return T ? `<div class="wl-cpic">${T[1]}</div>` : `<div class="wl-cpic"><img src="${esc(b.pic)}" alt=""></div>`; }
+    if (b.chart) return `<div class="wl-tchart wl-cchart" data-cchart="${k}"></div>`;
+    if (b.go) return `<button class="wl-btn wl-go" data-go='${esc(JSON.stringify(b.go))}'>${icon('arrow-right')}<span>${esc(b.go.label)}</span></button>`;
+    return '';
+  }).join('');
+}
+function coursePanel(view) {
+  const el = q(view, '[data-course]'); if (!el) return;
+  if (!COURSE) { el.innerHTML = '<div class="wl-empty"><span class="books-spinner"></span></div>'; return; }
+  const all = allCourse(), doneN = all.filter(l => cdone[l.id]).length, nxt = nextLesson();
+  if (!cur) cur = (nxt || all[all.length - 1]).id;
+  const l = all.find(x => x.id === cur), idx = all.indexOf(l), qz = cquiz[l.id] || {};
+  const answered = (l.quiz || []).every((_, k) => qz[k] != null);
+  const list = COURSE.levels.map(L => { const ls = L.lessons, d = ls.filter(x => cdone[x.id]).length;
+    return `<details class="wl-clevel"${ls.some(x => x.id === cur) ? ' open' : ''}><summary><b>${esc(L.title)}</b><small>${d}/${ls.length}</small></summary>${ls.map(x => `<button data-lessonid="${x.id}" class="${x.id === cur ? 'is-active' : ''} ${cdone[x.id] ? 'is-done' : ''}"><i>${cdone[x.id] ? '✓' : x.id}</i><span>${esc(x.title)}</span></button>`).join('')}</details>`; }).join('');
+  const quiz = (l.quiz || []).map((qq, k) => `<div class="wl-q"><p><b>${esc(qq.q)}</b></p>${qq.o.map((o, j) => { const picked = qz[k] === j, show = qz[k] != null; return `<button data-quiz="${k}:${j}" class="${show && j === qq.a ? 'is-right' : ''} ${picked && j !== qq.a ? 'is-wrong' : ''}" ${show ? 'disabled' : ''}>${esc(o)}</button>`; }).join('')}${qz[k] != null ? `<p class="wl-qwhy ${qz[k] === qq.a ? 'is-up' : 'is-down'}">${qz[k] === qq.a ? 'Right.' : 'Not quite.'} ${esc(qq.why)}</p>` : ''}</div>`).join('');
+  if (courseChart) { courseChart.forEach(c => c.destroy()); courseChart = null; }
+  el.innerHTML = `
+    <div class="wl-cprog"><div><b>${doneN} of ${all.length} lessons done</b><div class="wl-cbar"><i style="width:${100 * doneN / all.length}%"></i></div></div>
+      ${nxt && nxt.id !== cur ? `<button class="wl-btn wl-primary" data-lessonid="${nxt.id}">Continue: ${esc(nxt.id)} ${esc(nxt.title)}</button>` : ''}</div>
+    <div class="wl-cwrap">
+      <aside class="wl-clist">${list}</aside>
+      <article class="wl-clesson">
+        <div class="wl-cmeta">${esc(l.level)} · Lesson ${esc(l.id)} · about ${l.mins} min</div>
+        <h2>${esc(l.title)}</h2>
+        ${courseBlocks(l)}
+        ${l.note && B.exists(l.note) ? `<p class="wl-cmore">Want more detail? <a class="internal-link" data-note="${esc(l.note)}" href="${B.hashFor(l.note)}">Read the full guide</a></p>` : ''}
+        ${quiz ? `<h3>Quick check</h3>${quiz}` : ''}
+        <div class="wl-cnav">
+          ${idx > 0 ? `<button class="wl-btn" data-lessonid="${all[idx - 1].id}">Back</button>` : '<span></span>'}
+          ${cdone[l.id] ? `<span class="is-up">✓ Done</span>` : `<button class="wl-btn wl-primary" data-cdone="${l.id}" ${answered ? '' : 'disabled title="Answer the questions first"'}>Mark done${idx < all.length - 1 ? ' and next' : ''}</button>`}
+          ${cdone[l.id] && idx < all.length - 1 ? `<button class="wl-btn wl-primary" data-lessonid="${all[idx + 1].id}">Next lesson</button>` : ''}
+        </div>
+      </article>
+    </div>`;
+  // real price charts inside the lesson
+  const T = window.WLTeach;
+  if (T && allBars) {
+    courseChart = [];
+    l.blocks.forEach((b, k) => {
+      if (!b.chart) return;
+      const host = q(view, `[data-cchart="${k}"]`), bs = allBars[b.chart.sym];
+      if (!bs) { host.innerHTML = '<div class="wl-empty">This chart appears once the price history has loaded.</div>'; return; }
+      const ch = T.chart(host); courseChart.push(ch);
+      const lines = b.chart.ma ? [{ color: '#60A5FA', data: T.lineData(bs, T.sma(bs, 50)) }, { color: '#C084FC', data: T.lineData(bs, T.sma(bs, 200)) }] : [];
+      ch.set(bs, b.chart.anns || [], { from: b.chart.from, to: b.chart.to, lines, line: b.chart.style === 'line', volume: !!b.chart.volume });
+    });
+  }
+}
+async function loadCourse(view) {
+  const [c, p] = await Promise.all([fetch('data/course.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => null), api('course').catch(() => null)]);
+  COURSE = c; cdone = (p && p.done) || store.get('wl:cdone', {});
+  if (!store.get('wl:wtab', null) && nextLesson() === null) { S.wtab = 'market'; showPane(view); }
+  coursePanel(view);
+}
+function saveCourse() { store.set('wl:cdone', cdone); api('course', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ done: cdone }) }).catch(() => {}); }
+function goTo(view, g) {
+  S.wtab = g.tab; store.set('wl:wtab', S.wtab); showPane(view);
+  if (g.ltab) { LS.tab = g.ltab; store.set('wl:ltab', LS.tab); }
+  if (g.case) { cs = { id: g.case, step: 0 }; LS.tab = 'cases'; }
+  if (g.tab === 'practice') lessonsPanel(view);
+  const target = g.scroll ? q(view, g.scroll) : q(view, `[data-pane="${g.tab}"]`);
+  if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (g.scroll) { target.classList.remove('wl-flash'); void target.offsetWidth; target.classList.add('wl-flash'); } }
 }
 
 function notice(view) {
@@ -503,10 +602,11 @@ function decidePanel(view) {
     <div class="wl-pipehead"><h3>Pipeline</h3><label class="wl-check"><input type="checkbox" data-cfonly ${cfOnly ? 'checked' : ''}> CF only</label></div>
     <div class="wl-phaselegend">${PHASES.map(p => `<span title="${esc(PHASE_EX[p])}">${p}</span>`).join('')}</div>
     <p class="wl-ex">Each bar has 8 steps, from Preclinical (left) to Approved (right); filled steps show how far a drug has got. Only about 8% of drugs entering Phase 1 reach approval, so drugs further right are much more likely to make money. Greyed bars are stopped programmes.</p>
-    <div class="wl-pipe">${pipe.length ? pipe.map(p => `<div class="wl-prog${p.status === 'stopped' ? ' is-stopped' : ''}">
+    <div class="wl-pipe${pipe.length > 6 && !S.pipeAll ? ' is-short' : ''}">${pipe.length ? pipe.map(p => `<div class="wl-prog${p.status === 'stopped' ? ' is-stopped' : ''}">
       <div class="wl-prog-name"><b>${esc(p.drug || p.name || '')}</b>${p.cf ? '<span class="wl-cf">CF</span>' : ''}${p.status === 'partnered' ? '<span class="wl-cf wl-partner">partnered</span>' : ''}${p.status === 'stopped' ? '<span class="wl-cf wl-stop">stopped</span>' : ''}<span>${esc(p.disease || '')}${p.approach ? ' · ' + esc(p.approach) : ''}</span></div>
       <div class="wl-prog-phase">${track(p)}<small>${esc(p.phase || 'Stage not disclosed')}</small></div>
       <div class="wl-prog-next">${p.next ? `<b>Next:</b> ${esc(p.next)}` : ''}${p.note ? `<span>${esc(p.note)}</span>` : ''}</div></div>`).join('') : '<p class="wl-dim">No pipeline researched for this company yet.</p>'}</div>
+    ${pipe.length > 6 ? `<button class="wl-btn wl-small-btn" data-pipeall>${S.pipeAll ? 'Show fewer' : `Show all ${pipe.length} programmes`}</button>` : ''}
     <h3>Decision check</h3>
     <div class="wl-verdict is-${e.state}"><b>${st[0]}</b><div><strong>${st[1]}</strong><span>${st[2]}</span></div></div>
     <div class="wl-rules">${e.rows.map(r => `<details class="wl-rule is-${r.state}"><summary><i>${{ ok: '✓', wait: '!', block: '✕', info: 'i' }[r.state]}</i><b>${r.title}</b><span>${esc(r.result)}</span></summary><p>${esc(r.why)}${r.link ? tl(r.link) : ''}</p></details>`).join('')}</div>
@@ -599,10 +699,10 @@ function lessonsPanel(view) {
         ${cur.skip ? `<p class="wl-skip">${esc(cur.skip)}</p>` : ''}
         <h5>The plan, step by step</h5><ol class="wl-steps2">${cur.steps.map(x => `<li>${terms(x)}</li>`).join('')}</ol>
         ${size}
-        <h5>Why these levels</h5><ol class="wl-steps2">${cur.why.map(x => `<li>${terms(x)}</li>`).join('')}</ol>
-        ${cur.fail.length ? `<h5>How it can go wrong</h5><ul class="wl-steps2">${cur.fail.map(x => `<li>${terms(x)}</li>`).join('')}</ul>` : ''}
+        <details class="wl-more"><summary>Why these levels</summary><ol class="wl-steps2">${cur.why.map(x => `<li>${terms(x)}</li>`).join('')}</ol></details>
+        ${cur.fail.length ? `<details class="wl-more"><summary>How it can go wrong</summary><ul class="wl-steps2">${cur.fail.map(x => `<li>${terms(x)}</li>`).join('')}</ul></details>` : ''}
         ${cur.news && cur.news.length ? `<p class="wl-small"><b>News that day:</b> ${esc(cur.news[0])}</p>` : ''}
-        ${cur.key !== 'none' ? `<h5>Track record of this setup on ${cur.sym}</h5>${recTxt}` : ''}
+        ${cur.key !== 'none' ? `<details class="wl-more" open><summary>Has this worked on ${cur.sym} before?</summary>${recTxt}</details>` : ''}
         <p class="wl-dim wl-small">Setups are textbook patterns with fixed rules, worked out from real prices; the track record replays the same rules over the past two years (buy at the next day's open, then whichever of stop or target comes first, fees included). Nobody knows the next move: this shows how disciplined traders plan, not what will happen. Practise it in the Trading 212 practice account first.</p></div>`;
       drawn = { bars: allBars[cur.sym], anns: cur.anns, view: cur.view };
     }
@@ -663,9 +763,9 @@ function stepScroll(view) {
   if (st.scroll) { target.classList.remove('wl-flash'); void target.offsetWidth; target.classList.add('wl-flash'); }
 }
 async function loadLessons(view) {
-  const libs = [lib(), window.WLTeach ? null : new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'assets/teach.js?v=20261109'; s.onload = res; s.onerror = rej; document.head.appendChild(s); })];
+  const libs = [lib(), window.WLTeach ? null : new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'assets/teach.js?v=20261110'; s.onload = res; s.onerror = rej; document.head.appendChild(s); })];
   const [r, c] = await Promise.all([api('bars-all').catch(() => null), fetch('data/cases.json', { cache: 'no-cache' }).then(x => x.json()).catch(() => null), ...libs].map(p => Promise.resolve(p).catch(() => null)));
-  if (r && r.bars) { allBars = r.bars; lessonsCache = null; }
+  if (r && r.bars) { const first = !allBars; allBars = r.bars; lessonsCache = null; if (first && S.wtab === 'learn') coursePanel(view); }
   if (c) CASES = c.cases || [];
   lessonsPanel(view);
   // companies whose history isn't cached yet arrive one per request; ask again until all are in
@@ -676,7 +776,7 @@ async function loadLessons(view) {
 async function loadQuotes(view) {
   try { const r = await api('quotes'); if (r.error) quoteErr = r.error; else { quotes = r; quoteErr = null; } }
   catch (e) { if (e.auth) return; quoteErr = 'network'; }
-  notice(view); cards(view); chartTop(view); decidePanel(view);
+  notice(view); cards(view); picker(view); chartTop(view); decidePanel(view);
 }
 async function loadBars(view) {
   const want = S.sym + S.iv;
@@ -735,6 +835,7 @@ function show(view) {
     loadT212(view).then(() => decidePanel(view));
     loadDecide(view);
     loadLessons(view);
+    loadCourse(view);
     timer = setInterval(() => { if (!document.hidden) loadQuotes(view); }, 120000);
     const save = () => { store.set('wl:sym', S.sym); store.set('wl:iv', S.iv); store.set('wl:zoom', S.zoom); store.set('wl:style', S.style); store.set('wl:ma', S.ma); store.set('wl:show', S.show); };
     view.addEventListener('change', e => {
@@ -759,7 +860,12 @@ function show(view) {
     view.onclick = async e => {
       const t = e.target;
       const card = t.closest('[data-sym]');
-      if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); chartTop(view); decidePanel(view); loadBars(view); return; }
+      if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); picker(view); chartTop(view); decidePanel(view); loadBars(view); return; }
+      const wt = t.closest('[data-wtab]'); if (wt) { S.wtab = wt.dataset.wtab; store.set('wl:wtab', S.wtab); showPane(view); if (S.wtab === 'learn') coursePanel(view); if (S.wtab === 'practice') lessonsPanel(view); q(view, '.wl-wtabs').scrollIntoView({ block: 'start' }); return; }
+      const li = t.closest('[data-lessonid]'); if (li) { cur = li.dataset.lessonid; coursePanel(view); q(view, '.wl-clesson').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      const qb = t.closest('[data-quiz]'); if (qb) { const [k, j] = qb.dataset.quiz.split(':').map(Number); (cquiz[cur] = cquiz[cur] || {})[k] = j; coursePanel(view); return; }
+      const cd = t.closest('[data-cdone]'); if (cd) { cdone[cd.dataset.cdone] = Date.now(); saveCourse(); const all = allCourse(), i = all.findIndex(x => x.id === cd.dataset.cdone); if (i < all.length - 1) cur = all[i + 1].id; coursePanel(view); q(view, '.wl-course').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      const gb = t.closest('[data-go]'); if (gb) { goTo(view, JSON.parse(gb.dataset.go)); return; }
       const tb = t.closest('.wl-term'); if (tb) { termPop(tb); return; }
       const lp = () => { lessonsPanel(view); };
       const ci = t.closest('[data-case]'); if (ci) { cs = { id: ci.dataset.case, step: 0 }; lp(); stepScroll(view); return; }
@@ -771,6 +877,7 @@ function show(view) {
       const ls = t.closest('[data-lsym]'); if (ls) { LS.sym = ls.dataset.lsym; lp(); return; }
       const lr = t.closest('[data-lrule]'); if (lr) { LS.rule = lr.dataset.lrule; lp(); return; }
       const lpd = t.closest('[data-lper]'); if (lpd) { LS.period = +lpd.dataset.lper; lp(); return; }
+      if (t.closest('[data-pipeall]')) { S.pipeAll = !S.pipeAll; decidePanel(view); return; }
       if (t.closest('[data-explain]')) { S.explain = !S.explain; store.set('wl:explain', S.explain); q(view, '.wl').classList.toggle('is-explain', S.explain); t.closest('[data-explain]').classList.toggle('is-on', S.explain); return; }
       if (t.closest('[data-rulesreset]')) { rules = Object.assign({}, DEFAULT_RULES); saveRules(); decidePanel(view); return; }
       const iv = t.closest('[data-iv]'); if (iv) { S.iv = iv.dataset.iv; S.sel = null; save(); tools(view); loadBars(view); return; }
@@ -802,13 +909,13 @@ function show(view) {
       if (t.closest('[data-refresh]')) { check(view, true); }
     };
   }).catch(() => { view.innerHTML = '<div class="pane-empty">Could not load the watchlist.</div>'; });
-  return () => { alive = false; clearInterval(timer); destroyChart(); if (teachChart) { teachChart.destroy(); teachChart = null; } };
+  return () => { alive = false; clearInterval(timer); destroyChart(); if (teachChart) { teachChart.destroy(); teachChart = null; } if (courseChart) { courseChart.forEach(c => c.destroy()); courseChart = null; } };
 }
 
 B.registerView('watchlist', { title: () => 'Live watchlist', icon: 'trending-up', cls: 'wl-host', show });
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261114'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261115'; document.head.appendChild(l);
 }
 })();
