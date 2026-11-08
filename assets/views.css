@@ -685,3 +685,33 @@ body.is-phone .pg-box { width: 26px; height: 26px; margin: 5px 1px; }
 .fc-topics summary { cursor: pointer; padding: 4px 14px 8px; font-size: 12.5px; color: var(--text-muted); }
 .canvas-list { padding: 12px 16px 100px; display: grid; gap: 10px; }
 .canvas-list-item { display: block; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); overflow-wrap: anywhere; }
+
+/* ---------------------------------------------------------------- exam handwriting (assets/ink.js) */
+.view-content.exam-host { position: relative; }
+.ink-layer { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 3; overflow: visible; }
+.ink-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.exam-host.ink-mouse .exam-wrap { cursor: crosshair; }
+.ink-bar { position: sticky; bottom: 14px; z-index: 6; width: max-content; max-width: calc(100% - 24px); margin: -60px 12px 14px auto; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 6px 8px; border-radius: 14px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 28px rgba(0,0,0,.28); }
+.ink-btn { display: grid; place-items: center; min-width: 36px; height: 36px; padding: 0 6px; border: 0; border-radius: 9px; background: none; color: var(--text-muted); cursor: pointer; font: inherit; font-size: 12.5px; }
+.ink-btn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ink-btn:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.ink-btn.is-on { background: rgba(124,140,248,.2); color: var(--text-normal); }
+.ink-clear.is-armed { color: #ef4444; font-weight: 650; }
+.ink-dot { width: 24px; height: 24px; margin: 0 2px; border-radius: 50%; border: 2px solid transparent; background: var(--c); cursor: pointer; padding: 0; box-shadow: inset 0 0 0 2px var(--background-secondary); }
+.ink-dot.is-on { border-color: var(--text-normal); }
+.ink-sep { width: 1px; height: 22px; margin: 0 3px; background: var(--background-modifier-border); }
+.ink-ruler { position: absolute; left: 0; top: 0; z-index: 5; transform-origin: center; border-radius: 6px; background: rgba(226,232,240,.78); border: 1px solid rgba(15,23,42,.35); box-shadow: 0 6px 22px rgba(0,0,0,.25); cursor: grab; touch-action: none; backdrop-filter: blur(2px); }
+.ink-ruler-scale { position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(15,23,42,.8) 0 1px, transparent 1px 37.8px) 12px 0 / calc(100% - 24px) 18px no-repeat,
+    repeating-linear-gradient(90deg, rgba(15,23,42,.6) 0 1px, transparent 1px 18.9px) 12px 0 / calc(100% - 24px) 12px no-repeat,
+    repeating-linear-gradient(90deg, rgba(15,23,42,.45) 0 1px, transparent 1px 3.78px) 12px 0 / calc(100% - 24px) 7px no-repeat,
+    repeating-linear-gradient(90deg, rgba(15,23,42,.8) 0 1px, transparent 1px 37.8px) 12px 100% / calc(100% - 24px) 18px no-repeat,
+    repeating-linear-gradient(90deg, rgba(15,23,42,.45) 0 1px, transparent 1px 3.78px) 12px 100% / calc(100% - 24px) 7px no-repeat; }
+.ink-ruler-deg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 600 12px ui-monospace, 'SF Mono', Menlo, monospace; color: #0f172a; pointer-events: none; }
+.ink-ruler-rot { position: absolute; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: #7c8cf8; border: 2px solid #fff; cursor: alias; touch-action: none; }
+.ink-ruler-rot.l { left: -11px; } .ink-ruler-rot.r { right: -11px; }
+.ink-ruler-x { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(15,23,42,.65); color: #fff; font-size: 15px; line-height: 1; cursor: pointer; padding: 0; }
+@media print { .ink-bar, .ink-ruler { display: none; } }
+body .view-content > .ink-layer, body .view-content > .ink-bar, body .view-content > .ink-ruler { animation: none; }
+body.ui-nova .view-content > .ink-layer, body.ui-nova .view-content > .ink-bar, body.ui-nova .view-content > .ink-ruler { animation: none; }

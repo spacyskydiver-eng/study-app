@@ -19,20 +19,24 @@ async function load() {
 const draftKey = id => 'exam:draft:' + id;
 const hist = () => store.get('exam:history', {});
 const changed = () => document.dispatchEvent(new Event('bv:exam-changed'));
-let listView = null;   // the papers list, if it is the view on screen (redrawn when another device's results arrive)
+let listView = null;
+let ink = null;   // the handwriting layer on the open paper
+const inkOff = () => { if (ink) { ink.detach(); ink = null; } };
+const inkOn = (view, strokes, save) => { inkOff(); if (window.BVInk) ink = window.BVInk.attach(view, $('.exam-wrap', view), { strokes, save }); };   // the papers list, if it is the view on screen (redrawn when another device's results arrive)
 
 /* ------------------------------------------------------------ cross-device sync
    flashcards.js keeps a copy of all exam data in the signed-in progress blob. Nothing is ever dropped:
    attempts are merged by their time, an edited mark (ed) beats an older one, the newest draft wins,
    and a draft older than a submitted attempt is finished, so it goes. */
 function snapshot() {
-  const out = { history: hist(), last: {}, drafts: {} };
+  const out = { history: hist(), last: {}, drafts: {}, ink: {} };
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i) || '';
       let m;
       if ((m = k.match(/^bv:exam:last:(.+)$/))) { const v = store.get('exam:last:' + m[1], null); if (v) out.last[m[1]] = v; }
       else if ((m = k.match(/^bv:exam:draft:(.+)$/))) { const v = store.get(draftKey(m[1]), null); if (v) out.drafts[m[1]] = { t: store.get('exam:draftAt:' + m[1], 0), a: v }; }
+      else if ((m = k.match(/^bv:exam:ink:(.+)$/))) { const v = store.get('exam:ink:' + m[1], null); if (v && v.s && v.s.length) out.ink[m[1]] = v; }
     }
   } catch (e) { /* storage unavailable */ }
   return out;
@@ -40,7 +44,7 @@ function snapshot() {
 const newer = (a, b) => !a ? b : !b ? a : ((b.at || 0) - (a.at || 0) || (b.ed || 0) - (a.ed || 0)) > 0 ? b : a;
 function merge(a, b) {
   a = a || {}; b = b || {};
-  const out = { history: {}, last: {}, drafts: {} };
+  const out = { history: {}, last: {}, drafts: {}, ink: {} };
   const ha = a.history || {}, hb = b.history || {};
   for (const id of new Set([...Object.keys(ha), ...Object.keys(hb)])) {
     const byAt = new Map();
@@ -54,6 +58,12 @@ function merge(a, b) {
     const d = !da[id] ? db[id] : !db[id] ? da[id] : (db[id].t || 0) > (da[id].t || 0) ? db[id] : da[id];
     if (!(out.last[id] && out.last[id].at >= (d.t || 0))) out.drafts[id] = d;
   }
+  // working out on a paper in progress: newest wins; once submitted it lives on the attempt (last.ink)
+  const ia = a.ink || {}, ib = b.ink || {};
+  for (const id of new Set([...Object.keys(ia), ...Object.keys(ib)])) {
+    const d = !ia[id] ? ib[id] : !ib[id] ? ia[id] : (ib[id].t || 0) > (ia[id].t || 0) ? ib[id] : ia[id];
+    if (!(out.last[id] && out.last[id].at >= (d.t || 0))) out.ink[id] = d;
+  }
   return out;
 }
 function apply(m) {
@@ -64,6 +74,8 @@ function apply(m) {
   const mine = snapshot().drafts;
   for (const id of Object.keys(mine)) if (!(m.drafts || {})[id]) { try { localStorage.removeItem('bv:' + draftKey(id)); localStorage.removeItem('bv:exam:draftAt:' + id); } catch (e) { /* ignore */ } }
   for (const [id, d] of Object.entries(m.drafts || {})) { store.set(draftKey(id), d.a); store.set('exam:draftAt:' + id, d.t || 0); }
+  for (const id of Object.keys(snapshot().ink)) if (!(m.ink || {})[id]) { try { localStorage.removeItem('bv:exam:ink:' + id); } catch (e) { /* ignore */ } }
+  for (const [id, v] of Object.entries(m.ink || {})) store.set('exam:ink:' + id, v);
   if (JSON.stringify(snapshot()) !== before && listView && listView.isConnected && X) list(listView);
 }
 B.examSync = { snapshot, merge, apply };
@@ -130,6 +142,7 @@ function markPart(p, ans) {
 
 /* ------------------------------------------------------------ list */
 function list(view) {
+  inkOff();
   listView = view;
   const H = hist();
   view.innerHTML = `<div class="exam-wrap">
@@ -179,7 +192,7 @@ function paper(view, p) {
   view.innerHTML = `<div class="exam-wrap">
     <div class="exam-bar"><a href="${B.hashFor('exam')}" class="exam-back" data-go="exam">${icon('arrow-left')} All papers</a></div>
     <div class="exam-head"><div class="exam-paper-lec">${esc(p.subject)} · ${esc(p.lecture)}</div><h1>${esc(p.title)}</h1>
-      <p>${p.questions.reduce((n, q) => n + q.parts.length, 0)} questions · ${p.marks} marks · no time limit. ${p.note ? esc(p.note) + ' ' : ''}Answer every part, then submit at the bottom.</p></div>
+      <p>${p.questions.reduce((n, q) => n + q.parts.length, 0)} questions · ${p.marks} marks · no time limit. ${p.note ? esc(p.note) + ' ' : ''}Answer every part, then submit at the bottom. Write working out anywhere on the page with the Apple Pencil, margins included (or turn on the pen in the toolbar to use the mouse); it is saved with the paper.</p></div>
     <form class="exam-form" autocomplete="off">
     ${p.questions.map(q => { qn++; return `<section class="exam-q"><div class="exam-qn">${qn}</div><div class="exam-qbody">
       <div class="exam-stem">${q.stem}</div>
@@ -191,6 +204,7 @@ function paper(view, p) {
     <div class="exam-submit"><span class="exam-left"></span><button type="submit" class="exam-btn">${icon('check')} Submit for marking</button></div>
     </form></div>`;
   const form = $('.exam-form', view);
+  inkOn(view, (store.get('exam:ink:' + p.id, null) || {}).s || [], s => { store.set('exam:ink:' + p.id, { t: Date.now(), s }); changed(); });
   const collect = () => {
     const a = {};
     for (const q of p.questions) for (const pt of q.parts) {
@@ -212,6 +226,9 @@ function paper(view, p) {
     const n = unanswered(a);
     if (n && !armed) { armed = true; left.textContent = `${n} part${n > 1 ? 's' : ''} not answered. Press submit again to mark anyway.`; left.classList.add('warn'); return; }
     const res = { at: Date.now(), answers: a, adj: {} };
+    const work = (store.get('exam:ink:' + p.id, null) || {}).s;
+    if (work && work.length) res.ink = work;   // the working out goes with this attempt
+    try { localStorage.removeItem('bv:exam:ink:' + p.id); } catch (err) { /* ignore */ }
     store.set('exam:last:' + p.id, res);
     store.set(draftKey(p.id), null);
     try { localStorage.removeItem('bv:' + draftKey(p.id)); localStorage.removeItem('bv:exam:draftAt:' + p.id); } catch (err) { /* ignore */ }
@@ -272,6 +289,7 @@ function review(view, p, res) {
     </div>`;
     view.querySelector('[data-go]').onclick = e => { e.preventDefault(); B.go('exam'); };
     view.querySelector('[data-retry]').onclick = () => paper(view, p);
+    inkOn(view, res.ink || [], s => { res.ink = s; res.ed = Date.now(); store.set('exam:last:' + p.id, res); changed(); });
     $$('[data-adj]', view).forEach(b => b.onclick = () => {
       const id = b.dataset.adj; const pt = p.questions.flatMap(q => q.parts).find(x => x.id === id);
       const cur = S.parts[id].got; const nv = Math.max(0, Math.min(pt.marks, cur + parseFloat(b.dataset.d)));
@@ -287,12 +305,13 @@ function review(view, p, res) {
 const fail = view => { view.innerHTML = '<div class="pane-empty">Could not load the exam papers.</div>'; };
 B.registerView('exam', {
   title: () => 'Exam practice', icon: 'clipboard-list', cls: 'exam-host',
-  show(view) { view.innerHTML = '<div class="fc-loading"><span class="books-spinner"></span> Loading papers…</div>'; load().then(() => list(view)).catch(() => fail(view)); },
+  show(view) { inkOff(); view.innerHTML = '<div class="fc-loading"><span class="books-spinner"></span> Loading papers…</div>'; load().then(() => list(view)).catch(() => fail(view)); },
 });
 B.registerView('exam-paper', {
   prefix: 'exam/', icon: 'clipboard-list', cls: 'exam-host',
   title: id => { const p = byId.get(id.slice(5)); return p ? `Exam: ${p.title}` : 'Exam practice'; },
   show(view, id) {
+    inkOff();
     view.innerHTML = '<div class="fc-loading"><span class="books-spinner"></span> Loading paper…</div>';
     load().then(() => {
       const p = byId.get(id.slice(5));
