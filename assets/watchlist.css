@@ -232,3 +232,24 @@
 .wl-rulegrid small { display: block; font-size: .78em; color: var(--text-faint); margin-top: 3px; line-height: 1.4; }
 .wl-src a { display: block; font-size: .85em; margin: 3px 0; overflow-wrap: anywhere; }
 @container (max-width: 760px) { .wl-prog { grid-template-columns: minmax(0, 1fr) 150px; } .wl-prog-next { grid-column: 1 / -1; } .wl-phaselegend { display: none; } .wl-size { grid-template-columns: 1fr; } .wl-rulegrid { grid-template-columns: 1fr; } .wl-rule summary { grid-template-columns: 22px minmax(0, 1fr); } .wl-rule summary span { grid-column: 2; } }
+
+/* case studies */
+.wl-caselist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 10px; }
+.wl-caseitem { text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 10px 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-left: 3px solid var(--co); display: flex; flex-direction: column; gap: 3px; }
+.wl-caseitem:hover, .wl-caseitem.is-active { border-color: var(--co); }
+.wl-caseitem > span { display: flex; justify-content: space-between; align-items: center; }
+.wl-caseitem i { font-style: normal; font-size: .68em; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--kc); }
+.wl-caseitem strong { font-size: .86em; line-height: 1.35; }
+.wl-caseitem small { font-size: .74em; color: var(--text-faint); }
+.wl-case { margin-top: 10px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--co); background: var(--background-primary); box-shadow: 0 8px 30px -18px var(--co); }
+.wl-case-head { display: flex; gap: 8px; align-items: baseline; }
+.wl-case-head strong { flex: 1; }
+.wl-case-dots { display: flex; gap: 4px; margin: 10px 0 4px; }
+.wl-case-dots button { flex: 1; height: 4px; border: 0; border-radius: 4px; background: var(--background-modifier-border); cursor: pointer; padding: 0; }
+.wl-case-dots button.is-done { background: color-mix(in srgb, var(--co) 45%, transparent); }
+.wl-case-dots button.is-on { background: var(--co); }
+.wl-case h4 { margin: 10px 0 4px; font-size: .98em; }
+.wl-case p { margin: 0; font-size: .9em; line-height: 1.6; }
+.wl-case-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: .85em; }
+.wl-flash { animation: wl-flash 1.6s ease; }
+@keyframes wl-flash { 0%, 60% { box-shadow: 0 0 0 2px #60A5FA; } 100% { box-shadow: 0 0 0 0 transparent; } }

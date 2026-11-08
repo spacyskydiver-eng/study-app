@@ -74,8 +74,10 @@ function shell(view) {
       <div class="wl-chartwrap"><div class="wl-ohlc" data-ohlc></div><div class="wl-chart" data-chart></div></div>
       <div class="wl-hint wl-dim">Drag to move, scroll or pinch to zoom, double-click to reset. Tap a marker to see what happened that day.</div>
       <p class="wl-ex">Each candle is one period (one day on 1D): the thick body runs from the opening to the closing price, the thin wicks reach the highest and lowest prices. Green means it closed higher than it opened, red lower. The bars along the bottom are volume, the number of shares traded. The top line reads out open (O), high (H), low (L), close (C), the change and volume for whichever candle you point at. MA draws the 50-day (blue) and 200-day (purple) averages, which show the medium and long-term trend. The 5m/1H/1D/1W buttons set how long each candle covers; 1M to All set how much history is on screen. Markers: K key event, T trial, P paper, N news, B and S your own buys and sells. The full guide is under Reading Charts and Trading.</p>
+      <div data-casebox></div>
       <div class="wl-pin" data-pinbox></div>
     </section>
+    <section class="wl-panel wl-cases" data-cases></section>
     <section class="wl-panel wl-decide" data-decide></section>
     <section class="wl-panel wl-t212" data-t212></section>
     <section class="wl-panel"><h2>Coming up</h2><p class="wl-ex">Dated events still ahead: FDA decision dates, investor conferences and the dates trials are expected to finish collecting their main results (primary completion). Below them, what each company itself says is next. These are the moments a price is most likely to move sharply.</p><div data-upcoming></div></section>
@@ -532,6 +534,62 @@ async function loadDecide(view) {
 let rulesTimer = null;
 function saveRules() { clearTimeout(rulesTimer); rulesTimer = setTimeout(() => api('rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rules) }).catch(() => {}), 600); }
 
+/* ------------------------------------------------------------ case studies */
+let CASES = null, cs = { id: null, step: 0 }, barsKey = '';
+const closeOn = d => { if (!bars || intraday()) return null; let b = null; for (const x of bars) { if (x[0].slice(0, 10) <= d) b = x; else break; } return b; };
+function fill(text) {
+  return esc(text).replace(/\{chg:(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})\}/g, (_, a, b) => {
+    const x = closeOn(a), y = closeOn(b);
+    if (!x || !y) return '<em class="wl-dim">(needs the price chart)</em>';
+    const pct = 100 * (y[4] - x[4]) / x[4];
+    return `<b class="${dir(pct)}">${signed(pct)}</b> <span class="wl-dim">(${money(x[4])} → ${money(y[4])})</span>`;
+  }).replace(/\{px:(\d{4}-\d{2}-\d{2})\}/g, (_, a) => { const x = closeOn(a); return x ? `<b>${money(x[4])}</b>` : '<em class="wl-dim">(needs the price chart)</em>'; });
+}
+const KIND = { guide: ['How-to', '#60A5FA'], buy: ['Buy-side', '#10B981'], wait: ['Wait', '#F59E0B'], sell: ['Sell-side', '#F43F5E'] };
+function casesPanel(view) {
+  const el = q(view, '[data-cases]'); if (!el || !CASES) return;
+  const cur = CASES.find(c => c.id === cs.id);
+  let box = '';
+  if (cur) {
+    const st = cur.steps[cs.step], c = co(cur.symbol);
+    box = `<div class="wl-case" style="--co:${c.color}">
+      <div class="wl-case-head"><b class="wl-tick-s">${c.symbol}</b><strong>${esc(cur.title)}</strong><button class="wl-x" data-caseclose aria-label="Close">${icon('x')}</button></div>
+      <div class="wl-case-dots">${cur.steps.map((_, i) => `<button data-casestep="${i}" class="${i === cs.step ? 'is-on' : i < cs.step ? 'is-done' : ''}" aria-label="Step ${i + 1}"></button>`).join('')}</div>
+      <h4>${esc(st.title)}</h4>
+      <p>${fill(st.text)}</p>
+      <div class="wl-case-nav"><button class="wl-btn" data-casego="-1" ${cs.step === 0 ? 'disabled' : ''}>Back</button><span class="wl-dim">${cs.step + 1} of ${cur.steps.length}</span><button class="wl-btn" data-casego="1" ${cs.step === cur.steps.length - 1 ? 'disabled' : ''}>Next</button></div>
+    </div>`;
+  }
+  const slot = q(view, '[data-casebox]'); if (slot) slot.innerHTML = box;
+  el.innerHTML = `<h2>Learn from past events</h2>
+    <p class="wl-ex">Real situations from these companies, step by step: what you could see beforehand, what the tools on this page would have said, what a disciplined investor would do, what actually happened to the price, and the lesson. The chart jumps to each moment and the steps show right under it; price moves are worked out live from the chart's data. Start with "How to make a decision with this page".</p>
+    <div class="wl-caselist">${CASES.map(k => { const c = co(k.symbol), kd = KIND[k.kind] || KIND.guide; return `<button class="wl-caseitem${k.id === cs.id ? ' is-active' : ''}" data-case="${k.id}" style="--co:${c.color};--kc:${kd[1]}"><span><b class="wl-tick-s">${c.symbol}</b><i>${kd[0]}</i></span><strong>${esc(k.title)}</strong><small>${esc(k.tag)}</small></button>`; }).join('')}</div>`;
+}
+async function showStep(view) {
+  const cur = CASES.find(c => c.id === cs.id); if (!cur) return casesPanel(view);
+  const st = cur.steps[cs.step];
+  const need = cur.symbol + '1day';
+  if (S.sym !== cur.symbol || S.iv !== '1day' || barsKey !== need) {
+    S.sym = cur.symbol; S.iv = '1day'; cards(view); chartTop(view); tools(view); decidePanel(view);
+    await loadBars(view);
+  }
+  casesPanel(view);
+  if (st.focus && chart && bars && bars.length) {
+    const half = Math.round((st.range || 120) / 2), last = bars[bars.length - 1][0].slice(0, 10);
+    const from = new Date(Date.parse(st.focus) - half * 864e5).toISOString().slice(0, 10);
+    let to = new Date(Date.parse(st.focus) + half * 864e5).toISOString().slice(0, 10); if (to > last) to = last;
+    chart.timeScale().setVisibleRange({ from, to });
+    const hit = [...groups.entries()].find(([, g]) => bars[g.i][0].slice(0, 10) >= st.focus && bars[g.i][0].slice(0, 10) <= new Date(Date.parse(st.focus) + 4 * 864e5).toISOString().slice(0, 10));
+    if (hit) { S.sel = hit[0]; pinDetail(view); } else { S.sel = null; pinHint(view); }
+  }
+  // on a phone the chart and the step don't fit together, so the step text comes first
+  const target = st.scroll ? q(view, st.scroll) : B.isPhone() ? q(view, '[data-casebox]') : q(view, '.wl-chartpanel');
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: st.scroll || !B.isPhone() ? 'start' : 'center' });
+    if (st.scroll) { target.classList.remove('wl-flash'); void target.offsetWidth; target.classList.add('wl-flash'); }
+  }
+}
+
 /* ------------------------------------------------------------ data */
 async function loadQuotes(view) {
   try { const r = await api('quotes'); if (r.error) quoteErr = r.error; else { quotes = r; quoteErr = null; } }
@@ -540,11 +598,11 @@ async function loadQuotes(view) {
 }
 async function loadBars(view) {
   const want = S.sym + S.iv;
-  bars = null; barsErr = null; drawChart(view);
+  bars = null; barsKey = ''; barsErr = null; drawChart(view);
   try {
     const [r] = await Promise.all([api(`series?s=${S.sym}&i=${S.iv}`), lib()]);
     if (want !== S.sym + S.iv) return;
-    if (r.error) barsErr = r.error; else bars = r.bars || [];
+    if (r.error) barsErr = r.error; else { bars = r.bars || []; barsKey = want; }
   } catch (e) { barsErr = 'network'; }
   drawChart(view);
 }
@@ -593,6 +651,7 @@ function show(view) {
     if (S.show.mine === undefined) S.show.mine = true;
     loadT212(view).then(() => decidePanel(view));
     loadDecide(view);
+    fetch('data/cases.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { CASES = d.cases || []; casesPanel(view); }).catch(() => {});
     timer = setInterval(() => { if (!document.hidden) loadQuotes(view); }, 120000);
     const save = () => { store.set('wl:sym', S.sym); store.set('wl:iv', S.iv); store.set('wl:zoom', S.zoom); store.set('wl:style', S.style); store.set('wl:ma', S.ma); store.set('wl:show', S.show); };
     view.addEventListener('change', e => {
@@ -618,6 +677,10 @@ function show(view) {
       const t = e.target;
       const card = t.closest('[data-sym]');
       if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); chartTop(view); decidePanel(view); loadBars(view); return; }
+      const ci = t.closest('[data-case]'); if (ci) { cs = { id: ci.dataset.case, step: 0 }; showStep(view); return; }
+      const cg = t.closest('[data-casego]'); if (cg) { cs.step = Math.max(0, cs.step + +cg.dataset.casego); showStep(view); return; }
+      const cst = t.closest('[data-casestep]'); if (cst) { cs.step = +cst.dataset.casestep; showStep(view); return; }
+      if (t.closest('[data-caseclose]')) { cs = { id: null, step: 0 }; casesPanel(view); return; }
       if (t.closest('[data-explain]')) { S.explain = !S.explain; store.set('wl:explain', S.explain); q(view, '.wl').classList.toggle('is-explain', S.explain); t.closest('[data-explain]').classList.toggle('is-on', S.explain); return; }
       if (t.closest('[data-rulesreset]')) { rules = Object.assign({}, DEFAULT_RULES); saveRules(); decidePanel(view); return; }
       const iv = t.closest('[data-iv]'); if (iv) { S.iv = iv.dataset.iv; S.sel = null; save(); tools(view); loadBars(view); return; }
@@ -656,6 +719,6 @@ B.registerView('watchlist', { title: () => 'Live watchlist', icon: 'trending-up'
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261111'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261112'; document.head.appendChild(l);
 }
 })();

@@ -1,0 +1,101 @@
+{
+  "_about": "Worked examples for the live watchlist. {chg:A:B} is the % change from the close on or before date A to the close on or before date B, worked out from the chart's daily prices; {px:A} is the close on or before date A. Facts are from the researched event list (8 November 2026).",
+  "cases": [
+    {
+      "id": "howto", "symbol": "SION", "kind": "guide",
+      "title": "How to make a decision with this page", "tag": "start here",
+      "steps": [
+        { "title": "1. Start with what to buy: the shortlist", "scroll": "[data-cards]", "text": "You only consider companies you understand well enough to judge their trial data. That's why the watchlist is six CF companies and not the whole market. A company earns a place on your shortlist when (a) its lead drug is at Phase 2 or later, (b) it has at least 18 months of cash, (c) it has a catalyst you can judge in the next 3 to 12 months, and (d) you can explain in one sentence why the drug could work. The cards give you the stage, the next milestone and the runway at a glance." },
+        { "title": "2. Read the pipeline", "scroll": "[data-decide]", "text": "In the Pipeline and decision check panel, look at how far right the bars go. A company with an approved drug (Vertex, Krystal) earns money; a company whose best drug is Phase 1 (Prime) is a bet on science that usually fails. Read each programme's 'Next' line: that's the list of future price-moving days." },
+        { "title": "3. Run the decision check", "scroll": ".wl-verdict", "text": "The check turns your rules into a verdict: OK to consider, wait, or not allowed. Tap each line to see why. 'Wait' doesn't mean the company is bad. It means now is a risky moment, for example a coin-flip readout is close, or the share has already run up 30% on hope." },
+        { "title": "4. Look at the chart and the markers", "scroll": ".wl-chartpanel", "text": "Switch to 1Y and tap the K markers. For each one, the 'share price around this' figure shows how the market reacted. Ask: is the price near its lows or highs (the 52-week bar on the card)? Is it above or below its 200-day average (MA)? Has news been met with buying or selling? This is how you judge timing." },
+        { "title": "5. Decide the size before anything else", "scroll": ".wl-size", "text": "The size box shows the most your rules allow and the worst realistic loss. Pick an amount at or below it that you could lose 90% of without minding. Most beginners lose money by buying too much, not by picking the wrong company." },
+        { "title": "6. Write it down, then place a limit order", "scroll": "[data-t212]", "text": "Before buying in Trading 212 practice: one sentence of why, and a sell rule (what would make you sell). Then place a limit order (not market) at or near the current price. The order appears in the journal by itself; add your reason there." },
+        { "title": "7. When to sell", "scroll": "[data-t212]", "text": "Sell when the reason you bought is broken (the trial failed, the cash ran out without a plan, a clearly better drug arrived), when a position has grown far beyond your one-company limit (sell some back down), or before a binary event if the position is bigger than you could stand to lose. Don't sell just because the price wobbled; small biotechs swing 5% on a normal day." },
+        { "title": "8. Review every few weeks", "scroll": "[data-t212]", "text": "Fill in the lesson in the journal 2 to 4 weeks after each decision, including the ones where you didn't buy. Compare your picks with the index fund. The case studies below show each of these steps on real events." }
+      ]
+    },
+    {
+      "id": "sion-binary", "symbol": "SION", "kind": "wait",
+      "title": "Sionna: don't hold big into a coin-flip readout", "tag": "when not to buy, when to trim",
+      "steps": [
+        { "title": "Before: what you could see in July 2026", "focus": "2026-07-15", "range": 120, "text": "Sionna's whole value rested on two CF readouts promised for 'summer 2026'. One was SION-719, tested as an add-on to Trikafta in only 15 people. The shares were around {px:2026-07-15}. On 6 August the Q2 results repeated that the data were days away. That's a binary event inside any sensible warning window." },
+        { "title": "What the tools would have said", "focus": "2026-08-06", "range": 90, "text": "Decision check: binary event inside your 30-day window, so 'wait or go smaller', and the size is cut by half. The science adds a second warning: showing a further sweat chloride drop on top of Trikafta, the best existing drug, in 15 people is a high bar. A disciplined investor either stays out, or holds only an amount they could lose 90% of." },
+        { "title": "What happened", "focus": "2026-08-10", "range": 90, "text": "On 10 August the trial missed: −1.0 mmol/L placebo-adjusted (p=0.7). From the close on 7 August to the close on 11 August the shares moved {chg:2026-08-07:2026-08-11}. The drop happened overnight, so a stop-loss would have sold far below its level." },
+        { "title": "After the crash: value or trap?", "focus": "2026-09-14", "range": 120, "text": "In September Sionna cut 46% of staff and said its cash lasts into H2 2029. The decision check now shows the company worth less than its cash. That can be a bargain, but the next readout (the AscenSION Phase 2a) only starts in Q1 2027 with no data date. Since 11 August the price has moved {chg:2026-08-11:2026-11-06}. There's no rush: you can wait for the trial to start and the design to be published." },
+        { "title": "Lesson", "focus": "2026-08-10", "range": 365, "text": "The size you hold into a binary event is the only protection you have. Judge the trial design before the result, and write down what counts as good and bad. After a crash, compare the market cap with the cash and look for the next catalyst before thinking of buying." }
+      ]
+    },
+    {
+      "id": "fdmt-raise", "symbol": "FDMT", "kind": "wait",
+      "title": "4DMT: good data and a share sale on the same day", "tag": "dilution after good news",
+      "steps": [
+        { "title": "Before", "focus": "2025-11-05", "range": 90, "text": "In early November 2025, 4DMT was due to show long-term data for 4D-150, its eye gene therapy. Shares closed at {px:2025-11-05} the day before." },
+        { "title": "What happened", "focus": "2025-11-06", "range": 90, "text": "On 6 November it released positive long-term data and, the same day, priced a $100M share sale at $10.51. From the close on 5 November to the close on 7 November the shares moved {chg:2025-11-05:2025-11-07}. Good data lifts the price; the new shares (dilution) pull it the other way." },
+        { "title": "What a disciplined investor does", "focus": "2025-11-10", "range": 120, "text": "Expect a raise after good data whenever a company isn't profitable. Buying just before the data means you also buy just before the dilution. The share-sale price ($10.51 here) often becomes a reference level the price returns to. Watching how the price behaves around that level in the following weeks tells you whether big investors are happy holding." },
+        { "title": "What came next", "focus": "2026-07-18", "range": 365, "text": "Since the raise, both Phase 3 trials filled up and 2-year data came out in July 2026. From 7 November 2025 to now the shares moved {chg:2025-11-07:2026-11-06}. The next big binary events are the 4FRONT Phase 3 results (Q2 and H2 2027)." },
+        { "title": "Lesson", "focus": "2025-11-06", "range": 365, "text": "Check the runway before any big readout: if it's not profitable, plan for a share sale soon after good news. The raise funds the company through its next catalysts, which is often what makes the share worth holding afterwards." }
+      ]
+    },
+    {
+      "id": "krys-beat", "symbol": "KRYS", "kind": "sell",
+      "title": "Krystal: results beat, shares fell", "tag": "when to sell: check the thesis",
+      "steps": [
+        { "title": "Before", "focus": "2026-10-30", "range": 90, "text": "Krystal is profitable: Vyjuvek sales had grown every quarter. Before the Q3 results the shares closed at {px:2026-10-30}." },
+        { "title": "What happened", "focus": "2026-11-02", "range": 60, "text": "On 2 November: Vyjuvek sales $127.3M (+30%), a $400M buyback, but KB407 (CF) interim data and KB803 results slipped into 2027. From 30 October to 6 November the shares moved {chg:2026-10-30:2026-11-06}." },
+        { "title": "Should you sell? Check your reason for owning it", "focus": "2026-11-02", "range": 60, "text": "If your reason was 'Vyjuvek keeps growing and pays for the pipeline', the results confirmed it: the reason is intact, so a price dip alone isn't a sell signal. If your reason was 'KB407 CF data in 2026', that reason is now delayed: re-decide as if you didn't own it. That's why the journal asks for the reason before you buy." },
+        { "title": "Lesson", "focus": "2026-11-02", "range": 365, "text": "The market reacts to the whole release, not the headline. Sell when your reason breaks, not when the price falls; and timelines are part of the news." }
+      ]
+    },
+    {
+      "id": "krys-index", "symbol": "KRYS", "kind": "buy",
+      "title": "Krystal joins the S&P MidCap 400", "tag": "mechanical buying",
+      "steps": [
+        { "title": "What happened", "focus": "2026-07-20", "range": 60, "text": "On 20 July 2026, S&P announced Krystal would move into the S&P MidCap 400 index on 24 July. Every fund that tracks that index then has to buy the shares, whatever it thinks of the company." },
+        { "title": "The price", "focus": "2026-07-24", "range": 60, "text": "From the close on 17 July to the close on 27 July the shares moved {chg:2026-07-17:2026-07-27}. Index buying usually lands around the effective date, then the extra demand is gone." },
+        { "title": "Lesson", "focus": "2026-07-24", "range": 180, "text": "Index changes are known in advance and traded by professionals within minutes, so chasing them after the announcement rarely pays. What they do tell you: the company has grown big and liquid enough for mainstream funds." }
+      ]
+    },
+    {
+      "id": "arct-deal", "symbol": "ARCT", "kind": "buy",
+      "title": "Arcturus: a big partner backs the CF drug", "tag": "partnerships",
+      "steps": [
+        { "title": "Before", "focus": "2026-07-01", "range": 90, "text": "Arcturus had cash into 2028 and its inhaled mRNA CF drug, ARCT-032, in a 12-week Phase 2 cohort. The big question was who would pay for a Phase 3. Shares closed at {px:2026-07-01}." },
+        { "title": "What happened", "focus": "2026-07-02", "range": 90, "text": "On 2 July, Thermo Fisher agreed to fund and manufacture ARCT-032's development. From 1 July to 6 July the shares moved {chg:2026-07-01:2026-07-06}. Money from a partner is non-dilutive: it funds the trial without new shares." },
+        { "title": "What a disciplined investor does", "focus": "2026-07-06", "range": 180, "text": "A partnership answers the funding question but not the science question: the 12-week data (Q2 2027) still decide whether ARCT-032 works. It can justify a small position for a longer hold, sized for the binary event in 2027." },
+        { "title": "What came next", "focus": "2026-11-05", "range": 365, "text": "From 6 July to now the shares moved {chg:2026-07-06:2026-11-06}. Since then the CSL vaccine deal ended (August) and the Q3 results said the Phase 3 decision is due before the Phase 2 data are presented." },
+        { "title": "Lesson", "focus": "2026-07-02", "range": 365, "text": "Deals that bring cash without new shares are good news, but the price can fade if the science readout is far away. Note the date of the real binary event and size for it." }
+      ]
+    },
+    {
+      "id": "vrtx-buyer", "symbol": "VRTX", "kind": "wait",
+      "title": "Vertex buys Crinetics: what happens to the buyer", "tag": "acquisitions",
+      "steps": [
+        { "title": "What happened", "focus": "2026-07-06", "range": 60, "text": "On 6 July 2026 Vertex agreed to buy Crinetics for about $10B, a 102% premium. Crinetics' shareholders roughly doubled their money overnight. Vertex shares closed at {px:2026-07-02} before the deal." },
+        { "title": "The buyer's price", "focus": "2026-07-07", "range": 60, "text": "From 2 July to 8 July Vertex moved {chg:2026-07-02:2026-07-08}. Buyers usually dip a little: they're paying a big premium, and investors question the price." },
+        { "title": "Lesson", "focus": "2026-07-06", "range": 365, "text": "The big money in takeovers goes to holders of the target, not the buyer. That's one reason to own a few well-understood small biotechs: being bought is one of the ways they pay off. Large companies like Vertex move less on single events; they behave more like a steady core holding." }
+      ]
+    },
+    {
+      "id": "vrtx-readout", "symbol": "VRTX", "kind": "buy",
+      "title": "Vertex: a positive Phase 3 at a big company", "tag": "large caps move less",
+      "steps": [
+        { "title": "What happened", "focus": "2026-03-09", "range": 90, "text": "On 9 March 2026 povetacicept's Phase 3 (RAINIER) met every endpoint in IgA nephropathy: 49.8% placebo-adjusted proteinuria cut. Shares closed at {px:2026-03-06} before." },
+        { "title": "The price", "focus": "2026-03-10", "range": 90, "text": "From 6 March to 11 March Vertex moved {chg:2026-03-06:2026-03-11}. For a company making $12B a year, one new drug changes the value far less than a readout changes a single-drug biotech." },
+        { "title": "What's next", "focus": "2026-11-06", "range": 365, "text": "The FDA decision on povetacicept is due on 30 November 2026. For Vertex it's a 'medium' event; the CF franchise still pays the bills. Over the last year Vertex moved {chg:2025-11-07:2026-11-06}." },
+        { "title": "Lesson", "focus": "2026-03-09", "range": 365, "text": "Big companies are where you can hold through events without worrying about overnight wipe-outs, but the upside per event is smaller. Small companies are the opposite. Size accordingly." }
+      ]
+    },
+    {
+      "id": "prme-cash", "symbol": "PRME", "kind": "sell",
+      "title": "Prime Medicine: good science, cash running out", "tag": "runway and going concern",
+      "steps": [
+        { "title": "Good news on 8 July 2026", "focus": "2026-07-08", "range": 90, "text": "Prime won its arbitration with Beam, keeping its AATD programme. From 7 July to 9 July the shares moved {chg:2026-07-07:2026-07-09}." },
+        { "title": "The cash problem", "focus": "2026-08-06", "range": 120, "text": "The Q2 results on 6 August showed $108.8M of cash with runway only 'into 2027', and the 10-Q said there is substantial doubt Prime can continue as a going concern. The decision check flags both: 'wait'." },
+        { "title": "More good science", "focus": "2026-09-24", "range": 120, "text": "The FDA cleared PM647 for trials on 24 September and the first Wilson disease patient was dosed on 5 October. From 6 August to now the shares moved {chg:2026-08-06:2026-11-06}. Good science and a weak balance sheet pull in opposite directions." },
+        { "title": "What a disciplined investor does", "focus": "2026-10-05", "range": 365, "text": "A company that must raise money soon will usually sell new shares, often at a discount, possibly in big amounts. Buying before that means paying more than you'd need to. Your rules say wait until the money question is answered (a raise or a partnership), then judge the science at the new share count." },
+        { "title": "Lesson", "focus": "2026-07-08", "range": 365, "text": "Cash comes before science. Check the runway and the going-concern note before any small biotech, however exciting the drug." }
+      ]
+    }
+  ]
+}
