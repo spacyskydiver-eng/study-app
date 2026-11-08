@@ -253,6 +253,40 @@ def papers():
           mcq('What is the most likely R² value for this line?', ['0.0', '0.1 to 0.5', '0.5 to 0.9', 'Greater than 0.9 but less than 1.0', '1.0'], 3, 'The points lie very close to the straight trend line but not exactly on it, so R² is close to, but below, 1.0.'),
           img=cv3),
     ]})
+    # ============================================================== Mock 4 (same layout as the official example)
+    L4, S4 = 5100, {'XbaI': 0, 'SacI': 1100, 'NdeI': 2900}
+    f4 = lambda *e: frags(L4, [S4[x] for x in e])
+    assert f4('XbaI', 'SacI') == [4000, 1100] and f4('XbaI', 'NdeI') == [2900, 2200] and f4('SacI', 'NdeI') == [3300, 1800]
+    assert f4('XbaI', 'SacI', 'NdeI') == [2200, 1800, 1100]
+    g4 = gel('dat4_gel.png', ['L', f4('XbaI'), f4('SacI'), f4('NdeI'), f4('XbaI', 'SacI'), f4('XbaI', 'NdeI'), f4('SacI', 'NdeI'), f4('XbaI', 'SacI', 'NdeI'), 'L'], '')
+    p4 = plasmid('dat4_map.png', 6000, {'HindIII': 400, 'NheI': 850, 'BamHI': 1100, 'EcoRV': 1500, 'XhoI': 2100, 'SpeI': 2600, 'NotI': 3800, 'PstI': 5200},
+                 [('GFP', 1200, 1950, '#86efac'), ('ori', 3000, 3600, '#fde047'), ('KanR', 4300, 5100, '#fca5a5')], 'pGLO6')
+    m4, c4 = 24.6, 0.008
+    rng = np.random.default_rng(31)
+    xs4 = [0, 0.01, 0.02, 0.04, 0.06, 0.08]
+    ys4 = [round(m4 * x + c4 + (rng.normal(0, 0.03) if x else 0.004), 3) for x in xs4]
+    cv4 = curve('dat4_curve.png', xs4, ys4, [0.01, .02, .03, .04, .05, .06], m4, c4)
+    out.append({'id': 'dat-4', 'title': 'Data analysis practice test 4', 'lecture': 'In-class test (9 Nov)', 'marks': 20,
+                'hub': '01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics', 'note': 'Calculator allowed. The real test is 40 minutes. Same layout as the official example test, with a new plasmid.',
+                'questions': [
+        Q('<strong>Figure 9.</strong> Restriction digests of plasmid pZT5. Lanes 1 and 9: 1 kb ladder. Lane 2 XbaI; lane 3 SacI; lane 4 NdeI; lane 5 XbaI + SacI; lane 6 XbaI + NdeI; lane 7 SacI + NdeI; lane 8 XbaI + SacI + NdeI.',
+          mcq('How many SacI sites are there in pZT5?', ['0', '1', '2', '3', '4'], 1, 'Lane 3 (SacI alone) has one band. A circular plasmid cut once opens into one linear piece, so there is one site.'),
+          mcq('How many NdeI sites are there in pZT5?', ['0', '1', '2', '3', '4'], 1, 'Lane 4 (NdeI alone) also shows a single band, so NdeI cuts once.'),
+          mcq('What is the approximate size of pZT5?', ['3100 bp', '4100 bp', '5100 bp', '6100 bp', '7100 bp'], 2, 'The single bands in lanes 2 to 4 sit just above the 5000 bp marker. Check with a double digest: lane 5 is 4000 + 1100 = 5100.'),
+          mcq('The shortest distance between the XbaI and NdeI sites is approximately:', ['1100 bp', '1800 bp', '2200 bp', '2900 bp', '5100 bp'], 2, 'Use the lane cut with exactly these two enzymes: lane 6 (XbaI + NdeI) gives 2900 + 2200. The smaller fragment, about 2200 bp, is the short way round between them.'),
+          mcq('The smallest fragment in lane 8 was produced by digestion with which enzyme(s)?', ['XbaI alone', 'XbaI and SacI', 'XbaI and NdeI', 'SacI and NdeI', 'NdeI alone'], 1, 'The smallest band in lane 8 is about 1100 bp. The same 1100 bp band is in lane 5 (XbaI + SacI) and in no other double digest, so it has an XbaI end and a SacI end. Map: XbaI 0, SacI 1100, NdeI 2900; the gaps round the circle are 1100, 1800 and 2200, which is lane 8.'),
+          img=g4),
+        Q('XbaI cuts double-stranded DNA.',
+          mcq('The recognition site for XbaI on one strand is 5′-TCTAGA-3′. What is the sequence of the site on the other strand?', ['5′-AGATCT-3′', '5′-TCTAGA-3′', '5′-AGTACT-3′', '5′-ACTAGT-3′', '5′-GATC-3′'], 1, 'Write the complement under it: 3′-AGATCT-5′. Read that strand 5′ to 3′ (right to left) and you get 5′-TCTAGA-3′, the same as the top strand. Restriction sites are palindromes.')),
+        Q('<strong>Figure 10.</strong> Restriction map of plasmid pGLO6 (6000 bp) showing the green fluorescent protein gene (GFP, 1200 to 1950), the origin of replication (ori) and the kanamycin resistance gene (KanR).',
+          mcq('You want to cut out the whole GFP gene on the smallest possible fragment. Which pair of enzymes should you use?', ['BamHI and EcoRV', 'BamHI and XhoI', 'NheI and XhoI', 'HindIII and SpeI', 'EcoRV and XhoI'], 1, 'EcoRV (1500) cuts inside GFP (1200 to 1950), so any pair with EcoRV breaks the gene. Of the pairs either side of it, BamHI (1100) and XhoI (2100) are closest: a 1000 bp fragment. NheI + XhoI works but gives 1250 bp; HindIII + SpeI gives 2200 bp.'),
+          img=p4),
+        Q('<strong>Figure 11.</strong> Absorbance of DNA solutions of different concentrations. Trend line y = 24.6x + 0.008.',
+          mcq('What absorbance would you expect for a DNA solution of 0.03 mg/mL?', ['0.70', '0.73', '0.75', '0.77', '0.80'], 2, 'Use the equation, not the graph: y = (24.6 × 0.03) + 0.008 = 0.738 + 0.008 = 0.746, so 0.75.'),
+          mcq('What DNA concentration would you expect to give an absorbance of 1.25?', ['0.046 mg/mL', '0.048 mg/mL', '0.050 mg/mL', '0.052 mg/mL', '0.054 mg/mL'], 2, 'Rearrange for x: take off the + 0.008 first, then divide by the gradient. x = (1.25 − 0.008) ÷ 24.6 = 1.242 ÷ 24.6 = 0.0505, so 0.050 mg/mL.'),
+          mcq('What is the R² value?', ['0.0', '0.1 to 0.5', '0.5 to 0.9', 'Greater than 0.9 but less than 1.0', '1.0'], 3, 'The points sit very close to the trend line but not exactly on it, so R² is just below 1.0.'),
+          img=cv4),
+    ]})
     for p in out:
         assert sum(len(q['parts']) for q in p['questions']) == 10, p['id']
     return out

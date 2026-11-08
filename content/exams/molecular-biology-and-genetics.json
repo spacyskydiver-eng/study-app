@@ -781,6 +781,193 @@
    ]
   },
   {
+   "id": "dat-4",
+   "title": "Data analysis practice test 4",
+   "lecture": "In-class test (9 Nov)",
+   "marks": 20,
+   "hub": "01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics",
+   "note": "Calculator allowed. The real test is 40 minutes. Same layout as the official example test, with a new plasmid.",
+   "questions": [
+    {
+     "stem": "<strong>Figure 9.</strong> Restriction digests of plasmid pZT5. Lanes 1 and 9: 1 kb ladder. Lane 2 XbaI; lane 3 SacI; lane 4 NdeI; lane 5 XbaI + SacI; lane 6 XbaI + NdeI; lane 7 SacI + NdeI; lane 8 XbaI + SacI + NdeI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many SacI sites are there in pZT5?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Lane 3 (SacI alone) has one band. A circular plasmid cut once opens into one linear piece, so there is one site.",
+       "marks": 2,
+       "id": "dat-4-q1a"
+      },
+      {
+       "type": "mcq",
+       "stem": "How many NdeI sites are there in pZT5?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Lane 4 (NdeI alone) also shows a single band, so NdeI cuts once.",
+       "marks": 2,
+       "id": "dat-4-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the approximate size of pZT5?",
+       "options": [
+        "3100 bp",
+        "4100 bp",
+        "5100 bp",
+        "6100 bp",
+        "7100 bp"
+       ],
+       "answer": 2,
+       "explain": "The single bands in lanes 2 to 4 sit just above the 5000 bp marker. Check with a double digest: lane 5 is 4000 + 1100 = 5100.",
+       "marks": 2,
+       "id": "dat-4-q1c"
+      },
+      {
+       "type": "mcq",
+       "stem": "The shortest distance between the XbaI and NdeI sites is approximately:",
+       "options": [
+        "1100 bp",
+        "1800 bp",
+        "2200 bp",
+        "2900 bp",
+        "5100 bp"
+       ],
+       "answer": 2,
+       "explain": "Use the lane cut with exactly these two enzymes: lane 6 (XbaI + NdeI) gives 2900 + 2200. The smaller fragment, about 2200 bp, is the short way round between them.",
+       "marks": 2,
+       "id": "dat-4-q1d"
+      },
+      {
+       "type": "mcq",
+       "stem": "The smallest fragment in lane 8 was produced by digestion with which enzyme(s)?",
+       "options": [
+        "XbaI alone",
+        "XbaI and SacI",
+        "XbaI and NdeI",
+        "SacI and NdeI",
+        "NdeI alone"
+       ],
+       "answer": 1,
+       "explain": "The smallest band in lane 8 is about 1100 bp. The same 1100 bp band is in lane 5 (XbaI + SacI) and in no other double digest, so it has an XbaI end and a SacI end. Map: XbaI 0, SacI 1100, NdeI 2900; the gaps round the circle are 1100, 1800 and 2200, which is lane 8.",
+       "marks": 2,
+       "id": "dat-4-q1e"
+      }
+     ],
+     "img": "assets/exam-img/dat4_gel.png",
+     "id": "dat-4-q1"
+    },
+    {
+     "stem": "XbaI cuts double-stranded DNA.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "The recognition site for XbaI on one strand is 5′-TCTAGA-3′. What is the sequence of the site on the other strand?",
+       "options": [
+        "5′-AGATCT-3′",
+        "5′-TCTAGA-3′",
+        "5′-AGTACT-3′",
+        "5′-ACTAGT-3′",
+        "5′-GATC-3′"
+       ],
+       "answer": 1,
+       "explain": "Write the complement under it: 3′-AGATCT-5′. Read that strand 5′ to 3′ (right to left) and you get 5′-TCTAGA-3′, the same as the top strand. Restriction sites are palindromes.",
+       "marks": 2,
+       "id": "dat-4-q2a"
+      }
+     ],
+     "id": "dat-4-q2"
+    },
+    {
+     "stem": "<strong>Figure 10.</strong> Restriction map of plasmid pGLO6 (6000 bp) showing the green fluorescent protein gene (GFP, 1200 to 1950), the origin of replication (ori) and the kanamycin resistance gene (KanR).",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "You want to cut out the whole GFP gene on the smallest possible fragment. Which pair of enzymes should you use?",
+       "options": [
+        "BamHI and EcoRV",
+        "BamHI and XhoI",
+        "NheI and XhoI",
+        "HindIII and SpeI",
+        "EcoRV and XhoI"
+       ],
+       "answer": 1,
+       "explain": "EcoRV (1500) cuts inside GFP (1200 to 1950), so any pair with EcoRV breaks the gene. Of the pairs either side of it, BamHI (1100) and XhoI (2100) are closest: a 1000 bp fragment. NheI + XhoI works but gives 1250 bp; HindIII + SpeI gives 2200 bp.",
+       "marks": 2,
+       "id": "dat-4-q3a"
+      }
+     ],
+     "img": "assets/exam-img/dat4_map.png",
+     "id": "dat-4-q3"
+    },
+    {
+     "stem": "<strong>Figure 11.</strong> Absorbance of DNA solutions of different concentrations. Trend line y = 24.6x + 0.008.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What absorbance would you expect for a DNA solution of 0.03 mg/mL?",
+       "options": [
+        "0.70",
+        "0.73",
+        "0.75",
+        "0.77",
+        "0.80"
+       ],
+       "answer": 2,
+       "explain": "Use the equation, not the graph: y = (24.6 × 0.03) + 0.008 = 0.738 + 0.008 = 0.746, so 0.75.",
+       "marks": 2,
+       "id": "dat-4-q4a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What DNA concentration would you expect to give an absorbance of 1.25?",
+       "options": [
+        "0.046 mg/mL",
+        "0.048 mg/mL",
+        "0.050 mg/mL",
+        "0.052 mg/mL",
+        "0.054 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "Rearrange for x: take off the + 0.008 first, then divide by the gradient. x = (1.25 − 0.008) ÷ 24.6 = 1.242 ÷ 24.6 = 0.0505, so 0.050 mg/mL.",
+       "marks": 2,
+       "id": "dat-4-q4b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the R² value?",
+       "options": [
+        "0.0",
+        "0.1 to 0.5",
+        "0.5 to 0.9",
+        "Greater than 0.9 but less than 1.0",
+        "1.0"
+       ],
+       "answer": 3,
+       "explain": "The points sit very close to the trend line but not exactly on it, so R² is just below 1.0.",
+       "marks": 2,
+       "id": "dat-4-q4c"
+      }
+     ],
+     "img": "assets/exam-img/dat4_curve.png",
+     "id": "dat-4-q4"
+    }
+   ]
+  },
+  {
    "id": "gen-l1",
    "title": "Heredity and DNA",
    "lecture": "Lecture 1",
