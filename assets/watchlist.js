@@ -146,7 +146,7 @@ function coursePanel(view) {
     <div class="wl-cwrap">
       <aside class="wl-clist">${list}</aside>
       <article class="wl-clesson">
-        <div class="wl-cmeta">${esc(l.level)} · Lesson ${esc(l.id)} · about ${l.mins} min</div>
+        <div class="wl-cmeta rd-skip"><span>${esc(l.level)} · Lesson ${esc(l.id)} · about ${l.mins} min</span>${window.BVReader && window.BVReader.supported ? `<button class="wl-btn wl-listen" data-listen title="Read this lesson aloud. Or select any text to hear just that.">${icon('volume-2')}<span>Listen</span></button>` : ''}</div>
         <h2>${esc(l.title)}</h2>
         ${courseBlocks(l)}
         ${l.note && B.exists(l.note) ? `<p class="wl-cmore">Want more detail? <a class="internal-link" data-note="${esc(l.note)}" href="${B.hashFor(l.note)}">Read the full guide</a></p>` : ''}
@@ -158,6 +158,7 @@ function coursePanel(view) {
         </div>
       </article>
     </div>`;
+  if (window.BVReader) window.BVReader.selectable(el, { skip: '.wl-cnav, .wl-cmeta, .wl-cmore, .wl-clist, .wl-cprog' });
   // real price charts inside the lesson
   const T = window.WLTeach;
   if (T && allBars) {
@@ -862,6 +863,7 @@ function show(view) {
       const card = t.closest('[data-sym]');
       if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); picker(view); chartTop(view); decidePanel(view); loadBars(view); return; }
       const wt = t.closest('[data-wtab]'); if (wt) { S.wtab = wt.dataset.wtab; store.set('wl:wtab', S.wtab); showPane(view); if (S.wtab === 'learn') coursePanel(view); if (S.wtab === 'practice') lessonsPanel(view); q(view, '.wl-wtabs').scrollIntoView({ block: 'start' }); return; }
+      if (t.closest('[data-listen]')) { const art = q(view, '.wl-clesson'); if (art && window.BVReader) window.BVReader.play(art, { skip: '.wl-cnav, .wl-cmeta, .wl-cmore' }); return; }
       const li = t.closest('[data-lessonid]'); if (li) { cur = li.dataset.lessonid; coursePanel(view); q(view, '.wl-clesson').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       const qb = t.closest('[data-quiz]'); if (qb) { const [k, j] = qb.dataset.quiz.split(':').map(Number); (cquiz[cur] = cquiz[cur] || {})[k] = j; coursePanel(view); return; }
       const cd = t.closest('[data-cdone]'); if (cd) { cdone[cd.dataset.cdone] = Date.now(); saveCourse(); const all = allCourse(), i = all.findIndex(x => x.id === cd.dataset.cdone); if (i < all.length - 1) cur = all[i + 1].id; coursePanel(view); q(view, '.wl-course').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
@@ -916,6 +918,6 @@ B.registerView('watchlist', { title: () => 'Live watchlist', icon: 'trending-up'
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261115'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261124'; document.head.appendChild(l);
 }
 })();

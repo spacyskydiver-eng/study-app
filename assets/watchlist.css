@@ -380,3 +380,8 @@
 .wl-more summary { cursor: pointer; font-weight: 600; font-size: .88em; }
 .wl-more[open] summary { margin-bottom: 6px; }
 .wl-pipe.is-short .wl-prog:nth-child(n+7) { display: none; }
+
+/* read aloud (assets/reader.js) */
+.wl-cmeta { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.wl-listen { display: inline-flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: normal; font-size: 13.5px; }
+.wl-listen svg { width: 16px; height: 16px; }
