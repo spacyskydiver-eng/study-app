@@ -54,6 +54,7 @@ function moreSheet() {
     ${row('exam', 'clipboard-list', 'Exam practice')}
     ${row('books', 'library', 'Book library')}
     ${row('glossary', 'book-open', 'Key terms')}
+    ${row('watchlist', 'trending-up', 'Live watchlist')}
     ${row('mail', 'mail', 'Mail')}
     ${row('calendar', 'calendar', 'Calendar')}
     ${$('.na-dock') ? `<button class="ph-more-row" data-ask>${icon('sparkles')}<span>Ask the assistant</span></button>` : ''}

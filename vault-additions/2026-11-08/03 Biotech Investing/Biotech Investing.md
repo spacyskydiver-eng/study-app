@@ -15,6 +15,9 @@ updated: 2026-11-08
 > [!warning] Not financial advice
 > Research and learning notes. Company facts are dated 8 November 2026 and go out of date fast; share prices are deliberately not stored here. Check the company's latest results before acting on anything.
 
+> [!tip] Live watchlist
+> The [live watchlist](#/watchlist) shows these companies' share prices, a chart with every trial change, paper and news story pinned on the day it happened, and what's coming up.
+
 ## Sections
 1. [[Investing Foundations]] *how markets, orders, tax wrappers and biotech catalysts work*
 2. [[Cystic Fibrosis Pipeline]] *the companies developing CF drugs, the watchlist, and how it feeds the seminar essay and presentation*

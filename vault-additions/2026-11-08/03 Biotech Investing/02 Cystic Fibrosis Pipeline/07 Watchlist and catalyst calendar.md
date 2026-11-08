@@ -34,6 +34,9 @@ updated: 2026-11-08
 | BI 3720931 (inhaled lentivirus) | Boehringer Ingelheim | Phase 1/2 data didn't support development |
 | SION-719 add-on | Sionna | no sweat chloride effect (Aug 2026) |
 
+> [!tip] Live watchlist
+> The [live watchlist](#/watchlist) shows these companies' share prices, a chart with every trial change, paper and news story pinned on the day it happened, and what's coming up.
+
 ## Checking for updates
 - Company "Investors" pages: quarterly results and press releases
 - ClinicalTrials.gov: search the drug name for status and primary completion date

@@ -20,3 +20,7 @@ binding = "AI"
 # the deploy's id: /api/ping returns it so an installed app can tell a new version is out
 [version_metadata]
 binding = "CF_VERSION"
+
+# the live watchlist collects trial changes, papers and news once a day (06:17 UK winter time)
+[triggers]
+crons = ["17 6 * * *"]

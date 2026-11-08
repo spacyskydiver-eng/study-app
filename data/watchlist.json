@@ -1,0 +1,73 @@
+{
+  "_about": "The live watchlist's companies. The Worker (src/invest.js) and the page (assets/watchlist.js) both read this file. Facts in 'runway', 'next' and 'events' are as of 8 November 2026.",
+  "companies": [
+    {
+      "symbol": "VRTX", "name": "Vertex Pharmaceuticals", "short": "Vertex", "color": "#60A5FA",
+      "programme": "Alyftrek, Trikafta (CFTR modulators)", "stage": "Approved", "risk": "low",
+      "runway": "Profitable", "next": "Povetacicept FDA decision 30 Nov 2026 (not CF); Q4 results early 2027",
+      "note": "03 Biotech Investing/02 Cystic Fibrosis Pipeline/02 Vertex Pharmaceuticals (VRTX)",
+      "sponsor": "Vertex Pharmaceuticals",
+      "pubmed": "(elexacaftor OR vanzacaftor OR deutivacaftor OR Alyftrek OR Trikafta OR Kaftrio) AND cystic fibrosis",
+      "news": "\"Vertex Pharmaceuticals\" cystic fibrosis",
+      "newsMust": ["vertex"]
+    },
+    {
+      "symbol": "SION", "name": "Sionna Therapeutics", "short": "Sionna", "color": "#F472B6",
+      "programme": "SION-451 + SION-2222 (NBD1 stabiliser + corrector)", "stage": "Phase 2a planned", "risk": "high",
+      "runway": "Into H2 2029", "next": "Dual combination Phase 2a start Q1 2027",
+      "note": "03 Biotech Investing/02 Cystic Fibrosis Pipeline/03 Sionna Therapeutics (SION)",
+      "sponsor": "Sionna Therapeutics",
+      "pubmed": "(Sionna OR \"NBD1 stabilizer\" OR \"NBD1 stabiliser\" OR SION-719 OR SION-451) AND CFTR",
+      "news": "\"Sionna Therapeutics\"",
+      "newsMust": ["sionna"]
+    },
+    {
+      "symbol": "FDMT", "name": "4D Molecular Therapeutics", "short": "4DMT", "color": "#A78BFA",
+      "programme": "4D-710 (inhaled AAV gene therapy)", "stage": "Phase 2", "risk": "high",
+      "runway": "Into H2 2028", "next": "AEROW 4D-710 data H2 2026",
+      "note": "03 Biotech Investing/02 Cystic Fibrosis Pipeline/04 4D Molecular Therapeutics (FDMT)",
+      "sponsor": "4D Molecular Therapeutics",
+      "pubmed": "(\"4D-710\" OR \"4D Molecular Therapeutics\" OR (AAV AND CFTR AND aerosol))",
+      "news": "\"4D Molecular Therapeutics\" OR \"4DMT\"",
+      "newsMust": ["4d molecular", "4dmt", "4d-710"]
+    },
+    {
+      "symbol": "KRYS", "name": "Krystal Biotech", "short": "Krystal", "color": "#FBBF24",
+      "programme": "KB407 (nebulised HSV-1 gene therapy)", "stage": "Phase 1", "risk": "medium",
+      "runway": "Profitable", "next": "KB407 interim data H1 2027",
+      "note": "03 Biotech Investing/02 Cystic Fibrosis Pipeline/05 Krystal Biotech (KRYS)",
+      "sponsor": "Krystal Biotech",
+      "pubmed": "(KB407 OR \"Krystal Biotech\" OR \"beremagene geperpavec\" OR Vyjuvek)",
+      "news": "\"Krystal Biotech\"",
+      "newsMust": ["krystal"]
+    },
+    {
+      "symbol": "ARCT", "name": "Arcturus Therapeutics", "short": "Arcturus", "color": "#34D399",
+      "programme": "ARCT-032 (inhaled LNP mRNA)", "stage": "Phase 2", "risk": "high",
+      "runway": "Into 2028", "next": "12-week ARCT-032 Phase 2 data (date not given)",
+      "note": "03 Biotech Investing/02 Cystic Fibrosis Pipeline/06 Arcturus Therapeutics (ARCT)",
+      "sponsor": "Arcturus Therapeutics",
+      "pubmed": "(\"ARCT-032\" OR (Arcturus AND mRNA AND CFTR))",
+      "news": "\"Arcturus Therapeutics\"",
+      "newsMust": ["arcturus"]
+    },
+    {
+      "symbol": "PRME", "name": "Prime Medicine", "short": "Prime", "color": "#FB923C",
+      "programme": "CF prime editing (preclinical)", "stage": "Preclinical", "risk": "very high",
+      "runway": "Into 2027", "next": "No CF date yet",
+      "note": "",
+      "sponsor": "Prime Medicine",
+      "pubmed": "(\"prime editing\" AND (CFTR OR \"cystic fibrosis\"))",
+      "news": "\"Prime Medicine\"",
+      "newsMust": ["prime medicine"]
+    }
+  ],
+  "events": [
+    { "symbol": "VRTX", "date": "2019-10-21", "type": "key", "title": "FDA approves Trikafta", "detail": "The elexacaftor/tezacaftor/ivacaftor triple combination, for people with at least one F508del mutation." },
+    { "symbol": "VRTX", "date": "2024-12-20", "type": "key", "title": "FDA approves Alyftrek", "detail": "The once-daily vanzacaftor/tezacaftor/deutivacaftor triple, Vertex's next-generation CF modulator." },
+    { "symbol": "VRTX", "date": "2026-07-06", "type": "key", "title": "Canada pricing letter of intent for Alyftrek", "detail": "Vertex signed a letter of intent with the pan-Canadian Pharmaceutical Alliance, a step towards public funding in Canada." },
+    { "symbol": "VRTX", "date": "2026-11-30", "type": "key", "title": "Povetacicept FDA decision date (PDUFA)", "detail": "Not a CF drug (IgA nephropathy), but a binary event for Vertex's share price." },
+    { "symbol": "SION", "date": "2026-08-10", "type": "key", "title": "SION-719 Phase 2a misses its sweat chloride endpoint", "detail": "The PreciSION CF add-on trial showed no meaningful sweat chloride effect. Sionna stopped SION-719 as an add-on and the shares fell about 90%." },
+    { "symbol": "KRYS", "date": "2023-05-19", "type": "key", "title": "FDA approves Vyjuvek", "detail": "Krystal's first approved HSV-1 gene therapy (for a skin disease). Its sales are what make Krystal profitable and fund KB407 for CF." }
+  ]
+}
