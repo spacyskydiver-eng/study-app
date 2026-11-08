@@ -174,25 +174,60 @@ function clip(text) {
   }
   return clips.get(k);
 }
-const sentText = i => P.text.slice(P.sents[i].s, P.sents[i].e).trim();
-function prefetch(si) { for (let i = si + 1; i <= si + 2 && i < P.sents.length; i++) if (sentText(i)) clip(sentText(i)).catch(() => {}); }
+/* ---- what the voice is given: big numbers said as words people use ("12 million", not "twelve
+   comma zero zero zero..."), and a few symbols spelled out */
+const SCALE = [[1e12, 'trillion'], [1e9, 'billion'], [1e6, 'million']];
+function bigNumber(n) {
+  for (const [v, w] of SCALE) if (n >= v) { const x = n / v; return (Math.round(x * 100) / 100).toString() + ' ' + w; }
+  return null;
+}
+function speakable(t) {
+  return t
+    .replace(/1\/([\d,]{7,})(?:th)?/g, (m, d) => { const b = bigNumber(+d.replace(/,/g, '')); return b ? 'one ' + b + 'th' : m; })
+    .replace(/([£$€]?)(\d{1,3}(?:,\d{3}){2,}|\d{7,})(\.\d+)?(?![\d,])/g, (m, cur, int, dec) => {
+      const n = +(int.replace(/,/g, '') + (dec || ''));
+      const b = bigNumber(n); if (!b) return m;
+      const unit = { '£': ' pounds', '$': ' dollars', '€': ' euros' }[cur] || '';
+      return b + unit;
+    })
+    .replace(/(\d)\s*[×x]\s*10\^?([⁻-]?[\d⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g, (m, a, e) => a + ' times ten to the ' + e.replace(/[⁻]/g, 'minus ').replace(/-/g, 'minus ').replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c)))
+    .replace(/\s*→\s*/g, ', then ')
+    .replace(/\s*÷\s*/g, ' divided by ')
+    .replace(/\s+=\s+/g, ' equals ')
+    .replace(/(\d)\s*%/g, '$1 percent')
+    .replace(/\s+/g, ' ').trim();
+}
+
+/* ---- AI voice: a few sentences per clip so it flows, with the next clips fetched well ahead */
+function chunksOf(sents, text) {
+  const out = []; let cur = null;
+  sents.forEach((st, i) => {
+    if (!cur || (st.e - cur.s > 380 && cur.n >= 1) || cur.n >= 5) { cur = { s: st.s, e: st.e, n: 0 }; out.push(cur); }
+    cur.e = st.e; cur.n++;
+  });
+  return out.filter(c => text.slice(c.s, c.e).trim());
+}
+const chunkIndex = pos => { let i = P.chunks.findIndex(c => pos < c.e); return i < 0 ? P.chunks.length - 1 : i; };
+const chunkText = i => speakable(P.text.slice(P.chunks[i].s, P.chunks[i].e));
+function prefetch(ci, n = 3) { for (let i = ci; i <= ci + n && i < P.chunks.length; i++) clip(chunkText(i)).catch(() => {}); }
 function speakAI(pos, tok) {
-  const si = sentIndex(pos), st = P.sents[si], t = sentText(si);
-  if (!t) { speakFrom(st.e); return; }
-  P.aiSent = si; P.aiLoading = true; paint();
-  clip(t).then(url => {
+  if (!P.chunks || !P.chunks.length) P.chunks = chunksOf(P.sents, P.text);
+  const ci = chunkIndex(pos), ch = P.chunks[ci];
+  if (!ch) { stopAtEnd(); return; }
+  P.aiChunk = ci; P.aiLoading = true; paint();
+  prefetch(ci + 1);
+  clip(chunkText(ci)).then(url => {
     if (tok !== P.token) return;
     P.aiLoading = false;
     audio.onloadedmetadata = () => {
       if (tok !== P.token) return;
-      const frac = Math.max(0, Math.min(.98, (pos - st.s) / Math.max(1, st.e - st.s)));
+      const frac = Math.max(0, Math.min(.98, (pos - ch.s) / Math.max(1, ch.e - ch.s)));
       if (frac > 0.02 && isFinite(audio.duration)) audio.currentTime = frac * audio.duration;
       audio.playbackRate = P.rate;
       audio.play().catch(() => { if (tok === P.token) pause(); });
     };
-    audio.onended = () => { if (tok === P.token && P.playing) speakFrom(st.e); };
+    audio.onended = () => { if (tok === P.token && P.playing) speakFrom(ch.e); };
     audio.src = url;
-    prefetch(si);
   }).catch(() => {
     if (tok !== P.token) return;
     P.aiDown = true; P.aiLoading = false;   // no AI voice (offline, or the day's free allowance used): carry on with the device's voice
@@ -212,12 +247,13 @@ function speakFrom(pos) {
   const from = Math.max(P.pos, st.s), chunk = P.text.slice(from, st.e);
   if (!chunk.trim()) { speakFrom(st.e); return; }
   if (useAI()) { speakAI(P.pos, tok); return; }
-  const u = new SpeechSynthesisUtterance(chunk);
+  const spoken = speakable(chunk), squeeze = chunk.length / Math.max(1, spoken.length);   // word positions in the spoken text, mapped back to the page
+  const u = new SpeechSynthesisUtterance(spoken);
   const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; }
   u.rate = P.rate;
   u.pitch = voicePref().startsWith('ai:') ? 0.92 : 1;   // fallback for the Jarvis voice: a touch lower and steadier
   u.onstart = () => { if (tok !== P.token) return; P.utterStart = from; P.t0 = performance.now(); };
-  u.onboundary = e => { if (tok !== P.token || e.name === 'sentence') return; P.timed = true; if (P.dragging) return; P.pos = from + e.charIndex; paint(); };
+  u.onboundary = e => { if (tok !== P.token || e.name === 'sentence') return; P.timed = true; if (P.dragging) return; P.pos = from + Math.round(e.charIndex * squeeze); paint(); };
   u.onend = () => { if (tok !== P.token) return; if (P.playing) speakFrom(st.e); };
   u.onerror = e => { if (tok !== P.token || e.error === 'interrupted' || e.error === 'canceled') return; if (P.playing) speakFrom(st.e); };
   P.utterStart = from; P.t0 = performance.now(); P.timed = false;
@@ -257,7 +293,7 @@ function setRate(r) {
 function startTick() { stopTick(); P.tick = setInterval(() => {
   if (!P.playing || P.dragging) return;
   if (useAI()) {   // follow the clip: position = how far through the sentence's audio we are
-    const st = P.sents[P.aiSent];
+    const st = P.chunks && P.chunks[P.aiChunk];
     if (st && !P.aiLoading && audio.duration && isFinite(audio.duration)) { P.pos = st.s + (audio.currentTime / audio.duration) * (st.e - st.s); paint(); }
     return;
   }
@@ -355,6 +391,8 @@ function load(target, opts = {}) {
   if (!text.trim()) return false;
   pause();
   Object.assign(P, { text, segs, sents: sentences(text), pos: 0 });
+  P.chunks = chunksOf(P.sents, P.text);
+  if (useAI()) prefetch(0, 2);   // the first clips start loading while the bar appears
   build(); document.body.classList.add('rd-open'); drawButtons(); paint();
   return true;
 }
