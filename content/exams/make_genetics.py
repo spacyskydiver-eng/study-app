@@ -807,13 +807,13 @@ def build():
         for i, q in enumerate(P['questions']):
             q['id'] = f"{P['id']}-q{i + 1}"
             for j, p in enumerate(q['parts']):
-                p['id'] = f"{P['id']}-q{i + 1}{'abcdefgh'[j]}"
+                p['id'] = f"{P['id']}-q{i + 1}{'abcdefghijkl'[j]}"
     for key in ORDER:
         title, lec, hub, qs = L[key]
         for i, q in enumerate(qs):
             q['id'] = f'{key}-q{i + 1}'
             for j, p in enumerate(q['parts']):
-                p['id'] = f'{key}-q{i + 1}{"abcdefgh"[j]}'
+                p['id'] = f'{key}-q{i + 1}{"abcdefghijkl"[j]}'
         total = sum(p['marks'] for q in qs for p in q['parts'])
         papers.append({'id': 'gen-' + key, 'title': title, 'lecture': lec, 'hub': hub, 'marks': total, 'questions': qs})
     out = {'subject': 'Molecular Biology and Genetics', 'module': 'BIO-4018A', 'papers': papers}

@@ -380,8 +380,58 @@ def papers():
         Q('Tube 6 contained TE buffer only.',
           mcq('Why is it included?', ['To give the highest absorbance', 'To zero the spectrophotometer, so only the DNA\'s absorbance is measured', 'To make the curve steeper', 'To check the wavelength', 'To dilute the unknown'], 1, 'The blank contains everything except DNA. Zeroing on it removes the buffer\'s and cuvette\'s absorbance, so the readings are due to DNA alone.')),
     ]})
+
+    # ============================================================== Mock 7 (only Q1/Q2-type gel questions, heavy on "which ends / which fragment")
+    L7, S7 = 6200, {'PstI': 0, 'HindIII': 1700, 'SacI': 4100}
+    f7 = lambda *e: frags(L7, [S7[x] for x in e])
+    assert f7('PstI', 'HindIII') == [4500, 1700] and f7('PstI', 'SacI') == [4100, 2100] and f7('HindIII', 'SacI') == [3800, 2400]
+    assert f7('PstI', 'HindIII', 'SacI') == [2400, 2100, 1700]
+    g7 = gel('dat7_gel1.png', ['L', f7('PstI'), f7('HindIII'), f7('SacI'), f7('PstI', 'HindIII'), f7('PstI', 'SacI'), f7('HindIII', 'SacI'), f7('PstI', 'HindIII', 'SacI'), 'L'], '')
+    LA, XA, EA = 5200, [0, 1400], 2600
+    assert frags(LA, XA) == [3800, 1400] and frags(LA, XA + [EA]) == [2600, 1400, 1200]
+    g7a = gel('dat7_gel2.png', ['L', frags(LA, XA), frags(LA, [EA]), frags(LA, XA + [EA]), 'L'], '')
+    LB, NB, SB = 6000, [0, 4500], 5400
+    assert frags(LB, NB) == [4500, 1500] and frags(LB, NB + [SB]) == [4500, 900, 600]
+    g7b = gel('dat7_gel3.png', ['L', frags(LB, NB), frags(LB, [SB]), frags(LB, NB + [SB]), 'L'], '')
+    LC, BC, CC = 7000, [1000, 3000], 2200
+    assert frags(LC, BC) == [5000, 2000] and frags(LC, BC + [CC]) == [5000, 1200, 800]
+    g7c = gel('dat7_gel4.png', ['L', frags(LC, BC), frags(LC, [CC]), frags(LC, BC + [CC]), 'L'], '')
+    LANES = ['Lane 4', 'Lane 5', 'Lane 6', 'Lane 7', 'Lane 8']
+    out.append({'id': 'dat-7', 'title': 'Gel mapping drill (questions 1 and 2 types)', 'lecture': 'In-class test (9 Nov)', 'marks': 40,
+                'hub': '01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics',
+                'note': 'Only the question 1 and 2 styles from the big test, mostly the "which ends does this fragment have" and "which fragment contains the site" questions. Method: compare each band in the double digest with the single and other lanes; a band that survives unchanged keeps both its ends; two new bands that add up to a vanished band are its pieces.',
+                'questions': [
+        Q('<strong>Figure 17.</strong> Restriction digests of plasmid pGX. Lanes 1 and 9: 1 kb ladder. Lane 2 PstI; lane 3 HindIII; lane 4 SacI; lane 5 PstI + HindIII; lane 6 PstI + SacI; lane 7 HindIII + SacI; lane 8 PstI + HindIII + SacI.',
+          mcq('How many SacI sites are there in pGX?', ['0', '1', '2', '3', '4'], 1, 'Lane 4 (SacI alone) has one band. On a circle, bands = cuts, so one cut: one site.'),
+          mcq('What is the approximate size of pGX?', ['4500 bp', '5200 bp', '6200 bp', '7200 bp', '8000 bp'], 2, 'The single-enzyme bands sit between the 5000 and 7000 markers. Check exactly with any double digest: lane 5 is 4500 + 1700 = 6200.'),
+          mcq('The smallest fragment in lane 8 has which two ends?', ['PstI and SacI', 'PstI and HindIII', 'HindIII and SacI', 'SacI at both ends', 'PstI at both ends'], 1, 'The smallest band in lane 8 is 1700. Find the two-enzyme lane that also has 1700: lane 5 (PstI + HindIII). So it runs from a PstI site to a HindIII site.'),
+          mcq('Which fragment in lane 8 has a HindIII end and a SacI end?', ['1700 bp', '2100 bp', '2400 bp', '3800 bp', '4500 bp'], 2, 'Look for the lane 8 band that is also in lane 7 (HindIII + SacI): 2400. 3800 is in lane 7 too, but it is not in lane 8, because it contains the PstI site and gets cut again.'),
+          mcq('Which fragment in lane 8 has a PstI end and a SacI end?', ['1700 bp', '2100 bp', '2400 bp', '4100 bp', '4500 bp'], 1, 'The lane 8 band that also appears in lane 6 (PstI + SacI) is 2100.'),
+          mcq('In lane 7 (HindIII + SacI), which band contains the PstI site?', ['2400 bp', '3800 bp', 'Both', 'Neither', 'It cannot be worked out'], 1, 'Go from lane 7 to lane 8 (adding PstI). 2400 is still there, so PstI did not cut it. 3800 is gone, replaced by 2100 + 1700, and 2100 + 1700 = 3800. So PstI is inside the 3800 piece.'),
+          mcq('PstI is placed at 0 and HindIII at 1700. Where is SacI?', ['400', '2100', '3400', '4100', '4500'], 3, 'Lane 6 says SacI is 2100 from PstI, so 2100 or 6200 − 2100 = 4100. Test with lane 7 (HindIII + SacI: 2400 + 3800): at 2100 the HindIII–SacI gap would be 400 (not on the gel); at 4100 it is 2400 (on the gel). So 4100.'),
+          mcq('Which lane has a band of about 4500 bp?', LANES, 1, '4500 = 6200 − 1700, the long way round between PstI (0) and HindIII (1700). Only lane 5 (PstI + HindIII) has those two cuts alone.'),
+          mcq('Which lane shows the shortest distance between the HindIII and SacI sites?', LANES, 3, 'Use the lane with exactly those two enzymes and nothing else: lane 7 (HindIII + SacI). Its smaller band, 2400, is the short way round.'),
+          img=g7),
+        Q('<strong>Figure 18.</strong> Digests of plasmid pKM. Lanes 1 and 5: 1 kb ladder. Lane 2 XbaI; lane 3 EcoRV; lane 4 XbaI + EcoRV.',
+          mcq('How many XbaI sites are there in pKM?', ['0', '1', '2', '3', '4'], 2, 'Lane 2 (XbaI alone) has two bands. On a circle, bands = cuts, so XbaI cuts twice.'),
+          mcq('Which XbaI fragment contains the EcoRV site?', ['The 1400 bp fragment', 'The 3800 bp fragment', 'Both', 'Neither', 'It cannot be worked out'], 1, 'Compare lane 2 with lane 4. 1400 is still there unchanged, so EcoRV did not cut it. 3800 is gone and 2600 + 1200 appeared; 2600 + 1200 = 3800. So EcoRV cut the 3800 piece.'),
+          mcq('In lane 4, which fragment has an XbaI site at both ends?', ['1200 bp', '1400 bp', '2600 bp', '3800 bp', '5200 bp'], 1, '1400 survived from XbaI alone without being cut, so it still has XbaI at both ends. 2600 and 1200 each have one XbaI end and one EcoRV end (they are the two halves of the 3800 piece).'),
+          mcq('In lane 4, how many fragments have one XbaI end and one EcoRV end?', ['0', '1', '2', '3', 'All of them'], 2, 'EcoRV cut once, inside the 3800 piece, making two pieces (2600 and 1200). Each has the old XbaI end and the new EcoRV end. 1400 has XbaI at both ends.'),
+          mcq('How far is the EcoRV site from the nearest XbaI site?', ['1200 bp', '1400 bp', '2600 bp', '3800 bp', '5200 bp'], 0, 'The pieces with an EcoRV end are 2600 and 1200, the distances from EcoRV to the XbaI site on each side. The nearest is the smaller, 1200.'),
+          img=g7a),
+        Q('<strong>Figure 19.</strong> Digests of plasmid pDN. Lanes 1 and 5: 1 kb ladder. Lane 2 NcoI; lane 3 SphI; lane 4 NcoI + SphI.',
+          mcq('Which NcoI fragment contains the SphI site?', ['The 4500 bp fragment', 'The 1500 bp fragment', 'Both', 'Neither', 'It cannot be worked out'], 1, 'Careful: it is not always the big one. In lane 4, 4500 is still there unchanged, so SphI did not cut it. 1500 is gone and 900 + 600 appeared; 900 + 600 = 1500. So SphI is inside the 1500 piece.'),
+          mcq('In lane 4, which fragment has an NcoI site at both ends?', ['600 bp', '900 bp', '1500 bp', '4500 bp', '6000 bp'], 3, '4500 is the band that survived from NcoI alone without being cut, so both its ends are still NcoI.'),
+          mcq('In lane 4, which fragments came from cutting the same NcoI fragment?', ['4500 and 900', '4500 and 600', '900 and 600', '1500 and 4500', 'None of them'], 2, 'Find the bands that add up to the band that disappeared: 900 + 600 = 1500. Those are the two halves of the 1500 piece.'),
+          img=g7b),
+        Q('<strong>Figure 20.</strong> Digests of plasmid pLB. Lanes 1 and 5: 1 kb ladder. Lane 2 BglII; lane 3 ClaI; lane 4 BglII + ClaI.',
+          mcq('What is the size of pLB?', ['2000 bp', '5000 bp', '6000 bp', '7000 bp', '8000 bp'], 3, 'Add the bands in any lane: lane 2 is 5000 + 2000 = 7000, and lane 3 (ClaI cuts once) shows the same 7000 as one band.'),
+          mcq('In lane 4, which fragments have a BglII end and a ClaI end?', ['800 only', '1200 only', '800 and 1200', '5000 only', '5000 and 1200'], 2, '5000 is unchanged from BglII alone, so it is BglII at both ends. 2000 has gone and 1200 + 800 appeared (1200 + 800 = 2000), so ClaI cut the 2000 piece. Both halves have one BglII end and one ClaI end.'),
+          mcq('How far is the ClaI site from the nearest BglII site?', ['800 bp', '1000 bp', '1200 bp', '2000 bp', '5000 bp'], 0, 'The ClaI-ended pieces are 1200 and 800: the distances to the BglII site on each side. The nearest is 800.'),
+          img=g7c),
+    ]})
     for p in out:
-        assert sum(len(q['parts']) for q in p['questions']) == (30 if p['id'] == 'dat-6' else 10), p['id']
+        assert sum(len(q['parts']) for q in p['questions']) == {'dat-6': 30, 'dat-7': 20}.get(p['id'], 10), p['id']
     return out
 
 

@@ -43,7 +43,7 @@ def paper():
     for i, q in enumerate(qs):
         q['id'] = f'dat-ex-q{i + 1}'
         for j, p in enumerate(q['parts']):
-            p['id'] = f'dat-ex-q{i + 1}{"abcdefgh"[j]}'
+            p['id'] = f'dat-ex-q{i + 1}{"abcdefghijkl"[j]}'
     return {'id': 'dat-ex', 'title': 'Official example test (with the module\'s answers)', 'lecture': 'In-class test (9 Nov)',
             'hub': '01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics',
             'marks': sum(p['marks'] for q in qs for p in q['parts']), 'questions': qs}

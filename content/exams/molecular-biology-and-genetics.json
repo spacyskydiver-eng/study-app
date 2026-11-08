@@ -1701,6 +1701,344 @@
    ]
   },
   {
+   "id": "dat-7",
+   "title": "Gel mapping drill (questions 1 and 2 types)",
+   "lecture": "In-class test (9 Nov)",
+   "marks": 40,
+   "hub": "01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics",
+   "note": "Only the question 1 and 2 styles from the big test, mostly the \"which ends does this fragment have\" and \"which fragment contains the site\" questions. Method: compare each band in the double digest with the single and other lanes; a band that survives unchanged keeps both its ends; two new bands that add up to a vanished band are its pieces.",
+   "questions": [
+    {
+     "stem": "<strong>Figure 17.</strong> Restriction digests of plasmid pGX. Lanes 1 and 9: 1 kb ladder. Lane 2 PstI; lane 3 HindIII; lane 4 SacI; lane 5 PstI + HindIII; lane 6 PstI + SacI; lane 7 HindIII + SacI; lane 8 PstI + HindIII + SacI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many SacI sites are there in pGX?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Lane 4 (SacI alone) has one band. On a circle, bands = cuts, so one cut: one site.",
+       "marks": 2,
+       "id": "dat-7-q1a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the approximate size of pGX?",
+       "options": [
+        "4500 bp",
+        "5200 bp",
+        "6200 bp",
+        "7200 bp",
+        "8000 bp"
+       ],
+       "answer": 2,
+       "explain": "The single-enzyme bands sit between the 5000 and 7000 markers. Check exactly with any double digest: lane 5 is 4500 + 1700 = 6200.",
+       "marks": 2,
+       "id": "dat-7-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "The smallest fragment in lane 8 has which two ends?",
+       "options": [
+        "PstI and SacI",
+        "PstI and HindIII",
+        "HindIII and SacI",
+        "SacI at both ends",
+        "PstI at both ends"
+       ],
+       "answer": 1,
+       "explain": "The smallest band in lane 8 is 1700. Find the two-enzyme lane that also has 1700: lane 5 (PstI + HindIII). So it runs from a PstI site to a HindIII site.",
+       "marks": 2,
+       "id": "dat-7-q1c"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which fragment in lane 8 has a HindIII end and a SacI end?",
+       "options": [
+        "1700 bp",
+        "2100 bp",
+        "2400 bp",
+        "3800 bp",
+        "4500 bp"
+       ],
+       "answer": 2,
+       "explain": "Look for the lane 8 band that is also in lane 7 (HindIII + SacI): 2400. 3800 is in lane 7 too, but it is not in lane 8, because it contains the PstI site and gets cut again.",
+       "marks": 2,
+       "id": "dat-7-q1d"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which fragment in lane 8 has a PstI end and a SacI end?",
+       "options": [
+        "1700 bp",
+        "2100 bp",
+        "2400 bp",
+        "4100 bp",
+        "4500 bp"
+       ],
+       "answer": 1,
+       "explain": "The lane 8 band that also appears in lane 6 (PstI + SacI) is 2100.",
+       "marks": 2,
+       "id": "dat-7-q1e"
+      },
+      {
+       "type": "mcq",
+       "stem": "In lane 7 (HindIII + SacI), which band contains the PstI site?",
+       "options": [
+        "2400 bp",
+        "3800 bp",
+        "Both",
+        "Neither",
+        "It cannot be worked out"
+       ],
+       "answer": 1,
+       "explain": "Go from lane 7 to lane 8 (adding PstI). 2400 is still there, so PstI did not cut it. 3800 is gone, replaced by 2100 + 1700, and 2100 + 1700 = 3800. So PstI is inside the 3800 piece.",
+       "marks": 2,
+       "id": "dat-7-q1f"
+      },
+      {
+       "type": "mcq",
+       "stem": "PstI is placed at 0 and HindIII at 1700. Where is SacI?",
+       "options": [
+        "400",
+        "2100",
+        "3400",
+        "4100",
+        "4500"
+       ],
+       "answer": 3,
+       "explain": "Lane 6 says SacI is 2100 from PstI, so 2100 or 6200 − 2100 = 4100. Test with lane 7 (HindIII + SacI: 2400 + 3800): at 2100 the HindIII–SacI gap would be 400 (not on the gel); at 4100 it is 2400 (on the gel). So 4100.",
+       "marks": 2,
+       "id": "dat-7-q1g"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which lane has a band of about 4500 bp?",
+       "options": [
+        "Lane 4",
+        "Lane 5",
+        "Lane 6",
+        "Lane 7",
+        "Lane 8"
+       ],
+       "answer": 1,
+       "explain": "4500 = 6200 − 1700, the long way round between PstI (0) and HindIII (1700). Only lane 5 (PstI + HindIII) has those two cuts alone.",
+       "marks": 2,
+       "id": "dat-7-q1h"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which lane shows the shortest distance between the HindIII and SacI sites?",
+       "options": [
+        "Lane 4",
+        "Lane 5",
+        "Lane 6",
+        "Lane 7",
+        "Lane 8"
+       ],
+       "answer": 3,
+       "explain": "Use the lane with exactly those two enzymes and nothing else: lane 7 (HindIII + SacI). Its smaller band, 2400, is the short way round.",
+       "marks": 2,
+       "id": "dat-7-q1i"
+      }
+     ],
+     "img": "assets/exam-img/dat7_gel1.png",
+     "id": "dat-7-q1"
+    },
+    {
+     "stem": "<strong>Figure 18.</strong> Digests of plasmid pKM. Lanes 1 and 5: 1 kb ladder. Lane 2 XbaI; lane 3 EcoRV; lane 4 XbaI + EcoRV.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many XbaI sites are there in pKM?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 2,
+       "explain": "Lane 2 (XbaI alone) has two bands. On a circle, bands = cuts, so XbaI cuts twice.",
+       "marks": 2,
+       "id": "dat-7-q2a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which XbaI fragment contains the EcoRV site?",
+       "options": [
+        "The 1400 bp fragment",
+        "The 3800 bp fragment",
+        "Both",
+        "Neither",
+        "It cannot be worked out"
+       ],
+       "answer": 1,
+       "explain": "Compare lane 2 with lane 4. 1400 is still there unchanged, so EcoRV did not cut it. 3800 is gone and 2600 + 1200 appeared; 2600 + 1200 = 3800. So EcoRV cut the 3800 piece.",
+       "marks": 2,
+       "id": "dat-7-q2b"
+      },
+      {
+       "type": "mcq",
+       "stem": "In lane 4, which fragment has an XbaI site at both ends?",
+       "options": [
+        "1200 bp",
+        "1400 bp",
+        "2600 bp",
+        "3800 bp",
+        "5200 bp"
+       ],
+       "answer": 1,
+       "explain": "1400 survived from XbaI alone without being cut, so it still has XbaI at both ends. 2600 and 1200 each have one XbaI end and one EcoRV end (they are the two halves of the 3800 piece).",
+       "marks": 2,
+       "id": "dat-7-q2c"
+      },
+      {
+       "type": "mcq",
+       "stem": "In lane 4, how many fragments have one XbaI end and one EcoRV end?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "All of them"
+       ],
+       "answer": 2,
+       "explain": "EcoRV cut once, inside the 3800 piece, making two pieces (2600 and 1200). Each has the old XbaI end and the new EcoRV end. 1400 has XbaI at both ends.",
+       "marks": 2,
+       "id": "dat-7-q2d"
+      },
+      {
+       "type": "mcq",
+       "stem": "How far is the EcoRV site from the nearest XbaI site?",
+       "options": [
+        "1200 bp",
+        "1400 bp",
+        "2600 bp",
+        "3800 bp",
+        "5200 bp"
+       ],
+       "answer": 0,
+       "explain": "The pieces with an EcoRV end are 2600 and 1200, the distances from EcoRV to the XbaI site on each side. The nearest is the smaller, 1200.",
+       "marks": 2,
+       "id": "dat-7-q2e"
+      }
+     ],
+     "img": "assets/exam-img/dat7_gel2.png",
+     "id": "dat-7-q2"
+    },
+    {
+     "stem": "<strong>Figure 19.</strong> Digests of plasmid pDN. Lanes 1 and 5: 1 kb ladder. Lane 2 NcoI; lane 3 SphI; lane 4 NcoI + SphI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "Which NcoI fragment contains the SphI site?",
+       "options": [
+        "The 4500 bp fragment",
+        "The 1500 bp fragment",
+        "Both",
+        "Neither",
+        "It cannot be worked out"
+       ],
+       "answer": 1,
+       "explain": "Careful: it is not always the big one. In lane 4, 4500 is still there unchanged, so SphI did not cut it. 1500 is gone and 900 + 600 appeared; 900 + 600 = 1500. So SphI is inside the 1500 piece.",
+       "marks": 2,
+       "id": "dat-7-q3a"
+      },
+      {
+       "type": "mcq",
+       "stem": "In lane 4, which fragment has an NcoI site at both ends?",
+       "options": [
+        "600 bp",
+        "900 bp",
+        "1500 bp",
+        "4500 bp",
+        "6000 bp"
+       ],
+       "answer": 3,
+       "explain": "4500 is the band that survived from NcoI alone without being cut, so both its ends are still NcoI.",
+       "marks": 2,
+       "id": "dat-7-q3b"
+      },
+      {
+       "type": "mcq",
+       "stem": "In lane 4, which fragments came from cutting the same NcoI fragment?",
+       "options": [
+        "4500 and 900",
+        "4500 and 600",
+        "900 and 600",
+        "1500 and 4500",
+        "None of them"
+       ],
+       "answer": 2,
+       "explain": "Find the bands that add up to the band that disappeared: 900 + 600 = 1500. Those are the two halves of the 1500 piece.",
+       "marks": 2,
+       "id": "dat-7-q3c"
+      }
+     ],
+     "img": "assets/exam-img/dat7_gel3.png",
+     "id": "dat-7-q3"
+    },
+    {
+     "stem": "<strong>Figure 20.</strong> Digests of plasmid pLB. Lanes 1 and 5: 1 kb ladder. Lane 2 BglII; lane 3 ClaI; lane 4 BglII + ClaI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What is the size of pLB?",
+       "options": [
+        "2000 bp",
+        "5000 bp",
+        "6000 bp",
+        "7000 bp",
+        "8000 bp"
+       ],
+       "answer": 3,
+       "explain": "Add the bands in any lane: lane 2 is 5000 + 2000 = 7000, and lane 3 (ClaI cuts once) shows the same 7000 as one band.",
+       "marks": 2,
+       "id": "dat-7-q4a"
+      },
+      {
+       "type": "mcq",
+       "stem": "In lane 4, which fragments have a BglII end and a ClaI end?",
+       "options": [
+        "800 only",
+        "1200 only",
+        "800 and 1200",
+        "5000 only",
+        "5000 and 1200"
+       ],
+       "answer": 2,
+       "explain": "5000 is unchanged from BglII alone, so it is BglII at both ends. 2000 has gone and 1200 + 800 appeared (1200 + 800 = 2000), so ClaI cut the 2000 piece. Both halves have one BglII end and one ClaI end.",
+       "marks": 2,
+       "id": "dat-7-q4b"
+      },
+      {
+       "type": "mcq",
+       "stem": "How far is the ClaI site from the nearest BglII site?",
+       "options": [
+        "800 bp",
+        "1000 bp",
+        "1200 bp",
+        "2000 bp",
+        "5000 bp"
+       ],
+       "answer": 0,
+       "explain": "The ClaI-ended pieces are 1200 and 800: the distances to the BglII site on each side. The nearest is 800.",
+       "marks": 2,
+       "id": "dat-7-q4c"
+      }
+     ],
+     "img": "assets/exam-img/dat7_gel4.png",
+     "id": "dat-7-q4"
+    }
+   ]
+  },
+  {
    "id": "gen-l1",
    "title": "Heredity and DNA",
    "lecture": "Lecture 1",

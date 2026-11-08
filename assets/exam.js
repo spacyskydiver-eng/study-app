@@ -86,7 +86,7 @@ function apply(m) {
 B.examSync = { snapshot, merge, apply };
 const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
 const fmt = n => (Math.round(n * 2) / 2).toString();
-const letter = j => '(' + 'abcdefgh'[j] + ')';
+const letter = j => '(' + 'abcdefghijkl'[j] + ')';
 
 /* ------------------------------------------------------------ marking */
 const SUP = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁻': '-', '⁺': '' };
