@@ -122,6 +122,41 @@ const wordStart = pos => { let a = Math.min(pos, P.text.length); while (a > 0 &&
 /* ---- AI voice: one audio clip per sentence */
 const audio = new Audio();
 audio.preload = 'auto';
+
+/* ---- room sound: the AI voice runs through a reverb (a convolver with a made-up room's echo) */
+const ROOMS = { off: null, room: { secs: 0.9, decay: 3.2, wet: 0.28 }, hall: { secs: 2.2, decay: 2.4, wet: 0.42 } };
+const ROOM_LABEL = { off: 'No echo', room: 'Room', hall: 'Hall' };
+let actx = null, conv = null, wetG = null, dryG = null;
+function impulse(secs, decay) {
+  const rate = actx.sampleRate, len = Math.floor(rate * secs), pre = Math.floor(rate * 0.018), b = actx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = b.getChannelData(ch);
+    for (let i = pre; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - (i - pre) / (len - pre), decay);
+  }
+  return b;
+}
+function applyRoom() {
+  if (!actx) return;
+  const r = ROOMS[ls.get('room', 'room')];
+  if (r) conv.buffer = impulse(r.secs, r.decay);
+  wetG.gain.value = r ? r.wet : 0;
+  dryG.gain.value = r ? 1 - r.wet * 0.35 : 1;
+}
+function ensureFx() {   // must run inside a tap (iPad rule for starting audio processing)
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  if (!actx) {
+    try {
+      actx = new AC();
+      const src = actx.createMediaElementSource(audio);
+      conv = actx.createConvolver(); wetG = actx.createGain(); dryG = actx.createGain();
+      src.connect(dryG).connect(actx.destination);
+      src.connect(conv).connect(wetG).connect(actx.destination);
+      applyRoom();
+    } catch (e) { actx = null; return; }
+  }
+  if (actx.state !== 'running') actx.resume().catch(() => {});
+}
 const SILENT = (() => {   // 0.05 s of silence as a WAV, built here so it is certainly valid
   const n = 400, b = new Uint8Array(44 + n * 2), d = new DataView(b.buffer), w = (o, t) => [...t].forEach((c, k) => b[o + k] = c.charCodeAt(0));
   w(0, 'RIFF'); d.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
@@ -191,6 +226,7 @@ function speakFrom(pos) {
 }
 function play() {
   if (!P.text) return;
+  if (useAI()) ensureFx();
   // iPad only lets a page play sound that starts from a tap: start (silent) audio now, inside the tap,
   // so the AI voice clips that arrive a moment later are allowed to play
   if (useAI() && !P.unlocked) { audio.onended = audio.onloadedmetadata = null; audio.src = SILENT; audio.play().then(() => { P.unlocked = true; }).catch(() => {}); }
@@ -255,6 +291,7 @@ function build() {
       <input class="rd-scrub" data-rd-scrub type="range" min="0" max="1000" value="0" aria-label="Position">
       <span class="rd-speed"><button class="rd-b rd-s" data-rd="slower" title="Slower" aria-label="Slower">−</button><b data-rd-rate>1×</b><button class="rd-b rd-s" data-rd="faster" title="Faster" aria-label="Faster">+</button></span>
       <select class="rd-voice" data-rd-voice aria-label="Voice"></select>
+      <button class="rd-b rd-room" data-rd="room" title="Echo: none, a room, or a hall (AI voices)" aria-label="Echo"><svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4"/></svg><small data-rd-roomlbl></small></button>
       <button class="rd-b" data-rd="close" title="Stop and close" aria-label="Close">${ICON.x}</button>
     </div>
     <div class="rd-now" data-rd-now></div>`;
@@ -264,6 +301,7 @@ function build() {
     const b = e.target.closest('[data-rd]'); if (!b) return;
     const a = b.dataset.rd;
     if (a === 'toggle') P.playing ? pause() : play();
+    else if (a === 'room') { const ks = Object.keys(ROOMS), cur = ls.get('room', 'room'); ls.set('room', ks[(ks.indexOf(cur) + 1) % ks.length]); ensureFx(); applyRoom(); drawButtons(); }
     else if (a === 'prev') prevSentence();
     else if (a === 'next') nextSentence();
     else if (a === 'slower') setRate(RATES[Math.max(0, RATES.indexOf(nearestRate()) - 1)]);
@@ -292,6 +330,7 @@ function drawVoices() {
 }
 function drawButtons() {
   if (!P.el) return;
+  P.el.querySelector('[data-rd-roomlbl]').textContent = ROOM_LABEL[ls.get('room', 'room')];
   const t = P.el.querySelector('[data-rd="toggle"]');
   t.innerHTML = P.playing ? ICON.pause : ICON.play;
   t.setAttribute('aria-label', P.playing ? 'Pause' : 'Play');
