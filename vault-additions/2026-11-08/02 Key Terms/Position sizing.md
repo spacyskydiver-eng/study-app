@@ -15,3 +15,5 @@ updated: 2026-11-08
 
 ## Where this comes up
 - [[05 Orders and risk management|Orders and risk management]] · *Biotech Investing*
+- [[08 Event playbook for biotech shares|Event playbook for biotech shares]] · *Biotech Investing*
+- [[09 How money is actually made|How money is actually made]] · *Biotech Investing*

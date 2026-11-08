@@ -21,6 +21,7 @@ updated: 2026-11-08
 ## Sections
 1. [[Investing Foundations]] *how markets, orders, tax wrappers and biotech catalysts work*
 2. [[Cystic Fibrosis Pipeline]] *the companies developing CF drugs, the watchlist, and how it feeds the seminar essay and presentation*
+3. [[Reading Charts and Trading]] *charts and candles from the ground up, how events move biotech shares, whether that gives an edge, and practising on Trading 212*
 
 ## The plan in one line
 - **Core (about 80%)**: a low-cost global index fund in a Stocks and Shares ISA, paid in monthly and left alone

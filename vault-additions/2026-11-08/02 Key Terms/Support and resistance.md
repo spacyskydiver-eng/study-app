@@ -15,3 +15,4 @@ updated: 2026-11-08
 
 ## Where this comes up
 - [[05 Orders and risk management|Orders and risk management]] · *Biotech Investing*
+- [[04 Trends, support and resistance, and moving averages|Trends, support and resistance, and moving averages]] · *Biotech Investing*

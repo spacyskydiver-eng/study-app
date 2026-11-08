@@ -36,7 +36,7 @@ updated: 2026-11-08
 ## How to handle catalysts
 - Know the dates: company presentations, results releases and ClinicalTrials.gov ("primary completion date")
 - **"Buy the rumour, sell the news"**: shares often rise before a readout and fall after even good results
-- Size the position so a total loss is survivable (see [[Orders and risk management]])
+- Size the position so a total loss is survivable (see [[05 Orders and risk management|Orders and risk management]])
 
 ## Questions
 > [!question]- What is a biotech catalyst? Give three examples.

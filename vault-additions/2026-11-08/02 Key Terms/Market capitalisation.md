@@ -15,3 +15,4 @@ updated: 2026-11-08
 
 ## Where this comes up
 - [[01 How shares and markets work|How shares and markets work]] · *Biotech Investing*
+- [[08 Event playbook for biotech shares|Event playbook for biotech shares]] · *Biotech Investing*

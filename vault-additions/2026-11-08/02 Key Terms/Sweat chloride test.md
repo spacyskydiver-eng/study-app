@@ -16,3 +16,4 @@ updated: 2026-11-08
 ## Where this comes up
 - [[02 How a drug gets to market|How a drug gets to market]] · *Biotech Investing*
 - [[02 How a drug gets to market|How a drug gets to market]] · *Biotech Investing*
+- [[06 How news and events move biotech share prices|How news and events move biotech share prices]] · *Biotech Investing*

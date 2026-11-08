@@ -15,3 +15,4 @@ updated: 2026-11-08
 
 ## Where this comes up
 - [[07 Psychology traps|Psychology traps]] · *Biotech Investing*
+- [[10 Practising on Trading 212|Practising on Trading 212]] · *Biotech Investing*

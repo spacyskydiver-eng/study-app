@@ -15,3 +15,4 @@ updated: 2026-11-08
 
 ## Where this comes up
 - [[06 UK tax wrappers|UK tax wrappers]] · *Biotech Investing*
+- [[09 How money is actually made|How money is actually made]] · *Biotech Investing*
