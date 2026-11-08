@@ -1,1 +1,823 @@
-{"asOf": "", "companies": {}}
+{
+ "asOf": "2026-11-08",
+ "_about": "Researched 8 November 2026 from company Q2/Q3 2026 results, SEC filings and pipeline pages. Sources are listed per company.",
+ "companies": {
+  "VRTX": {
+   "pipeline": [
+    {
+     "drug": "TRIKAFTA/KAFTRIO (elexacaftor/tezacaftor/ivacaftor)",
+     "disease": "Cystic fibrosis",
+     "approach": "Oral pills that fix the faulty CFTR protein",
+     "phase": "Approved",
+     "status": "active",
+     "note": "Q3 2026 revenue was $2,436.9M, down from $2,653.6M in Q3 2025 as patients move to ALYFTREK.",
+     "next": null,
+     "cf": true
+    },
+    {
+     "drug": "ALYFTREK (vanzacaftor triple)",
+     "disease": "Cystic fibrosis",
+     "approach": "Once-daily oral CFTR modulator combination",
+     "phase": "Approved",
+     "status": "active",
+     "note": "Q3 2026 revenue was $705.8M, up from $247.0M. It is now reimbursed in 32 countries.",
+     "next": "Global submissions started for ages 2–5 (no timing given)",
+     "cf": true
+    },
+    {
+     "drug": "VX-828 (3.0 CFTR corrector, triple combination)",
+     "disease": "Cystic fibrosis (F/MF)",
+     "approach": "Next-generation oral CFTR corrector",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "Safe and well tolerated. Sweat chloride fell 6.6–9.4 mmol/L at 4 weeks compared with the TRIKAFTA baseline.",
+     "next": "Decision on 3.0 regimens after proof-of-concept data from all three 3.0 programmes (no timing given)",
+     "cf": true
+    },
+    {
+     "drug": "VX-581 and VX-272 (3.0 CFTR correctors)",
+     "disease": "Cystic fibrosis",
+     "approach": "Next-generation oral CFTR correctors",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "First-in-human dosing in healthy volunteers is underway, with proof-of-concept studies in people with CF planned.",
+     "next": null,
+     "cf": true
+    },
+    {
+     "drug": "VX-522 (with Moderna)",
+     "disease": "Cystic fibrosis",
+     "approach": "Inhaled mRNA that makes working CFTR",
+     "phase": "Phase 1/2",
+     "status": "stopped",
+     "note": "The Phase 1/2 trial was stopped and development ended after persistent tolerability issues (reported May 2026).",
+     "next": null,
+     "cf": true
+    },
+    {
+     "drug": "CASGEVY (exa-cel)",
+     "disease": "Sickle cell disease and beta thalassaemia",
+     "approach": "One-time CRISPR gene-edited stem cell therapy",
+     "phase": "Approved",
+     "status": "active",
+     "note": "US approval was extended to ages 2 and up in July 2026, and children's approvals followed in the UAE, Bahrain and the UK.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "JOURNAVX (suzetrigine)",
+     "disease": "Moderate-to-severe acute pain",
+     "approach": "Non-opioid oral NaV1.8 pain-signal blocker",
+     "phase": "Approved",
+     "status": "active",
+     "note": "Q3 2026 revenue was $58.3M, with more than 750,000 prescriptions filled in the quarter.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "Suzetrigine",
+     "disease": "Diabetic peripheral neuropathy pain",
+     "approach": "Non-opioid oral NaV1.8 pain-signal blocker",
+     "phase": "Phase 3",
+     "status": "active",
+     "note": "Enrolment is ongoing in two Phase 3 studies.",
+     "next": "Complete enrolment by the end of 2026; results in mid-2027",
+     "cf": false
+    },
+    {
+     "drug": "VX-993",
+     "disease": "Diabetic peripheral neuropathy pain",
+     "approach": "Oral NaV1.8 pain-signal blocker",
+     "phase": "Phase 2",
+     "status": "active",
+     "note": "Phase 2 enrolment is ongoing.",
+     "next": "Complete enrolment by the end of 2026; results in mid-2027",
+     "cf": false
+    },
+    {
+     "drug": "Povetacicept",
+     "disease": "IgA nephropathy",
+     "approach": "Injected protein blocking BAFF/APRIL immune signals",
+     "phase": "Filed",
+     "status": "active",
+     "note": "The BLA is under FDA priority review for accelerated approval, based on the Week 36 interim analysis of Phase 3 RAINIER.",
+     "next": "FDA PDUFA target action date November 30, 2026",
+     "cf": false
+    },
+    {
+     "drug": "Povetacicept",
+     "disease": "Primary membranous nephropathy",
+     "approach": "Injected protein blocking BAFF/APRIL immune signals",
+     "phase": "Phase 2/3",
+     "status": "active",
+     "note": "The Phase 3 portion of OLYMPUS is enrolling and dosing at 80mg, the dose chosen in Phase 2b.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "Povetacicept",
+     "disease": "Generalised myasthenia gravis",
+     "approach": "Injected protein blocking BAFF/APRIL immune signals",
+     "phase": "Phase 2",
+     "status": "active",
+     "note": "Enrolment in the dose-ranging proof-of-concept study is complete.",
+     "next": "Results in the first half of 2027",
+     "cf": false
+    },
+    {
+     "drug": "Inaxaplin",
+     "disease": "APOL1-mediated kidney disease",
+     "approach": "Oral small molecule blocking APOL1 protein",
+     "phase": "Phase 3",
+     "status": "active",
+     "note": "In Phase 2b AMPLIFIED, UACR fell 42.7% in patients with modest proteinuria. AMPLITUDE enrolment is complete.",
+     "next": "AMPLITUDE interim analysis data in early 2027",
+     "cf": false
+    },
+    {
+     "drug": "Zimislecel",
+     "disease": "Type 1 diabetes (blood types A or A/B)",
+     "approach": "Lab-grown insulin-making islet cell infusion",
+     "phase": null,
+     "status": "active",
+     "note": "Vertex is focusing on VX-017 instead, because zimislecel only suits patients with blood types A or A/B. The company has not formally said it is discontinued.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "VX-017",
+     "disease": "Type 1 diabetes",
+     "approach": "Islet cell therapy usable for any blood type",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "Enrolling and dosing, with FDA Fast Track designation.",
+     "next": "Advance into pivotal development in 2027",
+     "cf": false
+    },
+    {
+     "drug": "VX-670",
+     "disease": "Myotonic dystrophy type 1",
+     "approach": "Oligonucleotide targeting toxic DMPK RNA",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "Enrolment and dosing in the multiple ascending dose part of GALILEO are complete.",
+     "next": "Interim GALILEO results in the second half of 2026",
+     "cf": false
+    },
+    {
+     "drug": "PALSONIFY (paltusotine)",
+     "disease": "Acromegaly",
+     "approach": "Once-daily oral hormone-suppressing pill",
+     "phase": "Approved",
+     "status": "active",
+     "note": "Approved in the US (acquired with Crinetics, deal closed September 1, 2026) and in the EU in April 2026. September revenue was $10.1M.",
+     "next": "European launches in the second half of 2027",
+     "cf": false
+    },
+    {
+     "drug": "Atumelnant",
+     "disease": "Classic congenital adrenal hyperplasia",
+     "approach": "Oral pill blocking ACTH hormone receptor",
+     "phase": "Phase 3",
+     "status": "active",
+     "note": "The 32-week Phase 3 trial (about 150 patients) is enrolling and dosing. A Phase 2/3 in ACTH-dependent Cushing's syndrome has also started.",
+     "next": "Complete Phase 3 enrolment in the first quarter of 2027",
+     "cf": false
+    }
+   ],
+   "finance": {
+    "cash_and_investments_usd": 9821200000,
+    "as_of": "2026-09-30",
+    "shares_outstanding": 253537674,
+    "shares_outstanding_date": "2026-10-31",
+    "quarterly_net_loss_or_income_usd": 653600000,
+    "runway_guidance": "profitable",
+    "runway_until": null,
+    "note": "Q3 2026 (10-Q and press release). Revenue was $3,440.8M. FY2026 revenue guidance was raised to $13.15–13.25B."
+   },
+   "binary_events": [
+    {
+     "label": "FDA decision on povetacicept for IgA nephropathy",
+     "window_start": "2026-11-30",
+     "window_text": "PDUFA target action date of November 30, 2026",
+     "importance": "medium"
+    },
+    {
+     "label": "VX-670 GALILEO interim results (DM1)",
+     "window_start": "2026-07-01",
+     "window_text": "second half of 2026",
+     "importance": "medium"
+    },
+    {
+     "label": "Inaxaplin AMPLITUDE interim analysis (AMKD)",
+     "window_start": "2027-01-01",
+     "window_text": "early 2027",
+     "importance": "medium"
+    },
+    {
+     "label": "Povetacicept gMG Phase 2 results",
+     "window_start": "2027-01-01",
+     "window_text": "first half of 2027",
+     "importance": "medium"
+    },
+    {
+     "label": "Suzetrigine DPN Phase 3 and VX-993 DPN Phase 2 results",
+     "window_start": "2027-06-01",
+     "window_text": "mid-2027",
+     "importance": "medium"
+    }
+   ],
+   "sources": [
+    "https://www.sec.gov/Archives/edgar/data/0000875320/000087532026000287/ex-991_q32026.htm",
+    "https://www.sec.gov/Archives/edgar/data/0000875320/000087532026000291/vrtx-20260930.htm",
+    "https://www.oindpnews.com/2026/05/vertex-ceases-development-of-vx-522-inhaled-rna-therapy-for-cf-after-stopping-phase-1-2-trial-due-to-tolerability-issues/"
+   ]
+  },
+  "SION": {
+   "pipeline": [
+    {
+     "drug": "SION-451 + SION-2222 (galicaftor) dual combination",
+     "disease": "Cystic fibrosis (F508del homozygous)",
+     "approach": "Oral NBD1 stabiliser plus TMD1 corrector",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "In healthy volunteers (120 dosed across both combinations) it met safety, tolerability and PK goals and was chosen as the preferred combination. An open-label Phase 2a (AscenSION CF) switching patients from Trikafta for 28 days is planned.",
+     "next": "Phase 2a expected to initiate in the first quarter of 2027",
+     "cf": true
+    },
+    {
+     "drug": "SION-719",
+     "disease": "Cystic fibrosis (add-on to Trikafta)",
+     "approach": "Oral NBD1 stabiliser added to Trikafta",
+     "phase": "Phase 2",
+     "status": "stopped",
+     "note": "The Phase 2a PreciSION CF trial missed its sweat chloride endpoint (-1.0 mmol/L placebo-adjusted, p=0.7), so investment as an add-on was stopped in September 2026.",
+     "next": null,
+     "cf": true
+    },
+    {
+     "drug": "SION-109",
+     "disease": "Cystic fibrosis",
+     "approach": "Oral ICL4-directed CFTR corrector",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "Combinations with SION-451 were generally well tolerated in Phase 1, but SION-109 was not picked as the preferred partner and no further plans have been disclosed.",
+     "next": null,
+     "cf": true
+    }
+   ],
+   "finance": {
+    "cash_and_investments_usd": 268300000,
+    "as_of": "2026-06-30",
+    "shares_outstanding": 45212399,
+    "shares_outstanding_date": "2026-07-31",
+    "quarterly_net_loss_or_income_usd": -29900000,
+    "runway_guidance": "into the second half of 2029",
+    "runway_until": "2029-07",
+    "note": "Q3 2026 results were not found as of 2026-11-08, so these figures are Q2 2026. Runway wording is from the September 14, 2026 restructuring announcement (about 46% workforce cut, about $6.4M charges)."
+   },
+   "binary_events": [],
+   "sources": [
+    "https://www.sec.gov/Archives/edgar/data/0002036042/000162828026053832/sion2q26earningsrelease_fi.htm",
+    "https://www.sec.gov/Archives/edgar/data/0002036042/000162828026053839/sionna-20260630.htm",
+    "https://www.globenewswire.com/news-release/2026/08/10/3341683/0/en/sionna-therapeutics-reports-topline-data-from-two-development-programs-in-cystic-fibrosis-and-provides-corporate-update.html",
+    "https://www.globenewswire.com/news-release/2026/09/14/3361527/0/en/sionna-therapeutics-announces-plans-to-advance-sion-451-sion-2222-dual-combination-into-phase-2a-proof-of-concept-trial.html",
+    "https://www.sec.gov/Archives/edgar/data/2036042/000119312526390577/d148638d8k.htm"
+   ]
+  },
+  "FDMT": {
+   "pipeline": [
+    {
+     "drug": "4D-150",
+     "disease": "Wet age-related macular degeneration",
+     "approach": "One-time eye-injection gene therapy making anti-VEGF",
+     "phase": "Phase 3",
+     "status": "active",
+     "note": "In PRISM Phase 2b, 2-year data showed a 78% cut in treatment burden with vision maintained. Both 4FRONT Phase 3 trials are fully enrolled. Otsuka licenses it for Japan, China, Korea, Australia and other Asia-Pacific markets.",
+     "next": "4FRONT-1 topline Q2 2027; 4FRONT-2 topline H2 2027",
+     "cf": false
+    },
+    {
+     "drug": "4D-150",
+     "disease": "Diabetic macular edema",
+     "approach": "One-time eye-injection gene therapy making anti-VEGF",
+     "phase": "Phase 3",
+     "status": "active",
+     "note": "The 4SIGHT Phase 3 (N=514) began in September 2026. At the Phase 3 dose, 2-year SPECTRA data showed a +10.8-letter vision gain and 61% fewer injections.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "4D-710",
+     "disease": "Cystic fibrosis lung disease",
+     "approach": "Inhaled gene therapy delivering working CFTR gene",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "It is the first genetic medicine shown to deliver and express the CFTR gene in the lungs of people with CF after inhalation.",
+     "next": "AEROW Phase 1/2 trial and programme update expected in Q4 2026",
+     "cf": true
+    },
+    {
+     "drug": "4D-175",
+     "disease": "Geographic atrophy",
+     "approach": "Eye gene therapy",
+     "phase": "Preclinical",
+     "status": "active",
+     "note": "Has an active IND, but investment was reduced in January 2025. The company is evaluating moving it into the clinic.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "4D-725",
+     "disease": "Alpha-1 antitrypsin deficiency lung disease",
+     "approach": "Inhaled gene therapy",
+     "phase": "Preclinical",
+     "status": "active",
+     "note": "Capital allocation was reduced in January 2025, with no significant further investment pending financing or partners.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "4D-310",
+     "disease": "Fabry disease cardiomyopathy",
+     "approach": "Gene therapy",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "Investment was reduced in January 2025 (no significant further investment pending financing or partners), and it is not mentioned in 2026 filings.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "4D-125",
+     "disease": "X-linked retinitis pigmentosa",
+     "approach": "Eye gene therapy",
+     "phase": null,
+     "status": "stopped",
+     "note": "Terminated in January 2025 after a portfolio review to focus on 4D-150 and 4D-710.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "4D-110",
+     "disease": "Choroideremia",
+     "approach": "Eye gene therapy",
+     "phase": null,
+     "status": "stopped",
+     "note": "Terminated in January 2025 after a portfolio review.",
+     "next": null,
+     "cf": false
+    }
+   ],
+   "finance": {
+    "cash_and_investments_usd": 430600000,
+    "as_of": "2026-06-30",
+    "shares_outstanding": 55244211,
+    "shares_outstanding_date": "2026-08-10",
+    "quarterly_net_loss_or_income_usd": -72900000,
+    "runway_guidance": "at least into the second half of 2028",
+    "runway_until": "2028-07",
+    "note": "Q3 2026 results were not found as of 2026-11-08, so these figures are Q2 2026. The share count excludes 16,935,665 pre-funded warrant shares. Runway includes expected Otsuka collaboration payments."
+   },
+   "binary_events": [
+    {
+     "label": "4D-710 AEROW Phase 1/2 programme update (CF)",
+     "window_start": "2026-10-01",
+     "window_text": "Q4 2026",
+     "importance": "medium"
+    },
+    {
+     "label": "4FRONT-1 Phase 3 topline (wet AMD)",
+     "window_start": "2027-04-01",
+     "window_text": "Q2 2027",
+     "importance": "high"
+    },
+    {
+     "label": "4FRONT-2 Phase 3 topline (wet AMD)",
+     "window_start": "2027-07-01",
+     "window_text": "H2 2027",
+     "importance": "high"
+    }
+   ],
+   "sources": [
+    "https://www.sec.gov/Archives/edgar/data/0001650648/000119312526349160/fdmt-ex99_1.htm",
+    "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-reports-second-quarter-2026-financial-results-operational",
+    "https://www.sec.gov/Archives/edgar/data/0001650648/000119312526349173/fdmt-20260630.htm",
+    "https://finviz.com/news/395885/4dmt-advances-4d-150-into-phase-3-for-second-large-market-retina-indication-with-initiation-of-4sight-in-dme",
+    "https://www.rttnews.com/3694423/4d-molecular-enrolls-first-patient-in-phase-3-4sight-trial-reports-durable-2-year-spectra-data.aspx",
+    "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-focuses-pipeline-prioritize-4d-150-wet-amd-dme-and-4d-710"
+   ]
+  },
+  "KRYS": {
+   "pipeline": [
+    {
+     "drug": "VYJUVEK (B-VEC)",
+     "disease": "Dystrophic epidermolysis bullosa (DEB)",
+     "approach": "Topical redosable HSV-1 gene therapy (COL7A1)",
+     "phase": "Approved",
+     "status": "active",
+     "note": "Approved in the US, EU, UK and Japan; Q3 2026 product revenue was $127.3M, up 30% year on year, with over 760 US reimbursement approvals.",
+     "next": "Italy launch early 2027; Spain pricing decision later in 2026; France no earlier than 2027; Switzerland filing before year-end 2026",
+     "cf": false
+    },
+    {
+     "drug": "KB803",
+     "disease": "Corneal abrasions in DEB",
+     "approach": "HSV-1 gene therapy eye drops",
+     "phase": "Phase 3",
+     "status": "active",
+     "note": "In the registrational IOLITE study, three patients (one aged one year) were added to replace two who withdrew.",
+     "next": "Last patient visit February 2027, top-line results shortly after",
+     "cf": false
+    },
+    {
+     "drug": "KB801",
+     "disease": "Neurotrophic keratitis",
+     "approach": "HSV-1 gene therapy eye drops",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "The company calls EMERALD-1 a randomized, placebo-controlled registrational study (the trial registry lists it as Phase 1/2); enrollment is slower than expected and the target is now about 60 patients.",
+     "next": "Top-line results in 2027",
+     "cf": false
+    },
+    {
+     "drug": "KB407",
+     "disease": "Cystic fibrosis",
+     "approach": "Inhaled HSV-1 vector delivering CFTR gene",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "In an open-label repeat-dose safety study, three patients are dosed and three more are planned by year-end; it was selected for the FDA Complex Innovative Trial Design program.",
+     "next": "Interim results 1H 2027; registrational study start on track for 2027",
+     "cf": true
+    },
+    {
+     "drug": "KB408",
+     "disease": "Alpha-1 antitrypsin deficiency lung disease",
+     "approach": "Inhaled HSV-1 vector delivering SERPINA1 gene",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "SERPENTINE-1 Cohort 2B (repeat dosing) is enrolling.",
+     "next": "Interim results in 2027",
+     "cf": false
+    },
+    {
+     "drug": "KB707 (inhaled)",
+     "disease": "Non-small cell lung cancer",
+     "approach": "Inhaled HSV-1 vector delivering IL-12/IL-2",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "KYANITE-1 data at ASCO 2026 with pembrolizumab showed a 31% objective response rate and a 75% disease control rate.",
+     "next": "~70 patients dosed at selected regimen in chemo-combination expansion by mid-2027",
+     "cf": false
+    },
+    {
+     "drug": "KB707 (intratumoral, OPAL-1)",
+     "disease": "Advanced solid tumours incl. melanoma",
+     "approach": "Injected HSV-1 vector delivering IL-12/IL-2",
+     "phase": "Phase 1/2",
+     "status": "stopped",
+     "note": "Enrollment was paused in 2025 after the FDA's rejection of a similar Replimune drug made the accelerated-approval path uncertain, and the company prioritised inhaled KB707.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "KB111",
+     "disease": "Hailey-Hailey disease",
+     "approach": "Topical HSV-1 gene therapy (ATP2C1)",
+     "phase": null,
+     "status": "active",
+     "note": "The HALITE-1 open-label safety study has enrolled 5 patients, with weekly dosing for 12 weeks ongoing.",
+     "next": "Interim results before end of 2026; FDA meeting Q1 2027; registrational study start targeted 2027",
+     "cf": false
+    },
+    {
+     "drug": "KB113",
+     "disease": "Gorlin syndrome (basal cell carcinomas)",
+     "approach": "Injected HSV-1 gene therapy",
+     "phase": null,
+     "status": "active",
+     "note": "In a 3-patient pilot, more than 80% of assessed lesions regressed, including non-injected lesions, and every patient had histologic clearance of an injected lesion.",
+     "next": "Update after FDA alignment on advanced development",
+     "cf": false
+    },
+    {
+     "drug": "KB304 (Jeune Aesthetics)",
+     "disease": "Décolleté wrinkles",
+     "approach": "Topical/injected HSV-1 aesthetic gene therapy",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "The Phase 2 start has slipped from 1H 2026 to 2027.",
+     "next": "Phase 2 study expected to start in 2027",
+     "cf": false
+    },
+    {
+     "drug": "KB105",
+     "disease": "TGM1-deficient lamellar ichthyosis",
+     "approach": "Topical HSV-1 gene therapy (TGM1)",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "In Feb 2025 the company planned the Phase 2 portion of JADE-1 for 2026; the Q3 2025 and Q3 2026 releases do not mention it, so its current status is unverified.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "KB301",
+     "disease": "Décolleté dynamic wrinkles",
+     "approach": "HSV-1 aesthetic gene therapy",
+     "phase": null,
+     "status": "active",
+     "note": "In Feb 2025 Jeune expected to start a Phase 2 study in 2H 2025; later releases do not mention it, so its status is unverified.",
+     "next": null,
+     "cf": false
+    }
+   ],
+   "finance": {
+    "cash_and_investments_usd": 1194152000,
+    "as_of": "2026-09-30",
+    "shares_outstanding": 29633472,
+    "shares_outstanding_date": "2026-10-28",
+    "quarterly_net_loss_or_income_usd": 63068000,
+    "runway_guidance": "profitable",
+    "runway_until": null
+   },
+   "binary_events": [
+    {
+     "label": "KB111 HALITE-1 interim results (Hailey-Hailey)",
+     "window_start": "2026-11-08",
+     "window_text": "interim results before end of 2026",
+     "importance": "medium"
+    },
+    {
+     "label": "KB803 IOLITE registrational top-line results",
+     "window_start": "2027-02-01",
+     "window_text": "last patient visit in February 2027, with top-line results shortly after",
+     "importance": "medium"
+    },
+    {
+     "label": "KB407 cystic fibrosis interim results",
+     "window_start": "2027-01-01",
+     "window_text": "interim results in 1H 2027",
+     "importance": "medium"
+    },
+    {
+     "label": "KB801 EMERALD-1 top-line results",
+     "window_start": "2027-01-01",
+     "window_text": "top-line results in 2027",
+     "importance": "medium"
+    },
+    {
+     "label": "KB408 SERPENTINE-1 interim results",
+     "window_start": "2027-01-01",
+     "window_text": "interim results in 2027",
+     "importance": "medium"
+    }
+   ],
+   "sources": [
+    "https://www.sec.gov/Archives/edgar/data/0001711279/000171127926000072/exhibit991-3q26pressrelease.htm",
+    "https://www.sec.gov/Archives/edgar/data/0001711279/000171127926000071/krys-20260930.htm",
+    "https://ir.krystalbio.com/node/10516/pdf",
+    "https://www.sec.gov/Archives/edgar/data/1711279/000171127925000088/a3q25exhibit991pr.htm",
+    "https://www.fiercebiotech.com/biotech/krystal-discontinues-melanoma-trial-after-fdas-replimune-rebuff-stat",
+    "https://www.tipranks.com/stocks/krys/drug-pipeline"
+   ]
+  },
+  "ARCT": {
+   "pipeline": [
+    {
+     "drug": "ARCT-032 (LUNAR-CF)",
+     "disease": "Cystic fibrosis",
+     "approach": "Inhaled mRNA making working CFTR protein",
+     "phase": "Phase 2",
+     "status": "active",
+     "note": "Cohorts 1-3 (5/10/15 mg daily for 28 days) are complete and the drug was generally safe and well tolerated; Cohort 4 (10 mg daily for 12 weeks, up to 20 adults) is enrolling, with financial support from Thermo Fisher.",
+     "next": "Enrollment complete by year-end 2026; full Cohort 4 data Q2 2027; Phase 3 decision before Phase 2 data presentation",
+     "cf": true
+    },
+    {
+     "drug": "ARCT-810",
+     "disease": "Ornithine transcarbamylase (OTC) deficiency",
+     "approach": "IV mRNA in lipid nanoparticle, liver enzyme replacement",
+     "phase": "Phase 2",
+     "status": "active",
+     "note": "September 2026 interim data at 0.3 and 0.5 mg/kg kept fasting ammonia in the normal range and lowered glutamine in all participants; it was generally well tolerated and is being folded into an amended study with ARCT-2601.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "ARCT-2601",
+     "disease": "OTC deficiency",
+     "approach": "Next-gen LUNAR 2.0 mRNA, liver enzyme replacement",
+     "phase": "Phase 2",
+     "status": "active",
+     "note": "It is being added to the ARCT-810 Phase 2 study (ages 12+) after a June 2026 FDA Type C meeting; primate data suggest lower or less frequent dosing than ARCT-810.",
+     "next": "Dosing start Q1 2027; initial proof-of-concept data H2 2027",
+     "cf": false
+    },
+    {
+     "drug": "PKU programme (LUNAR 2.0)",
+     "disease": "Phenylketonuria",
+     "approach": "mRNA making liver PAH enzyme",
+     "phase": "Preclinical",
+     "status": "active",
+     "note": "This programme was newly added to the pipeline on the LUNAR 2.0 platform.",
+     "next": "IND submission H2 2027",
+     "cf": false
+    },
+    {
+     "drug": "Gout programme (LUNAR 2.0)",
+     "disease": "Gout",
+     "approach": "mRNA therapy on LUNAR 2.0 platform",
+     "phase": "Preclinical",
+     "status": "active",
+     "note": "This programme was newly added to the pipeline with no timing given.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "KOSTAIVE (ARCT-154)",
+     "disease": "COVID-19",
+     "approach": "Self-amplifying mRNA vaccine",
+     "phase": "Approved",
+     "status": "active",
+     "note": "It is approved in Japan, the EU and the UK and sold by Meiji in Japan; Arcturus regained EU/UK rights after the CSL Seqirus deal ended in August 2026.",
+     "next": "EU/UK commercial activity in 2027",
+     "cf": false
+    },
+    {
+     "drug": "ARCT-2304",
+     "disease": "Pandemic influenza (H5N1)",
+     "approach": "Self-amplifying mRNA vaccine",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "Phase 1 results (212 adults) were published in Nature Communications in September 2026; there was no BARDA R&D spend in Q3 2026 as the company reduces BARDA activity.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "LUNAR-FLU",
+     "disease": "Seasonal influenza",
+     "approach": "Self-amplifying mRNA vaccine",
+     "phase": "Phase 1",
+     "status": "active",
+     "note": "This programme was formerly partnered with CSL Seqirus, and rights returned to Arcturus when the collaboration ended in August 2026.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "RSV vaccine",
+     "disease": "Respiratory syncytial virus",
+     "approach": "mRNA vaccine",
+     "phase": null,
+     "status": "active",
+     "note": "Listed among the vaccine programmes regained from CSL Seqirus, with no stage disclosed.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "EBV vaccine",
+     "disease": "Epstein-Barr virus",
+     "approach": "mRNA vaccine",
+     "phase": null,
+     "status": "active",
+     "note": "Listed among the vaccine programmes regained from CSL Seqirus, with no stage disclosed.",
+     "next": null,
+     "cf": false
+    }
+   ],
+   "finance": {
+    "cash_and_investments_usd": 184817000,
+    "as_of": "2026-09-30",
+    "shares_outstanding": 28822514,
+    "shares_outstanding_date": "2026-11-03",
+    "quarterly_net_loss_or_income_usd": -7414000,
+    "runway_guidance": "cash runway of over two years through year end 2028",
+    "runway_until": "2028-12"
+   },
+   "binary_events": [
+    {
+     "label": "ARCT-032 full Cohort 4 (12-week) cystic fibrosis data",
+     "window_start": "2027-04-01",
+     "window_text": "Q2 2027",
+     "importance": "high"
+    },
+    {
+     "label": "ARCT-2601 initial proof-of-concept data in OTC deficiency",
+     "window_start": "2027-07-01",
+     "window_text": "H2 2027",
+     "importance": "medium"
+    }
+   ],
+   "sources": [
+    "https://www.sec.gov/Archives/edgar/data/0001768224/000119380526001439/e665874_ex99-1.htm",
+    "https://www.sec.gov/Archives/edgar/data/0001768224/000119312526449901/arct-20260930.htm"
+   ]
+  },
+  "PRME": {
+   "pipeline": [
+    {
+     "drug": "PM577a",
+     "disease": "Wilson disease (H1069Q mutation)",
+     "approach": "One-time IV in vivo prime editing (LNP)",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "The first patient was dosed in the global Phase 1/2 trial (NCT07748403), announced 5 Oct 2026.",
+     "next": "Initial clinical data expected in 2027",
+     "cf": false
+    },
+    {
+     "drug": "R778L Wilson follow-on",
+     "disease": "Wilson disease (R778L mutation)",
+     "approach": "In vivo prime editing (LNP)",
+     "phase": "Preclinical",
+     "status": "active",
+     "note": "This follow-on candidate targets the most common East Asian Wilson allele.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "PM647",
+     "disease": "Alpha-1 antitrypsin deficiency",
+     "approach": "One-time IV in vivo prime editing (LNP)",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "The FDA cleared the IND on 24 Sep 2026 after Prime won its July 2026 arbitration against Beam.",
+     "next": "Initial clinical data expected in 2027",
+     "cf": false
+    },
+    {
+     "drug": "PM359",
+     "disease": "Chronic granulomatous disease (X-linked CGD)",
+     "approach": "Prime-edited patient stem cells (ex vivo)",
+     "phase": "Phase 1/2",
+     "status": "active",
+     "note": "Prime ceased further X-CGD efforts in May 2025 and sought outside options, but now holds RMAT designation (June 2026) and believes existing data may support accelerated approval.",
+     "next": "BLA submission planned 1H 2027",
+     "cf": false
+    },
+    {
+     "drug": "p47phox CGD programme",
+     "disease": "Chronic granulomatous disease (p47phox)",
+     "approach": "Prime-edited patient stem cells (ex vivo)",
+     "phase": null,
+     "status": "stopped",
+     "note": "It was deprioritised in the May 2025 restructuring to focus on liver programmes, and the company is seeking a partner.",
+     "next": null,
+     "cf": false
+    },
+    {
+     "drug": "In vivo CF programme",
+     "disease": "Cystic fibrosis",
+     "approach": "In vivo prime editing of CFTR",
+     "phase": "Preclinical",
+     "status": "active",
+     "note": "This programme is supported by the Cystic Fibrosis Foundation.",
+     "next": "Preclinical proof-of-concept data in 2026",
+     "cf": true
+    },
+    {
+     "drug": "Prime-edited CAR-T (with BMS)",
+     "disease": "Blood cancers, immunology and oncology",
+     "approach": "Prime-edited CAR-T cells",
+     "phase": null,
+     "status": "partnered",
+     "note": "The programme continues in partnership with Bristol Myers Squibb.",
+     "next": null,
+     "cf": false
+    }
+   ],
+   "finance": {
+    "cash_and_investments_usd": 95071000,
+    "as_of": "2026-06-30",
+    "shares_outstanding": 181376856,
+    "shares_outstanding_date": "2026-07-31",
+    "quarterly_net_loss_or_income_usd": -42109000,
+    "runway_guidance": "into 2027",
+    "runway_until": "2027-01",
+    "note": "Q3 2026 results and 10-Q were not found as of 2026-11-08, so these are Q2 2026 figures. Cash including restricted cash was $108.8M. The Q2 10-Q states substantial doubt about the company's ability to continue as a going concern."
+   },
+   "binary_events": [
+    {
+     "label": "PM577a first clinical data (Wilson disease)",
+     "window_start": "2027-01-01",
+     "window_text": "initial clinical data expected in 2027",
+     "importance": "high"
+    },
+    {
+     "label": "PM647 first clinical data (AATD)",
+     "window_start": "2027-01-01",
+     "window_text": "initial clinical data expected in 2027",
+     "importance": "high"
+    }
+   ],
+   "sources": [
+    "https://www.sec.gov/Archives/edgar/data/0001894562/000162828026053878/q220268-kex991xpressrelease.htm",
+    "https://www.sec.gov/Archives/edgar/data/0001894562/000162828026053883/prme-20260630.htm",
+    "https://www.sec.gov/Archives/edgar/data/1894562/000162828026013565/fy20258-kex991xpressrelease.htm",
+    "https://www.sec.gov/Archives/edgar/data/1894562/000119312525122156/d863812dex992.htm",
+    "https://finviz.com/news/395375/prime-medicine-announces-us-fda-clearance-of-investigational-new-drug-application-for-pm647-in-alpha-1-antitrypsin-deficiency",
+    "https://finviz.com/news/398593/prime-medicine-announces-first-patient-dosed-in-global-phase-12-clinical-trial-of-pm577a-for-h1069q-mutated-wilson-disease",
+    "https://quantisnow.com/company/PRME",
+    "https://www.earningswhispers.com/stocks/PRME"
+   ]
+  }
+ }
+}

@@ -438,14 +438,18 @@ function evaluate(sym) {
   let factor = 1;
   const add = (state, title, result, why, link) => rows.push({ state, title, result, why, link });
   // 1 binary event
-  const next = (P.binary_events || []).filter(e => e.window_start && daysUntil(e.window_start) >= -45).sort((a, b) => (a.window_start < b.window_start ? -1 : 1))[0];
+  const upcomingEv = (P.binary_events || []).filter(e => e.window_start && daysUntil(e.window_start) >= -200).sort((a, b) => (a.window_start < b.window_start ? -1 : 1));
+  const next = upcomingEv[0];
   if (next) {
     const d = daysUntil(next.window_start), exact = /^\d{4}-\d{2}-\d{2}$/.test(next.window_text || '') || /\d{1,2} [A-Z][a-z]+ \d{4}/.test(next.window_text || '');
     const near = d <= r.binaryDays;
     if (near) { factor *= 1 - r.binaryCut / 100; change.push(`After ${next.label} (${next.window_text}) the binary-event cut no longer applies.`); }
     add(near ? 'wait' : 'ok', 'Binary event', `${next.label}: ${next.window_text}${d > 0 ? ` (${exact ? '' : 'earliest '}${d} days away)` : d === 0 ? ' (today)' : ' (may happen any day)'}. ${near ? `Inside your ${r.binaryDays}-day window, so the size is cut by ${r.binaryCut}%.` : `Outside your ${r.binaryDays}-day window.`}`,
-      'A readout or FDA decision can move a small biotech 30 to 90% overnight, and stop-losses don\'t protect you because the price gaps. Your rule keeps positions small right before one.', 'Binary event');
+      'A readout or FDA decision can move a small biotech 30 to 90% overnight, and stop-losses don\'t protect you because the price gaps. Your rule keeps positions small right before one. Dates given as a period (like "H1 2027") are counted from the earliest day of that period.' + (upcomingEv.length > 1 ? ' Also ahead: ' + upcomingEv.slice(1).map(e => `${e.label} (${e.window_text})`).join('; ') + '.' : ''), 'Binary event');
   } else add('info', 'Binary event', 'No dated readout or FDA decision found in the research.', 'Without a scheduled coin-flip event, the price moves more on results, news and the market.', 'Binary event');
+  // a going-concern warning in the filings is the company's own auditors doubting it can keep operating
+  if (f.note && /going concern/i.test(f.note)) add('wait', 'Going-concern warning', f.note, 'Companies must say when there is "substantial doubt" they can keep going for the next 12 months without new money. It usually means a share sale, a deal or cuts are coming soon, and existing shareholders often lose out. This is a built-in check, not one of your rules.', 'Share dilution');
+  else if (f.note) add('info', 'From the latest filing', f.note, 'Context from the company\'s own results and filings.', null);
   // 2 runway
   const months = f.runway_until ? monthsUntil(f.runway_until) : null;
   if (f.runway_guidance && /profit/i.test(f.runway_guidance)) add('ok', 'Cash runway', 'Profitable: it funds itself from sales.', 'A profitable company doesn\'t need to sell new shares to keep going.', 'Cash runway');
@@ -500,7 +504,7 @@ function decidePanel(view) {
     <p class="wl-ex">Each bar has 8 steps, from Preclinical (left) to Approved (right); filled steps show how far a drug has got. Only about 8% of drugs entering Phase 1 reach approval, so drugs further right are much more likely to make money. Greyed bars are stopped programmes.</p>
     <div class="wl-pipe">${pipe.length ? pipe.map(p => `<div class="wl-prog${p.status === 'stopped' ? ' is-stopped' : ''}">
       <div class="wl-prog-name"><b>${esc(p.drug || p.name || '')}</b>${p.cf ? '<span class="wl-cf">CF</span>' : ''}${p.status === 'partnered' ? '<span class="wl-cf wl-partner">partnered</span>' : ''}${p.status === 'stopped' ? '<span class="wl-cf wl-stop">stopped</span>' : ''}<span>${esc(p.disease || '')}${p.approach ? ' · ' + esc(p.approach) : ''}</span></div>
-      <div class="wl-prog-phase">${track(p)}<small>${esc(p.phase || '')}</small></div>
+      <div class="wl-prog-phase">${track(p)}<small>${esc(p.phase || 'Stage not disclosed')}</small></div>
       <div class="wl-prog-next">${p.next ? `<b>Next:</b> ${esc(p.next)}` : ''}${p.note ? `<span>${esc(p.note)}</span>` : ''}</div></div>`).join('') : '<p class="wl-dim">No pipeline researched for this company yet.</p>'}</div>
     <h3>Decision check</h3>
     <div class="wl-verdict is-${e.state}"><b>${st[0]}</b><div><strong>${st[1]}</strong><span>${st[2]}</span></div></div>
