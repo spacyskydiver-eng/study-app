@@ -30,8 +30,8 @@ function jarvisVoice() {
   for (const re of JARVIS) { const v = voices.find(x => re.test(x.name) && /GB|UK/i.test(x.lang + x.name)); if (v) return v; }
   return voices.find(v => /en-GB/i.test(v.lang)) || voices.find(v => v.default) || voices[0] || null;
 }
-const AI_VOICES = [['ai:draco', 'Jarvis style: Draco (AI, British)'], ['ai:helios', 'Helios (AI, British)'], ['ai:pandora', 'Pandora (AI, British, female)']];
-const voicePref = () => { const v = ls.get('voice', 'ai:draco'); return v === 'jarvis' ? 'ai:draco' : v; };
+const AI_VOICES = [['ai:enceladus', 'Jarvis style: Enceladus (Gemini, British butler)'], ['ai:draco', 'Draco (AI, British baritone)'], ['ai:helios', 'Helios (AI, British)'], ['ai:pandora', 'Pandora (AI, British, female)']];
+const voicePref = () => { const v = ls.get('voice', 'ai:enceladus'); return v === 'jarvis' ? 'ai:enceladus' : v; };
 const useAI = () => voicePref().startsWith('ai:') && !P.aiDown;
 function pickVoice() {
   const want = voicePref();
@@ -288,7 +288,7 @@ function drawVoices() {
   const want = voicePref();
   s.innerHTML = AI_VOICES.map(([v, l]) => `<option value="${v}">${l}</option>`).join('') +
     (voices.length ? '<optgroup label="This device\'s voices">' + voices.map(v => `<option value="${v.voiceURI.replace(/"/g, '&quot;')}">${v.name} · ${v.lang}</option>`).join('') + '</optgroup>' : '');
-  s.value = [...s.options].some(o => o.value === want) ? want : 'ai:draco';
+  s.value = [...s.options].some(o => o.value === want) ? want : 'ai:enceladus';
 }
 function drawButtons() {
   if (!P.el) return;
