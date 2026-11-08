@@ -21,6 +21,6 @@ binding = "AI"
 [version_metadata]
 binding = "CF_VERSION"
 
-# the live watchlist collects trial changes, papers and news once a day (06:17 UK winter time)
+# the live watchlist checks a couple of its sources (trials, papers, news) every 15 minutes
 [triggers]
-crons = ["17 6 * * *"]
+crons = ["*/15 * * * *"]

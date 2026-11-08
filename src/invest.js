@@ -3,11 +3,11 @@
    news) are collected once a day by the cron in wrangler.toml, and when the page asks for a refresh,
    and kept in D1. The companies and the hand-written key events are in data/watchlist.json. */
 import CFG from "../data/watchlist.json";
+import HISTORY from "../data/watchlist-history.json";
 
 const TD = "https://api.twelvedata.com";
 const UA = "BiomedVault-watchlist/1.0 (personal study site)";
 const DAY = 86400000;
-const REFRESH_GAP = 15 * 60000;          // a page-triggered refresh at most every 15 minutes
 const SYMBOLS = CFG.companies.map(c => c.symbol);
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
@@ -65,23 +65,24 @@ async function quotes(env) {
     throw e;
   }
 }
-const RANGES = {
-  "1d": { interval: "5min", outputsize: 80, ttl: 5 * 60000 },
-  "1m": { interval: "1day", outputsize: 23, ttl: 3 * 3600000 },
-  "6m": { interval: "1day", outputsize: 128, ttl: 3 * 3600000 },
-  "1y": { interval: "1day", outputsize: 253, ttl: 3 * 3600000 },
-  "5y": { interval: "1week", outputsize: 262, ttl: 12 * 3600000 },
+// one request per interval gets the whole history the chart can zoom through
+const INTERVALS = {
+  "5min": { outputsize: 390, ttl: 5 * 60000 },       // about five trading days
+  "1h": { outputsize: 1000, ttl: 30 * 60000 },       // about seven months
+  "1day": { outputsize: 1300, ttl: 3 * 3600000 },    // about five years
+  "1week": { outputsize: 600, ttl: 12 * 3600000 },   // about eleven years
 };
-async function series(env, sym, range) {
-  const r = RANGES[range];
-  const key = `series:${sym}:${range}`;
+async function series(env, sym, interval) {
+  const r = INTERVALS[interval];
+  const key = `bars:${sym}:${interval}`;
   const hit = await cacheGet(env, key);
   if (hit && Date.now() - hit.at < r.ttl) return { ...hit.v, at: hit.at };
   try {
-    const body = await twelve(env, "/time_series", { symbol: sym, interval: r.interval, outputsize: String(r.outputsize), order: "ASC" });
-    const points = (body.values || []).map(v => [v.datetime, Number(v.close)]).filter(p => isFinite(p[1]));
-    points.sort((a, b) => (a[0] < b[0] ? -1 : 1));
-    const v = { symbol: sym, range, interval: r.interval, tz: (body.meta && body.meta.exchange_timezone) || "", points };
+    const body = await twelve(env, "/time_series", { symbol: sym, interval, outputsize: String(r.outputsize), order: "ASC", timezone: "UTC" });
+    const n = x => Math.round(Number(x) * 10000) / 10000;
+    const bars = (body.values || []).map(v => [v.datetime, n(v.open), n(v.high), n(v.low), n(v.close), Number(v.volume) || 0]).filter(b => isFinite(b[4]));
+    bars.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+    const v = { symbol: sym, interval, bars };
     await cachePut(env, key, v);
     return { ...v, at: Date.now() };
   } catch (e) {
@@ -112,10 +113,13 @@ const nice = s => STATUS[s] || String(s || "").toLowerCase().replace(/_/g, " ");
 async function trialsFor(env, c, first) {
   const u = new URL("https://clinicaltrials.gov/api/v2/studies");
   u.searchParams.set("query.spons", c.sponsor);
-  u.searchParams.set("query.cond", "cystic fibrosis");
-  u.searchParams.set("pageSize", "40");
+  if (c.trialCond) u.searchParams.set("query.cond", c.trialCond);
+  u.searchParams.set("pageSize", "50");
   u.searchParams.set("sort", "LastUpdatePostDate:desc");
-  const res = await fetch(u.toString(), { headers: { "User-Agent": UA, Accept: "application/json" } });
+  // only the fields used here, which keeps the reply small enough for the free plan's time limit
+  u.searchParams.set("fields", "NCTId,BriefTitle,OverallStatus,StartDate,PrimaryCompletionDate,LastUpdatePostDate,ResultsFirstPostDate,Phase");
+  let res = await fetch(u.toString(), { headers: { "User-Agent": UA, Accept: "application/json" } });
+  if (res.status === 400) { u.searchParams.delete("fields"); u.searchParams.set("pageSize", "20"); res = await fetch(u.toString(), { headers: { "User-Agent": UA, Accept: "application/json" } }); }
   if (!res.ok) throw new Error("ClinicalTrials.gov " + res.status);
   const body = await res.json();
   const known = new Map(((await env.DB.prepare("SELECT nct, status FROM inv_trials WHERE symbol = ?").bind(c.symbol).all()).results || []).map(r => [r.nct, r.status]));
@@ -155,7 +159,7 @@ async function trialsFor(env, c, first) {
 async function papersFor(env, c, first) {
   const base = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
   const s = new URL(base + "esearch.fcgi");
-  for (const [k, v] of Object.entries({ db: "pubmed", term: c.pubmed, retmode: "json", retmax: first ? "20" : "10", sort: "pub_date", datetype: "edat", reldate: first ? "730" : "60", tool: "biomedvault" })) s.searchParams.set(k, v);
+  for (const [k, v] of Object.entries({ db: "pubmed", term: c.pubmed, retmode: "json", retmax: first ? "40" : "15", sort: "pub_date", datetype: "edat", reldate: first ? "400" : "45", tool: "biomedvault" })) s.searchParams.set(k, v);
   const r1 = await fetch(s.toString(), { headers: { "User-Agent": UA } });
   if (!r1.ok) throw new Error("PubMed " + r1.status);
   const ids = (((await r1.json()).esearchresult || {}).idlist || []);
@@ -183,12 +187,27 @@ const JUNK = /investigat|class action|shareholder (alert|rights)|securities (fra
 const unxml = s => String(s || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").trim();
 const tagOf = (item, t) => { const m = item.match(new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}>`)); return m ? unxml(m[1]) : ""; };
 
+// Google News first; it can answer a server in the UK or EU with a cookie page instead of the feed,
+// so the consent cookie goes with the request and Bing's feed is the fallback
+const BROWSER = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+async function newsXml(query, first) {
+  const tries = [
+    [`https://news.google.com/rss/search?q=${encodeURIComponent(query + (first ? "" : " when:14d"))}&hl=en-US&gl=US&ceid=US:en`, { "User-Agent": BROWSER, Cookie: "CONSENT=YES+cb.20240101-00-p0.en+FX+000; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg" }],
+    [`https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=rss&count=50${first ? "" : "&qft=interval%3d%228%22"}`, { "User-Agent": BROWSER }],
+  ];
+  const errs = [];
+  for (const [u, headers] of tries) {
+    try {
+      const res = await fetch(u, { headers, redirect: "follow" });
+      const text = await res.text();
+      if (res.ok && text.includes("<item>")) return text;
+      errs.push(`${new URL(u).host} ${res.status}${res.ok ? " no items" : ""}`);
+    } catch (e) { errs.push(new URL(u).host + " " + e.message); }
+  }
+  throw new Error(errs.join("; "));
+}
 async function newsFor(env, c, first) {
-  const q = c.news + (first ? "" : " when:14d");
-  const u = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-GB&gl=GB&ceid=GB:en`;
-  const res = await fetch(u, { headers: { "User-Agent": UA } });
-  if (!res.ok) throw new Error("News " + res.status);
-  const xml = await res.text();
+  const xml = await newsXml(c.news, first);
   const items = xml.split("<item>").slice(1).map(x => x.split("</item>")[0]);
   const stmts = [];
   const seen = new Set();
@@ -212,26 +231,41 @@ async function newsFor(env, c, first) {
 
 async function seed(env) {
   const stmts = [];
-  for (const e of CFG.events || []) stmts.push(evStmt(env, true, { ...e, id: "key:" + (await hashId(e.symbol + e.date + e.title)), url: e.url || "", source: e.source || "Watchlist notes" }));
+  for (const e of [...(CFG.events || []), ...(HISTORY.events || [])]) stmts.push(evStmt(env, true, { ...e, id: "key:" + (await hashId(e.symbol + e.date + e.title)), url: e.url || "", source: e.source || "Watchlist notes" }));
   if (stmts.length) await env.DB.batch(stmts);
 }
 
-export async function refreshUpdates(env) {
-  await tables(env);
-  await seed(env);
-  const last = await cacheGet(env, "refresh");
-  const first = !last || !last.v.done;
-  const report = {};
-  // one company at a time keeps PubMed's three-a-second limit
-  for (const c of CFG.companies) {
-    const r = report[c.symbol] = {};
-    for (const [k, f] of [["trials", trialsFor], ["papers", papersFor], ["news", newsFor]]) {
-      try { r[k] = await f(env, c, first); } catch (e) { r[k] = "error: " + e.message; }
-    }
-  }
-  const ok = Object.values(report).some(r => Object.values(r).some(v => typeof v === "number"));
-  await cachePut(env, "refresh", { done: ok || !first, report });
-  return report;
+// The work is split into small jobs (one source for one company), because the free plan stops a
+// Worker after a few milliseconds of processing. The cron runs a couple of the stalest jobs every
+// 15 minutes, so each is checked several times a day; "Check now" on the page runs them one by one.
+const SOURCES = { trials: trialsFor, papers: papersFor, news: newsFor };
+const JOBS = CFG.companies.flatMap(c => Object.keys(SOURCES).map(k => `${c.symbol}:${k}`));
+async function jobsTable(env) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS inv_jobs (job TEXT PRIMARY KEY, at INTEGER, ok_at INTEGER, result TEXT)").run(); }
+async function jobState(env) {
+  await jobsTable(env);
+  const rows = (await env.DB.prepare("SELECT * FROM inv_jobs").all()).results || [];
+  return new Map(rows.map(r => [r.job, r]));
+}
+export async function runJob(env, job) {
+  const [sym, kind] = job.split(":");
+  const c = CFG.companies.find(x => x.symbol === sym);
+  if (!c || !SOURCES[kind]) throw new Error("no such job");
+  await tables(env); await jobsTable(env);
+  const prev = await env.DB.prepare("SELECT ok_at FROM inv_jobs WHERE job = ?").bind(job).first();
+  const first = !prev || !prev.ok_at;          // the first good run goes back about a year
+  let result, ok = false;
+  try { result = String(await SOURCES[kind](env, c, first)); ok = true; }
+  catch (e) { result = "error: " + String(e.message || e).slice(0, 200); }
+  const now = Date.now();
+  await env.DB.prepare("INSERT OR REPLACE INTO inv_jobs (job, at, ok_at, result) VALUES (?, ?, ?, ?)").bind(job, now, ok ? now : (prev && prev.ok_at) || 0, result).run();
+  return { job, ok, result };
+}
+export async function cronTick(env) {
+  await tables(env); await seed(env);
+  const st = await jobState(env);
+  // never-run jobs first, then the oldest; a job is due again after six hours
+  const due = JOBS.map(j => [j, st.get(j)]).filter(([, r]) => !r || Date.now() - r.at > 6 * 3600000).sort((a, b) => (a[1] ? a[1].at : 0) - (b[1] ? b[1].at : 0));
+  for (const [j] of due.slice(0, 2)) await runJob(env, j);
 }
 
 /* ------------------------------------------------------------ routes */
@@ -241,9 +275,10 @@ export async function investApi(request, env, url, ctx) {
   const hasKey = !!String(env.TWELVE_DATA_KEY || "").trim();
   try {
     if (p === "status") {
-      const last = await cacheGet(env, "refresh");
+      const st = await jobState(env);
       const n = await env.DB.prepare("SELECT type, COUNT(*) AS n FROM inv_events GROUP BY type").all();
-      return json({ hasKey, lastRefresh: last ? last.at : 0, report: last ? last.v.report : null, counts: Object.fromEntries((n.results || []).map(r => [r.type, r.n])) });
+      const jobs = JOBS.map(j => { const r = st.get(j); return { job: j, at: r ? r.at : 0, okAt: r ? r.ok_at : 0, result: r ? r.result : "" }; });
+      return json({ hasKey, jobs, counts: Object.fromEntries((n.results || []).map(r => [r.type, r.n])) });
     }
     if (p === "quotes") {
       if (!hasKey) return json({ error: "nokey" }, 200);
@@ -251,25 +286,21 @@ export async function investApi(request, env, url, ctx) {
     }
     if (p === "series") {
       if (!hasKey) return json({ error: "nokey" }, 200);
-      const sym = (url.searchParams.get("s") || "").toUpperCase(), range = url.searchParams.get("r") || "1y";
-      if (!SYMBOLS.includes(sym) || !RANGES[range]) return json({ error: "bad request" }, 400);
-      return json(await series(env, sym, range));
+      const sym = (url.searchParams.get("s") || "").toUpperCase(), iv = url.searchParams.get("i") || "1day";
+      if (!SYMBOLS.includes(sym) || !INTERVALS[iv]) return json({ error: "bad request" }, 400);
+      return json(await series(env, sym, iv));
     }
     if (p === "events") {
-      const last = await cacheGet(env, "refresh");
-      if (!last) { await seed(env); await cachePut(env, "refresh", { running: true }); ctx.waitUntil(refreshUpdates(env).catch(() => {})); }
-      const sym = (url.searchParams.get("s") || "").toUpperCase();
-      const rows = sym && SYMBOLS.includes(sym)
-        ? await env.DB.prepare("SELECT * FROM inv_events WHERE symbol = ? ORDER BY date DESC LIMIT 400").bind(sym).all()
-        : await env.DB.prepare("SELECT * FROM inv_events ORDER BY date DESC, added DESC LIMIT 600").all();
-      return json({ events: rows.results || [], lastRefresh: last ? last.at : 0, refreshing: !last });
+      await seed(env);
+      const st = await jobState(env);
+      const rows = await env.DB.prepare("SELECT * FROM inv_events ORDER BY date DESC, added DESC LIMIT 3000").all();
+      const last = Math.max(0, ...[...st.values()].map(r => r.ok_at || 0));
+      return json({ events: rows.results || [], lastRefresh: last, jobs: JOBS, done: JOBS.filter(j => st.get(j) && st.get(j).ok_at).length });
     }
     if (p === "refresh" && request.method === "POST") {
-      const last = await cacheGet(env, "refresh");
-      if (last && Date.now() - last.at < REFRESH_GAP) return json({ ok: true, skipped: true, lastRefresh: last.at });
-      await cachePut(env, "refresh", { ...(last ? last.v : {}), running: true });   // stops a second tap starting another run
-      const report = await refreshUpdates(env);
-      return json({ ok: true, report, lastRefresh: Date.now() });
+      const job = url.searchParams.get("job") || "";
+      if (!JOBS.includes(job)) return json({ error: "bad request" }, 400);
+      return json(await runJob(env, job));
     }
     return json({ error: "not found" }, 404);
   } catch (e) {

@@ -1,4 +1,4 @@
-import { investApi, refreshUpdates } from "./invest.js";
+import { investApi, cronTick } from "./invest.js";
 /* PIN-gates the whole site: every request must carry a valid signed session cookie, set by
    entering the PIN at /pin, before it's allowed through to the static assets. Mirrors the book
    engine's PIN/session scheme (same HMAC-signed-expiry cookie, same D1 pin_attempts rate limit,
@@ -854,8 +854,8 @@ Rules:
 }
 
 export default {
-  // the daily watchlist check (trigger time in wrangler.toml)
-  async scheduled(event, env, ctx) { ctx.waitUntil(refreshUpdates(env)); },
+  // the watchlist's update checks (every 15 minutes, set in wrangler.toml)
+  async scheduled(event, env, ctx) { ctx.waitUntil(cronTick(env)); },
   async email(message, env, ctx) { await handleSyncEmail(message, env); ctx.waitUntil(scanDeadlines(env, 10)); },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);

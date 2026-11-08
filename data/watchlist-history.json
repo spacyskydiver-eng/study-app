@@ -1,0 +1,293 @@
+{
+ "_about": "A year of past events for the live watchlist, researched on 8 November 2026. The Worker adds these to the feed; new events after this are collected automatically.",
+ "events": [
+  {
+   "symbol": "FDMT",
+   "date": "2025-11-06",
+   "type": "key",
+   "title": "Long-term PRISM data back 4D-150 as durable wet AMD backbone therapy",
+   "detail": "Over 1.5 to 3.5 years of follow-up, supplemental injections fell 92-94% in recently diagnosed patients, and only 2 of 71 patients (2.8%) had mild, transient inflammation.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-announces-positive-long-term-data-phase-12-prism-clinical",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2025-11-06",
+   "type": "news",
+   "title": "4DMT prices $100M offering of stock and pre-funded warrants at $10.51",
+   "detail": "The raise sold about 8.4M shares plus 1.1M pre-funded warrants on the same day as the PRISM data, diluting existing holders.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-announces-pricing-100-million-offering-common-stock-and-pre",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2025-11-10",
+   "type": "key",
+   "title": "Q3 2025 results: $372M cash plus ~$93M raise and $85M Otsuka upfront",
+   "detail": "Runway is guided into H2 2028, with 4D-710 AEROW interim CF data promised by year-end 2025.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-reports-third-quarter-2025-financial-results-operational",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2025-11-17",
+   "type": "news",
+   "title": "Kristian Humer appointed Chief Financial Officer",
+   "detail": "Humer is a former Citi healthcare banker who was most recently CFO of Viridian and Foghorn Therapeutics.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-appoints-kristian-humer-chief-financial-officer",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2025-12-17",
+   "type": "key",
+   "title": "Positive interim 4D-710 AEROW data in CF; 2.5E14 vg Phase 2 dose chosen",
+   "detail": "In 16 people who were ineligible for or intolerant of CFTR modulators, ppFEV1, LCI and quality-of-life measures improved through one year, with no drug-related severe adverse events at the lower doses.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-announces-positive-interim-clinical-data-4d-710-aerow-phase",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-01-07",
+   "type": "news",
+   "title": "2026 guidance: $514M cash, runway into H2 2028, catalyst list",
+   "detail": "Guided milestones were 4FRONT-1 enrollment in Q1, DME Phase 3 start in Q3, SPECTRA 2-year data and a 4D-710 update in H2 2026, and 4D-175 parked pending funding.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-provides-company-update-and-anticipated-development",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-02-09",
+   "type": "trial",
+   "title": "4FRONT-1 Phase 3 (4D-150, wet AMD) completes enrollment",
+   "detail": "The trial over-enrolled to more than 500 patients, with 52-week topline data expected in H1 2027.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-completes-enrollment-4front-1-phase-3-clinical-trial-4d-150",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-03-18",
+   "type": "key",
+   "title": "FY2025 results: $514M cash, runway into H2 2028",
+   "detail": "The Phase 2 of 4D-710 is ongoing and fully funded by the CF Foundation, and the Otsuka deal added $85M upfront with up to $336M in milestones.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-reports-full-year-2025-financial-results-operational",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-05-07",
+   "type": "key",
+   "title": "Q1 2026 results: $458M cash, runway into H2 2028",
+   "detail": "4FRONT-1 randomized 523 patients, PRISM 2-year data were moved to Q3 2026, and the 4D-710 update is still guided for H2 2026.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-reports-first-quarter-2026-financial-results-operational",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-06-29",
+   "type": "news",
+   "title": "Up to $200M credit facility from Hercules Capital; $20M drawn",
+   "detail": "Beyond the initial $20M draw, the further tranches of $30M, $100M and $50M depend on company option, milestones or lender approval.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-secures-strategic-credit-facility-200-million-hercules",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-06-29",
+   "type": "trial",
+   "title": "4FRONT-2 global Phase 3 (4D-150, wet AMD) completes enrollment",
+   "detail": "The trial over-enrolled beyond its planned N>500, with 52-week topline data expected in H2 2027.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-completes-enrollment-4front-2-global-phase-3-clinical-trial",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-07-18",
+   "type": "key",
+   "title": "Positive 2-year PRISM Phase 2b data at ASRS in wet AMD",
+   "detail": "Treatment burden fell 78% overall (87% in recently diagnosed patients), vision was maintained, and no new inflammation cases appeared after about week 28.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-announces-positive-2-year-data-prism-phase-2b-clinical",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-08-13",
+   "type": "key",
+   "title": "Q2 2026 results: $430.6M cash, runway into at least H2 2028",
+   "detail": "The release moved 4FRONT-1 topline to Q2 2027 and guided SPECTRA DME 2-year data and a 4D-710 AEROW update for Q4 2026.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-reports-second-quarter-2026-financial-results-operational",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-09-28",
+   "type": "trial",
+   "title": "4D-150 enters Phase 3 in DME with 4SIGHT trial (N=514)",
+   "detail": "First patients are enrolled in the global non-inferiority trial against aflibercept 2 mg, with the primary endpoint on BCVA at week 52.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-advances-4d-150-phase-3-second-large-market-retina",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-10-21",
+   "type": "news",
+   "title": "4DMT Investor Day in NYC on 4D-150 clinical and commercial vision",
+   "detail": "The event had KOL panels with four retina specialists on 4D-150's profile and launch strategy, and it was announced on 5 October.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-host-investor-day-october-21-2026",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-11-03",
+   "type": "news",
+   "title": "4DMT to present at November and December investor conferences",
+   "detail": "Scheduled appearances include Guggenheim (10 Nov), Stifel (11 Nov), Jefferies London (16 Nov) and several in early December.",
+   "url": "https://ir.4dmoleculartherapeutics.com/news-releases/news-release-details/4dmt-participate-upcoming-investor-conferences-12",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-11-10",
+   "type": "catalyst",
+   "title": "Guggenheim Healthcare Innovation Conference presentation",
+   "detail": "Scheduled for 4:30 p.m. EST, while the 4D-710 and SPECTRA updates guided for Q4 2026 are still outstanding.",
+   "url": "https://ir.4dmoleculartherapeutics.com/events",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "FDMT",
+   "date": "2026-12-10",
+   "type": "catalyst",
+   "title": "Barclays Virtual Ophthalmology Day",
+   "detail": "A scheduled retina-focused investor event, likely to centre on 4D-150.",
+   "url": "https://ir.4dmoleculartherapeutics.com/events",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2025-11-05",
+   "type": "key",
+   "title": "Q3 2025 results: $325.0M cash, runway into 2028",
+   "detail": "Cash was up from $168.0M at the end of 2024, and topline data from both the SION-719 Phase 2a and the SION-451 dual-combination Phase 1 were guided for mid-2026.",
+   "url": "https://www.sec.gov/Archives/edgar/data/2036042/000162828025049246/sion3q25earningsrelease_fi.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-01-05",
+   "type": "news",
+   "title": "Sionna to present at 44th J.P. Morgan Healthcare Conference",
+   "detail": "Sionna announced a JPM presentation on 13 January 2026, ahead of its mid-2026 CF data readouts.",
+   "url": "https://www.biospace.com/press-releases/sionna-therapeutics-to-present-at-the-44th-annual-j-p-morgan-healthcare-conference",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-03-02",
+   "type": "key",
+   "title": "Q4/FY2025 results: $310.3M cash, runway into 2028",
+   "detail": "FY2025 net loss was $75.3M, and both topline readouts (SION-719 Phase 2a and SION-451 dual combination) were still guided for mid-2026.",
+   "url": "https://www.sec.gov/Archives/edgar/data/2036042/000162828026012993/sionfy4q25earningsrelease_.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-04-27",
+   "type": "trial",
+   "title": "PreciSION CF Phase 2a (SION-719 add-on) completes enrollment",
+   "detail": "Enrollment finished in the SION-719 add-on-to-Trikafta proof-of-concept trial, with topline data expected in summer 2026.",
+   "url": "https://investors.sionnatx.com/news-releases/news-release-details/sionna-therapeutics-completes-enrollment-precision-cf-phase-2a",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-05-12",
+   "type": "key",
+   "title": "Q1 2026 results: $289.9M cash, runway into 2028",
+   "detail": "Q1 net loss was $26.8M (vs $16.5M a year earlier), both readouts were guided for summer 2026, and the shares fell about 10% on the day.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0002036042/000162828026033870/sion1q26earningsrelease_fi.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-08-06",
+   "type": "key",
+   "title": "Q2 2026 results: $268.3M cash, runway into 2028",
+   "detail": "Q2 net loss was $29.9M, with both topline readouts still guided for summer 2026, four days before the data came out.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0002036042/000162828026053832/sion2q26earningsrelease_fi.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-08-10",
+   "type": "key",
+   "title": "SION-719 Phase 2a misses sweat chloride endpoint; shares fall ~90%",
+   "detail": "The placebo-adjusted sweat chloride change was only -1.0 mmol/L (p=0.7) in 15 F508del-homozygous adults, so SION-719 will not advance as an add-on to standard of care.",
+   "url": "https://investors.sionnatx.com/news-releases/news-release-details/sionna-therapeutics-reports-topline-data-two-development",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-08-10",
+   "type": "trial",
+   "title": "Phase 1 dual-combination trial meets safety/PK goals; SION-451 + SION-2222 preferred",
+   "detail": "In 120 healthy volunteers the trial met its safety, tolerability and exposure objectives, and SION-451 + SION-2222 was chosen as the lead combination.",
+   "url": "https://investors.sionnatx.com/news-releases/news-release-details/sionna-therapeutics-reports-topline-data-two-development",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-09-14",
+   "type": "news",
+   "title": "Sionna cuts ~46% of workforce; runway extended into H2 2029",
+   "detail": "The restructuring is expected to cost about $6.4M in charges and stretches cash of roughly $268M into the second half of 2029.",
+   "url": "https://investors.sionnatx.com/news-releases/news-release-details/sionna-therapeutics-announces-plans-advance-sion-451-sion-2222",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-09-14",
+   "type": "trial",
+   "title": "SION-451 + SION-2222 to enter AscenSION CF Phase 2a in Q1 2027",
+   "detail": "The open-label, 28-day trial will switch F508del-homozygous adults off Trikafta, and a post hoc PreciSION CF analysis showed up to -8.6 mmol/L once PK outliers were excluded.",
+   "url": "https://investors.sionnatx.com/news-releases/news-release-details/sionna-therapeutics-announces-plans-advance-sion-451-sion-2222",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-10-08",
+   "type": "news",
+   "title": "NACFC 2026 oral talk: post hoc SION-719 data and NBD1 preclinical data",
+   "detail": "The presentation reported a -8.6 mmol/L sweat chloride reduction after excluding three likely non-adherent participants and a possible interaction with Trikafta's ivacaftor.",
+   "url": "https://investors.sionnatx.com/news-releases/news-release-details/sionna-therapeutics-present-data-2026-north-american-cystic",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-11-02",
+   "type": "news",
+   "title": "Sionna to present at Guggenheim and Stifel healthcare conferences",
+   "detail": "Sionna announced fireside chats on 9 November (Guggenheim) and 10 November 2026 (Stifel), its first major investor appearances since the restructuring.",
+   "url": "https://www.stocktitan.net/news/SION/sionna-therapeutics-to-participate-in-upcoming-november-2026-p6li05rnznll.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-11-09",
+   "type": "catalyst",
+   "title": "Guggenheim Healthcare Innovation Conference fireside chat",
+   "detail": "Scheduled for 10:30 a.m. ET, it is a chance for management to update the AscenSION CF plans and cash outlook.",
+   "url": "https://www.stocktitan.net/news/SION/sionna-therapeutics-to-participate-in-upcoming-november-2026-p6li05rnznll.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "SION",
+   "date": "2026-11-10",
+   "type": "catalyst",
+   "title": "Stifel 2026 Healthcare Conference fireside chat",
+   "detail": "Scheduled for 8:40 a.m. ET, with a webcast on Sionna's investor site.",
+   "url": "https://www.stocktitan.net/news/SION/sionna-therapeutics-to-participate-in-upcoming-november-2026-p6li05rnznll.html",
+   "source": "Researched 8 Nov 2026"
+  }
+ ]
+}
