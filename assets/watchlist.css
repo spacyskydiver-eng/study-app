@@ -175,3 +175,60 @@
 .wl-jfields .wl-x { position: absolute; right: 0; top: -26px; }
 @container (max-width: 760px) { .wl-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .wl-jfields { grid-template-columns: 1fr; } .wl-jadd { grid-template-columns: 1fr 1fr 1fr; } .wl-jadd input[name=thesis] { grid-column: 1 / -1; } .wl-jadd button { grid-column: 1 / -1; } }
 @container (max-width: 520px) { .wl-pos { grid-template-columns: minmax(0, 1fr) auto; } .wl-pos-num { grid-column: 1; grid-row: 2; flex-direction: row; gap: 8px; } .wl-pos-val { grid-row: 1 / 3; grid-column: 2; } }
+
+/* explanations */
+.wl-ex { display: none; font-size: .8em; line-height: 1.55; color: var(--text-muted); margin: 4px 0 10px; padding: 8px 12px; border-left: 2px solid rgba(96,165,250,.5); background: rgba(96,165,250,.06); border-radius: 0 8px 8px 0; }
+.wl.is-explain .wl-ex { display: block; }
+.wl-headbtns { display: flex; gap: 6px; flex-wrap: wrap; }
+.wl-btn.is-on { border-color: rgba(96,165,250,.6); color: #60A5FA; }
+
+/* pipeline and decision check */
+.wl-pipehead { display: flex; align-items: baseline; justify-content: space-between; }
+.wl-check { font-size: .8em; color: var(--text-muted); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.wl-phaselegend { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; font-size: .62em; color: var(--text-faint); margin: 2px 0 6px; margin-left: calc(38% + 14px); max-width: 260px; }
+.wl-phaselegend span { writing-mode: vertical-rl; transform: rotate(180deg); height: 64px; white-space: nowrap; overflow: hidden; }
+.wl-pipe { display: flex; flex-direction: column; }
+.wl-prog { display: grid; grid-template-columns: 38% 260px minmax(0, 1fr); gap: 4px 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--background-modifier-border); font-size: .84em; }
+.wl-prog:last-child { border-bottom: 0; }
+.wl-prog.is-stopped { opacity: .55; }
+.wl-prog-name { min-width: 0; }
+.wl-prog-name b { margin-right: 6px; }
+.wl-prog-name > span:last-child { display: block; color: var(--text-muted); font-size: .92em; }
+.wl-cf { font-size: .68em; font-weight: 700; padding: 1px 6px; border-radius: 99px; background: rgba(45,212,191,.15); color: #2DD4BF; margin-right: 4px; letter-spacing: .04em; }
+.wl-partner { background: rgba(96,165,250,.15); color: #60A5FA; } .wl-stop { background: rgba(244,63,94,.15); color: #F43F5E; }
+.wl-prog-phase { display: flex; flex-direction: column; gap: 3px; }
+.wl-prog-phase small { color: var(--text-faint); font-size: .82em; }
+.wl-track { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; }
+.wl-track i { height: 8px; border-radius: 2px; background: var(--background-modifier-border); }
+.wl-track i.on { background: var(--co, #2DD4BF); }
+.wl-track.is-stopped i.on { background: var(--text-faint); }
+.wl-prog-next { color: var(--text-muted); font-size: .92em; display: flex; flex-direction: column; gap: 2px; }
+.wl-prog-next b { color: var(--text-normal); font-weight: 600; }
+.wl-verdict { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 12px; margin: 4px 0 10px; border: 1px solid; }
+.wl-verdict > b { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 1.1em; }
+.wl-verdict strong { display: block; } .wl-verdict span { font-size: .82em; color: var(--text-muted); }
+.wl-verdict.is-ok { border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.07); } .wl-verdict.is-ok > b { background: rgba(16,185,129,.2); color: #10B981; }
+.wl-verdict.is-wait { border-color: rgba(245,158,11,.45); background: rgba(245,158,11,.07); } .wl-verdict.is-wait > b { background: rgba(245,158,11,.2); color: #F59E0B; }
+.wl-verdict.is-block { border-color: rgba(244,63,94,.45); background: rgba(244,63,94,.07); } .wl-verdict.is-block > b { background: rgba(244,63,94,.2); color: #F43F5E; }
+.wl-rules { display: flex; flex-direction: column; gap: 4px; }
+.wl-rule summary { display: grid; grid-template-columns: 22px 130px minmax(0, 1fr); gap: 8px; align-items: baseline; cursor: pointer; font-size: .84em; padding: 6px 0; list-style: none; }
+.wl-rule summary::-webkit-details-marker { display: none; }
+.wl-rule summary i { font-style: normal; font-weight: 700; text-align: center; border-radius: 50%; width: 20px; height: 20px; line-height: 20px; font-size: .9em; }
+.wl-rule.is-ok i { color: #10B981; background: rgba(16,185,129,.15); } .wl-rule.is-wait i { color: #F59E0B; background: rgba(245,158,11,.15); }
+.wl-rule.is-block i { color: #F43F5E; background: rgba(244,63,94,.15); } .wl-rule.is-info i { color: #60A5FA; background: rgba(96,165,250,.15); }
+.wl-rule summary span { color: var(--text-muted); }
+.wl-rule p { margin: 0 0 8px 30px; font-size: .8em; color: var(--text-muted); line-height: 1.5; }
+.wl-size { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 14px; margin: 12px 0 6px; padding: 12px 14px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); }
+.wl-size > div span { display: block; font-size: .78em; color: var(--text-faint); }
+.wl-size > div b { font-size: 1.6em; }
+.wl-size > div small { display: block; font-size: .76em; color: #F43F5E; }
+.wl-size ol { margin: 0; padding-left: 18px; font-size: .78em; color: var(--text-muted); line-height: 1.6; }
+.wl-change { margin: 0; padding-left: 18px; font-size: .84em; color: var(--text-muted); }
+.wl-rulesedit, .wl-src { margin-top: 12px; font-size: .86em; }
+.wl-rulesedit summary, .wl-src summary { cursor: pointer; font-weight: 600; }
+.wl-rulegrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 10px 0; }
+.wl-rulegrid label > span { display: block; font-size: .86em; margin-bottom: 3px; }
+.wl-rulegrid input[type=number], .wl-rulegrid input[type=text] { width: 100%; box-sizing: border-box; font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); }
+.wl-rulegrid small { display: block; font-size: .78em; color: var(--text-faint); margin-top: 3px; line-height: 1.4; }
+.wl-src a { display: block; font-size: .85em; margin: 3px 0; overflow-wrap: anywhere; }
+@container (max-width: 760px) { .wl-prog { grid-template-columns: minmax(0, 1fr) 150px; } .wl-prog-next { grid-column: 1 / -1; } .wl-phaselegend { display: none; } .wl-size { grid-template-columns: 1fr; } .wl-rulegrid { grid-template-columns: 1fr; } .wl-rule summary { grid-template-columns: 22px minmax(0, 1fr); } .wl-rule summary span { grid-column: 2; } }

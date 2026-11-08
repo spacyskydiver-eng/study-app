@@ -26,7 +26,7 @@ let CFG = null;
 const S = {
   sym: store.get('wl:sym', 'VRTX'), iv: store.get('wl:iv', '1day'), zoom: store.get('wl:zoom', '1y'),
   style: store.get('wl:style', 'candles'), ma: store.get('wl:ma', true), show: store.get('wl:show', { key: true, trial: true, paper: true, news: true }),
-  fSym: 'all', fType: 'all', shown: 40, sel: null,
+  fSym: 'all', fType: 'all', shown: 40, sel: null, explain: store.get('wl:explain', true),
 };
 let tz = { status: null, account: null, accErr: null, orders: [], journal: [], mine: [] };   // Trading 212
 let quotes = null, quoteErr = null, events = [], bars = null, barsErr = null, jobs = null, checking = null;
@@ -59,23 +59,27 @@ function lib() {
 
 /* ------------------------------------------------------------ page */
 function shell(view) {
-  view.innerHTML = `<div class="wl">
+  view.innerHTML = `<div class="wl${S.explain ? ' is-explain' : ''}">
     <header class="wl-head">
       <div><h1>Live watchlist</h1><p class="wl-sub">Cystic fibrosis companies. Prices from Twelve Data; trials, papers and news collected by the site every few hours.${B.exists(GUIDE) ? ` <a class="internal-link" data-note="${esc(GUIDE)}" href="${B.hashFor(GUIDE)}">How to read all of this</a>` : ''}</p></div>
-      <button class="wl-btn" data-refresh title="Check every source now">${icon('refresh')}<span>Check now</span></button>
+      <div class="wl-headbtns"><button class="wl-btn${S.explain ? ' is-on' : ''}" data-explain title="Show or hide the explanations">${icon('book-open')}<span>Explanations</span></button>
+      <button class="wl-btn" data-refresh title="Check every source now">${icon('refresh')}<span>Check now</span></button></div>
     </header>
     <div class="wl-notice" data-notice hidden></div>
+    <p class="wl-ex">Each card is one company. The big number is the latest share price in US dollars, then today's change since yesterday's close (green up, red down). "Live" means the US market is open now (14:30 to 21:00 UK time). The bar shows the 52-week range: lowest price of the past year on the left, highest on the right, and the dot is today. Stage is the furthest point the company's most advanced CF drug has reached. Next is the next milestone the company has given. Runway is how long its cash lasts at the current spending rate. Risk is a rough label from the company notes: how much of the company rides on unproven drugs. Tap a card to chart it and see its pipeline and decision check.</p>
     <div class="wl-cards" data-cards></div>
     <section class="wl-panel wl-chartpanel">
       <div class="wl-chart-top" data-charttop></div>
       <div class="wl-tools" data-tools></div>
       <div class="wl-chartwrap"><div class="wl-ohlc" data-ohlc></div><div class="wl-chart" data-chart></div></div>
       <div class="wl-hint wl-dim">Drag to move, scroll or pinch to zoom, double-click to reset. Tap a marker to see what happened that day.</div>
+      <p class="wl-ex">Each candle is one period (one day on 1D): the thick body runs from the opening to the closing price, the thin wicks reach the highest and lowest prices. Green means it closed higher than it opened, red lower. The bars along the bottom are volume, the number of shares traded. The top line reads out open (O), high (H), low (L), close (C), the change and volume for whichever candle you point at. MA draws the 50-day (blue) and 200-day (purple) averages, which show the medium and long-term trend. The 5m/1H/1D/1W buttons set how long each candle covers; 1M to All set how much history is on screen. Markers: K key event, T trial, P paper, N news, B and S your own buys and sells. The full guide is under Reading Charts and Trading.</p>
       <div class="wl-pin" data-pinbox></div>
     </section>
+    <section class="wl-panel wl-decide" data-decide></section>
     <section class="wl-panel wl-t212" data-t212></section>
-    <section class="wl-panel"><h2>Coming up</h2><div data-upcoming></div></section>
-    <section class="wl-panel"><h2>Updates</h2>
+    <section class="wl-panel"><h2>Coming up</h2><p class="wl-ex">Dated events still ahead: FDA decision dates, investor conferences and the dates trials are expected to finish collecting their main results (primary completion). Below them, what each company itself says is next. These are the moments a price is most likely to move sharply.</p><div data-upcoming></div></section>
+    <section class="wl-panel"><h2>Updates</h2><p class="wl-ex">Everything that has happened, newest first: key events (results, FDA decisions, trial readouts, researched by hand), trial registry changes from ClinicalTrials.gov, new papers from PubMed and news stories. Filter by company or type; tap a ticker to see that day on the chart. New items are collected automatically every few hours.</p>
       <div class="wl-chips" data-fsym></div><div class="wl-chips" data-ftype></div>
       <div class="wl-feed" data-feed></div>
       <details class="wl-sources" data-sources></details>
@@ -106,7 +110,7 @@ function cards(view) {
       <div class="wl-card-top"><b class="wl-tick">${c.symbol}</b><span class="wl-name">${esc(c.short)}</span><span class="wl-risk wl-risk-${c.risk.replace(' ', '-')}">${esc(c.risk)} risk</span></div>
       <div class="wl-price">${x ? money(x.price, x.currency) : '<span class="wl-dim">–</span>'}<span class="wl-chg ${x ? dir(x.pct) : ''}">${x ? signed(x.pct) : ''}</span>${x && x.marketOpen ? '<span class="wl-live">live</span>' : ''}</div>
       ${bar}
-      <dl><dt>Programme</dt><dd>${esc(c.programme)}</dd><dt>Next</dt><dd>${esc(c.next)}</dd><dt>Runway</dt><dd>${esc(c.runway)}</dd></dl>
+      <dl><dt>Stage</dt><dd>${esc(c.stage || '')}</dd><dt>Programme</dt><dd>${esc(c.programme)}</dd><dt>Next</dt><dd>${esc(c.next)}</dd><dt>Runway</dt><dd>${esc(c.runway)}</dd></dl>
     </button>`;
   }).join('');
 }
@@ -340,8 +344,10 @@ function tzPanel(view) {
     </div>`; }).join('');
   el.innerHTML = `<h2>My Trading 212 ${tag}${tz.account.stale ? '<span class="wl-dim wl-asof">saved copy, Trading 212 didn\'t answer</span>' : ''}</h2>
     <div class="wl-stats">${stat('Account value', gbp(a.totalValue, cur))}${stat('Cash free', gbp(a.cash, cur))}${stat('Invested', gbp(a.invested, cur))}${stat('Open profit/loss', (a.unrealised > 0 ? '+' : '') + gbp(a.unrealised, cur) + (ret != null ? ` <small>${signed(ret)}</small>` : ''), pnlCls(a.unrealised))}${stat('Banked profit/loss', (a.realised > 0 ? '+' : '') + gbp(a.realised, cur), pnlCls(a.realised))}</div>
+    <p class="wl-ex">Account value is cash plus everything invested, at today's prices. Cash free is money not yet invested. Invested is the current value of your shares. Open profit/loss is the gain or loss on shares you still hold (it only becomes real when you sell). Banked profit/loss is what you've actually made or lost on shares already sold. In holdings, "48.2 @ $4.05" means 48.2 shares bought at an average of $4.05 each; the £ figure is their value now, and the line under it the profit or loss in pounds and percent, after currency changes.</p>
     ${pos ? `<h3>Holdings</h3><div class="wl-positions">${pos}</div>` : '<p class="wl-dim">No open positions.</p>'}
     <h3>Trading journal</h3>
+    <p class="wl-ex">Every order you place appears here by itself. Fill in why you did it and what would make you sell, before or right after you trade; come back 2 to 4 weeks later and write the lesson. Use "Add note" for shares you looked at and decided to skip: those teach as much as trades.</p>
     <form class="wl-jadd" data-jadd>
       <input type="date" name="date" value="${today()}" aria-label="Date">
       <input name="ticker" placeholder="Ticker" maxlength="10" aria-label="Ticker" list="wl-syms">
@@ -397,11 +403,136 @@ async function loadT212(view) {
   if (chart && mainSeries) mainSeries.setMarkers(markerGroups());
 }
 
+/* ------------------------------------------------------------ pipeline and decision check */
+const PHASES = ['Preclinical', 'Phase 1', 'Phase 1/2', 'Phase 2', 'Phase 2/3', 'Phase 3', 'Filed', 'Approved'];
+const PHASE_EX = { 'Preclinical': 'tested in cells and animals only', 'Phase 1': 'first human tests: safety and dose', 'Phase 1/2': 'safety plus a first look at whether it works', 'Phase 2': 'does it work in patients (often a biomarker)', 'Phase 2/3': 'combined: activity then proof of benefit', 'Phase 3': 'large trial proving benefit; supports approval', 'Filed': 'submitted to a regulator for approval', 'Approved': 'on sale' };
+const DEFAULT_RULES = { accountGBP: 1000, useT212: false, satellitePct: 20, perCompanyPct: 20, maxPositions: 5, binaryDays: 30, binaryCut: 50, minRunwayMonths: 18, runupPct: 30, worstLossPct: 90, coreTickers: 'VWRP,VWRL,VUAG,VUSA,SWDA,VHVG' };
+let PIPE = null, metricsData = null, rules = Object.assign({}, DEFAULT_RULES), cfOnly = store.get('wl:cfonly', false);
+const RULE_FIELDS = [
+  ['accountGBP', 'Account size (£), used when Trading 212 isn\'t linked', 'The total money you invest or practise with.'],
+  ['satellitePct', 'Satellite share of the account (%)', 'The part for individual biotech shares. The rest is the core index fund. The guides use 20%.'],
+  ['perCompanyPct', 'Most in one company (% of satellite)', 'Caps how much one company can hurt you. 20% of a £200 satellite is £40.'],
+  ['maxPositions', 'Most companies held at once', 'Spreads the risk across several bets; core index funds don\'t count.'],
+  ['binaryDays', 'Binary event warning window (days)', 'How close to a big readout or FDA decision counts as "right before" it.'],
+  ['binaryCut', 'Cut size before a binary event by (%)', 'Before a coin-flip event, a smaller position limits the overnight loss if it fails.'],
+  ['minRunwayMonths', 'Minimum cash runway (months)', 'Below this, the company will probably sell new shares soon, usually at a discount.'],
+  ['runupPct', 'Flag a 3-month rise above (%)', 'A big run-up means high hopes are already in the price ("sell the news" risk).'],
+  ['worstLossPct', 'Assume a failed readout costs (%)', 'Used for the worst-case figure. Single-drug biotechs often fall 70 to 90% on a failure.'],
+  ['coreTickers', 'Core fund tickers (not counted as positions)', 'Your index funds, separated by commas.'],
+];
+const monthsUntil = ym => { if (!ym) return null; const [y, m] = ym.split('-').map(Number); const n = new Date(); return (y - n.getUTCFullYear()) * 12 + (m - 1 - n.getUTCMonth()); };
+const daysUntil = d => Math.round((Date.parse(d) - Date.parse(today())) / 864e5);
+const usdShort = v => v == null ? '–' : v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : '$' + (v / 1e6).toFixed(0) + 'M';
+
+function evaluate(sym) {
+  const c = co(sym), P = PIPE && PIPE.companies[sym] || {}, f = P.finance || {}, r = rules;
+  const x = quotes && quotes.quotes ? quotes.quotes[sym] : null, m = metricsData && metricsData[sym];
+  const linked = r.useT212 && tz.account && tz.account.totalValue != null;
+  const account = linked ? tz.account.totalValue : +r.accountGBP;
+  const sat = account * r.satellitePct / 100, cap = sat * r.perCompanyPct / 100;
+  const pos = linked ? tz.account.positions : [];
+  const held = (pos.find(p => p.symbol === sym) || {}).value || 0;
+  const core = String(r.coreTickers || '').toUpperCase().split(/[\s,]+/).filter(Boolean);
+  const others = pos.filter(p => p.symbol !== sym && !core.includes(p.symbol)).length;
+  const rows = [], change = [];
+  let factor = 1;
+  const add = (state, title, result, why, link) => rows.push({ state, title, result, why, link });
+  // 1 binary event
+  const next = (P.binary_events || []).filter(e => e.window_start && daysUntil(e.window_start) >= -45).sort((a, b) => (a.window_start < b.window_start ? -1 : 1))[0];
+  if (next) {
+    const d = daysUntil(next.window_start), exact = /^\d{4}-\d{2}-\d{2}$/.test(next.window_text || '') || /\d{1,2} [A-Z][a-z]+ \d{4}/.test(next.window_text || '');
+    const near = d <= r.binaryDays;
+    if (near) { factor *= 1 - r.binaryCut / 100; change.push(`After ${next.label} (${next.window_text}) the binary-event cut no longer applies.`); }
+    add(near ? 'wait' : 'ok', 'Binary event', `${next.label}: ${next.window_text}${d > 0 ? ` (${exact ? '' : 'earliest '}${d} days away)` : d === 0 ? ' (today)' : ' (may happen any day)'}. ${near ? `Inside your ${r.binaryDays}-day window, so the size is cut by ${r.binaryCut}%.` : `Outside your ${r.binaryDays}-day window.`}`,
+      'A readout or FDA decision can move a small biotech 30 to 90% overnight, and stop-losses don\'t protect you because the price gaps. Your rule keeps positions small right before one.', 'Binary event');
+  } else add('info', 'Binary event', 'No dated readout or FDA decision found in the research.', 'Without a scheduled coin-flip event, the price moves more on results, news and the market.', 'Binary event');
+  // 2 runway
+  const months = f.runway_until ? monthsUntil(f.runway_until) : null;
+  if (f.runway_guidance && /profit/i.test(f.runway_guidance)) add('ok', 'Cash runway', 'Profitable: it funds itself from sales.', 'A profitable company doesn\'t need to sell new shares to keep going.', 'Cash runway');
+  else if (months != null) {
+    const short = months < r.minRunwayMonths;
+    if (short) change.push('A share sale or partnership that extends the runway would clear the runway rule.');
+    add(short ? 'wait' : 'ok', 'Cash runway', `Company says: "${f.runway_guidance}" (about ${months} months). ${short ? `Under your ${r.minRunwayMonths}-month minimum.` : `Above your ${r.minRunwayMonths}-month minimum.`}`,
+      'When cash runs low, biotechs sell new shares, usually at a discount, which makes each existing share worth less (dilution). Buying just before that means buying high.', 'Cash runway');
+  } else add('info', 'Cash runway', 'No runway figure in the research.', 'Runway is how long the cash lasts at the current spending rate.', 'Cash runway');
+  // 3 run-up
+  if (m && m.ch3m != null) {
+    const hot = m.ch3m > r.runupPct;
+    if (hot) change.push(`A 3-month change back under ${r.runupPct}% clears the run-up flag.`);
+    add(hot ? 'wait' : 'ok', 'Run-up', `${signed(m.ch3m)} over 3 months (1 month ${signed(m.ch1m)}, 1 year ${signed(m.ch1y)}). ${hot ? `Above your ${r.runupPct}% flag.` : `Below your ${r.runupPct}% flag.`}`,
+      'A share that has already risen a lot has good news priced in: it needs better-than-hoped news to keep rising, and often falls on merely good news.', 'Run-up');
+  } else add('info', 'Run-up', 'Price history not loaded yet.', 'Shows how much hope is already in the price.', 'Run-up');
+  // 4 valuation vs cash
+  if (x && f.shares_outstanding && f.cash_and_investments_usd) {
+    const mc = x.price * f.shares_outstanding, ev = mc - f.cash_and_investments_usd;
+    add('info', 'Value vs cash', `Market cap about ${usdShort(mc)} (price ${money(x.price)} × ${(f.shares_outstanding / 1e6).toFixed(1)}M shares); cash ${usdShort(f.cash_and_investments_usd)} at ${f.as_of}. ${ev < 0 ? `The market values the company at ${usdShort(-ev)} less than its cash.` : `So the market values the drugs and pipeline at about ${usdShort(ev)} (enterprise value).`}`,
+      ev < 0 ? 'Worth less than its cash means the market expects much of that cash to be spent on programmes that fail. That can be a bargain or a trap.' : 'Enterprise value (market cap minus cash) is what the market is paying for the science itself. Compare it with what the pipeline could earn.', 'Enterprise value');
+  }
+  // 5 trend
+  if (m && m.ma200 && x) add('info', 'Long-term trend', `Price ${money(x.price)} is ${x.price >= m.ma200 ? 'above' : 'below'} its 200-day average (${money(m.ma200)}).`, 'Above a rising 200-day average is a long-term uptrend; below a falling one, a downtrend. It lags, so it says little straight after big news.', 'Moving average');
+  // 6 diversification and cap
+  if (linked && others >= r.maxPositions && !held) add('block', 'Number of positions', `You hold ${others} other satellite companies; your limit is ${r.maxPositions}.`, 'More positions than you can follow properly means decisions get lazy. Sell one before adding another.', 'Position sizing');
+  else if (linked) add('ok', 'Number of positions', `${others} other satellite ${others === 1 ? 'company' : 'companies'} held; your limit is ${r.maxPositions}.`, 'Several smaller bets beat one big one in biotech, because most single bets lose.', 'Position sizing');
+  if (held >= cap && cap > 0) add('block', 'Company limit', `You already hold ${gbp(held)} here, at or above your ${gbp(cap)} limit for one company.`, 'Adding more to one company raises how much a single bad readout can take from you.', 'Position sizing');
+  const room = Math.max(0, cap - held), size = Math.floor(room * factor);
+  const state = rows.some(r => r.state === 'block') ? 'block' : rows.some(r => r.state === 'wait') ? 'wait' : 'ok';
+  const math = [`${linked ? 'Account value from Trading 212' : 'Account size you set'}: ${gbp(account)}`, `Satellite (${r.satellitePct}%): ${gbp(sat)}`, `One-company limit (${r.perCompanyPct}% of satellite): ${gbp(cap)}`]
+    .concat(held ? [`Already held: ${gbp(held)}, leaving ${gbp(room)}`] : [])
+    .concat(factor < 1 ? [`Binary event cut (−${r.binaryCut}%): ${gbp(room)} × ${factor.toFixed(2)} = ${gbp(size)}`] : []);
+  return { c, P, rows, state, size, worst: size * r.worstLossPct / 100, math, change, linked };
+}
+
+const STATE = { ok: ['✓', 'Your rules: OK to consider', 'Every rule you set is met. That only means the rules are met; it isn\'t a prediction that the share will rise.'],
+  wait: ['!', 'Your rules say: wait or go smaller', 'At least one rule flags a risk right now. The lines below say which and what would change it.'],
+  block: ['✕', 'Your rules say: not allowed', 'A hard limit (company or position count) is already reached.'] };
+function decidePanel(view) {
+  const el = q(view, '[data-decide]'); if (!el) return;
+  if (!PIPE) { el.innerHTML = '<h2>Pipeline and decision check</h2><div class="wl-empty"><span class="books-spinner"></span></div>'; return; }
+  const e = evaluate(S.sym), st = STATE[e.state], c = e.c, P = e.P;
+  el.style.setProperty('--co', c.color);
+  const tl = t => B.exists('02 Key Terms/' + t) ? ` ${termLink(t)}` : '';
+  const pipe = (P.pipeline || []).filter(p => !cfOnly || p.cf);
+  const track = p => { const i = PHASES.indexOf(p.phase); return `<div class="wl-track${p.status === 'stopped' ? ' is-stopped' : ''}" title="${esc(p.phase || '')}: ${esc(PHASE_EX[p.phase] || '')}">${PHASES.map((_, j) => `<i class="${j <= i ? 'on' : ''}"></i>`).join('')}</div>`; };
+  el.innerHTML = `<h2>Pipeline and decision check <span class="wl-dim wl-asof">${esc(c.name)}${PIPE.asOf ? ' · researched ' + esc(fmtDate(PIPE.asOf)) : ''}</span></h2>
+    <p class="wl-ex">The pipeline is every drug the company is developing and how far each has got. The decision check runs your own rules (editable below) against live prices, the pipeline and your Trading 212 account. It shows what your rules allow and why; it doesn't predict the price.</p>
+    <div class="wl-pipehead"><h3>Pipeline</h3><label class="wl-check"><input type="checkbox" data-cfonly ${cfOnly ? 'checked' : ''}> CF only</label></div>
+    <div class="wl-phaselegend">${PHASES.map(p => `<span title="${esc(PHASE_EX[p])}">${p}</span>`).join('')}</div>
+    <p class="wl-ex">Each bar has 8 steps, from Preclinical (left) to Approved (right); filled steps show how far a drug has got. Only about 8% of drugs entering Phase 1 reach approval, so drugs further right are much more likely to make money. Greyed bars are stopped programmes.</p>
+    <div class="wl-pipe">${pipe.length ? pipe.map(p => `<div class="wl-prog${p.status === 'stopped' ? ' is-stopped' : ''}">
+      <div class="wl-prog-name"><b>${esc(p.drug || p.name || '')}</b>${p.cf ? '<span class="wl-cf">CF</span>' : ''}${p.status === 'partnered' ? '<span class="wl-cf wl-partner">partnered</span>' : ''}${p.status === 'stopped' ? '<span class="wl-cf wl-stop">stopped</span>' : ''}<span>${esc(p.disease || '')}${p.approach ? ' · ' + esc(p.approach) : ''}</span></div>
+      <div class="wl-prog-phase">${track(p)}<small>${esc(p.phase || '')}</small></div>
+      <div class="wl-prog-next">${p.next ? `<b>Next:</b> ${esc(p.next)}` : ''}${p.note ? `<span>${esc(p.note)}</span>` : ''}</div></div>`).join('') : '<p class="wl-dim">No pipeline researched for this company yet.</p>'}</div>
+    <h3>Decision check</h3>
+    <div class="wl-verdict is-${e.state}"><b>${st[0]}</b><div><strong>${st[1]}</strong><span>${st[2]}</span></div></div>
+    <div class="wl-rules">${e.rows.map(r => `<details class="wl-rule is-${r.state}"><summary><i>${{ ok: '✓', wait: '!', block: '✕', info: 'i' }[r.state]}</i><b>${r.title}</b><span>${esc(r.result)}</span></summary><p>${esc(r.why)}${r.link ? tl(r.link) : ''}</p></details>`).join('')}</div>
+    <div class="wl-size">
+      <div><span>Most your rules allow in ${esc(c.symbol)} now</span><b>${gbp(e.size)}</b><small>Worst realistic case on a failed readout: −${gbp(e.worst)} (${rules.worstLossPct}%)</small></div>
+      <ol>${e.math.map(l => `<li>${esc(l)}</li>`).join('')}</ol>
+    </div>
+    <p class="wl-ex">This is the ceiling from your rules, not a target: buying less, or nothing, is always allowed. If you do buy, write the reason and a sell rule in the journal first.</p>
+    ${e.change.length ? `<h3>What would change this</h3><ul class="wl-change">${e.change.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    <details class="wl-rulesedit"><summary>Your rules</summary>
+      <p class="wl-ex">These are the numbers the check uses. They start as the examples from the Event playbook and How money is actually made guides. Change them as you learn what suits you; they're saved on the site, so phone and laptop share them.</p>
+      <div class="wl-rulegrid">${RULE_FIELDS.map(([k, label, ex]) => `<label><span>${label}</span><input data-rule="${k}" ${k === 'coreTickers' ? 'type="text"' : 'type="number" min="0" step="any"'} value="${esc(rules[k])}"><small>${ex}</small></label>`).join('')}
+      <label class="wl-check"><input type="checkbox" data-rule="useT212" ${rules.useT212 ? 'checked' : ''}> Use the Trading 212 account value instead</label><small class="wl-dim">Leave this off while practising: the practice account's huge virtual balance would make every limit unrealistically big. Turn it on once the linked account holds your real amount.</small></div>
+      <button class="wl-btn" data-rulesreset>Back to the guide examples</button>
+    </details>
+    ${PIPE.companies[S.sym] && PIPE.companies[S.sym].sources ? `<details class="wl-src"><summary>Sources for this company</summary>${PIPE.companies[S.sym].sources.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, '').slice(0, 80))}</a>`).join('')}</details>` : ''}`;
+}
+async function loadDecide(view) {
+  const [pp, mm, rr] = await Promise.all([fetch('data/pipeline.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : { companies: {} }).catch(() => ({ companies: {} })), api('metrics').catch(() => null), api('rules').catch(() => null)]);
+  PIPE = pp; metricsData = mm && !mm.error ? mm : null;
+  if (rr && rr.rules) rules = Object.assign({}, DEFAULT_RULES, rr.rules);
+  decidePanel(view); cards(view);
+}
+let rulesTimer = null;
+function saveRules() { clearTimeout(rulesTimer); rulesTimer = setTimeout(() => api('rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rules) }).catch(() => {}), 600); }
+
 /* ------------------------------------------------------------ data */
 async function loadQuotes(view) {
   try { const r = await api('quotes'); if (r.error) quoteErr = r.error; else { quotes = r; quoteErr = null; } }
   catch (e) { if (e.auth) return; quoteErr = 'network'; }
-  notice(view); cards(view); chartTop(view);
+  notice(view); cards(view); chartTop(view); decidePanel(view);
 }
 async function loadBars(view) {
   const want = S.sym + S.iv;
@@ -456,9 +587,19 @@ function show(view) {
     loadQuotes(view); loadBars(view);
     loadEvents(view).then(() => alive && check(view, false));
     if (S.show.mine === undefined) S.show.mine = true;
-    loadT212(view);
+    loadT212(view).then(() => decidePanel(view));
+    loadDecide(view);
     timer = setInterval(() => { if (!document.hidden) loadQuotes(view); }, 120000);
     const save = () => { store.set('wl:sym', S.sym); store.set('wl:iv', S.iv); store.set('wl:zoom', S.zoom); store.set('wl:style', S.style); store.set('wl:ma', S.ma); store.set('wl:show', S.show); };
+    view.addEventListener('change', e => {
+      const t = e.target;
+      if (t.matches('[data-cfonly]')) { cfOnly = t.checked; store.set('wl:cfonly', cfOnly); decidePanel(view); return; }
+      if (t.matches('[data-rule]')) {
+        const k = t.dataset.rule;
+        rules[k] = t.type === 'checkbox' ? t.checked : t.type === 'number' ? (t.value === '' ? DEFAULT_RULES[k] : Math.max(0, +t.value)) : t.value;
+        saveRules(); const open = q(view, '.wl-rulesedit').open; decidePanel(view); if (open) q(view, '.wl-rulesedit').open = true;
+      }
+    });
     view.addEventListener('focusout', e => { const t = e.target; if (t.matches && t.matches('textarea[data-jid]')) saveJournal(view, t.dataset.jid); });
     view.addEventListener('submit', async e => {
       const f = e.target.closest('[data-jadd]'); if (!f) return;
@@ -472,7 +613,9 @@ function show(view) {
     view.onclick = async e => {
       const t = e.target;
       const card = t.closest('[data-sym]');
-      if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); chartTop(view); loadBars(view); return; }
+      if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); chartTop(view); decidePanel(view); loadBars(view); return; }
+      if (t.closest('[data-explain]')) { S.explain = !S.explain; store.set('wl:explain', S.explain); q(view, '.wl').classList.toggle('is-explain', S.explain); t.closest('[data-explain]').classList.toggle('is-on', S.explain); return; }
+      if (t.closest('[data-rulesreset]')) { rules = Object.assign({}, DEFAULT_RULES); saveRules(); decidePanel(view); return; }
       const iv = t.closest('[data-iv]'); if (iv) { S.iv = iv.dataset.iv; S.sel = null; save(); tools(view); loadBars(view); return; }
       const z = t.closest('[data-zoom]'); if (z) { S.zoom = z.dataset.zoom; save(); tools(view); applyZoom(); return; }
       const st = t.closest('[data-style]'); if (st) { S.style = st.dataset.style; save(); tools(view); drawChart(view, true); return; }
@@ -509,6 +652,6 @@ B.registerView('watchlist', { title: () => 'Live watchlist', icon: 'trending-up'
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261110'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261111'; document.head.appendChild(l);
 }
 })();

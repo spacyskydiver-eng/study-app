@@ -272,8 +272,33 @@ export async function runJob(env, job) {
   await env.DB.prepare("INSERT OR REPLACE INTO inv_jobs (job, at, ok_at, result) VALUES (?, ?, ?, ?)").bind(job, now, ok ? now : (prev && prev.ok_at) || 0, result).run();
   return { job, ok, result };
 }
+// price trend figures for the decision check, from the cached daily bars (no extra Twelve Data calls)
+async function metrics(env) {
+  const out = {};
+  for (const sym of SYMBOLS) {
+    const hit = await cacheGet(env, `bars:${sym}:1day`);
+    const bars = hit && hit.v.bars;
+    if (!bars || bars.length < 30) { out[sym] = null; continue; }
+    const close = bars[bars.length - 1][4];
+    const back = n => { const b = bars[Math.max(0, bars.length - 1 - n)]; return b ? 100 * (close - b[4]) / b[4] : null; };
+    const vols = bars.slice(-50).map(b => b[5]);
+    const ma = n => bars.length >= n ? bars.slice(-n).reduce((a, b) => a + b[4], 0) / n : null;
+    out[sym] = { close, date: bars[bars.length - 1][0], ch1m: back(21), ch3m: back(63), ch6m: back(126), ch1y: back(252), avgVol50: vols.reduce((a, b) => a + b, 0) / vols.length, ma50: ma(50), ma200: ma(200), at: hit.at };
+  }
+  return out;
+}
+// keep every company's daily bars fresh in the background, one company per tick (Twelve Data allows 8 calls a minute)
+async function warmBars(env) {
+  if (!String(env.TWELVE_DATA_KEY || "").trim()) return;
+  for (const sym of SYMBOLS) {
+    const hit = await cacheGet(env, `bars:${sym}:1day`);
+    if (!hit || Date.now() - hit.at > 12 * 3600000) { try { await series(env, sym, "1day"); } catch (e) { /* next tick */ } return; }
+  }
+}
+
 export async function cronTick(env) {
   await tables(env); await seed(env);
+  await warmBars(env);
   const st = await jobState(env);
   // never-run jobs first, then the oldest; a job is due again after six hours
   const due = JOBS.map(j => [j, st.get(j)]).filter(([, r]) => !r || Date.now() - r.at > 6 * 3600000).sort((a, b) => (a[1] ? a[1].at : 0) - (b[1] ? b[1].at : 0));
@@ -308,6 +333,25 @@ export async function investApi(request, env, url, ctx) {
       const rows = await env.DB.prepare("SELECT * FROM inv_events ORDER BY date DESC, added DESC LIMIT 3000").all();
       const last = Math.max(0, ...[...st.values()].map(r => r.ok_at || 0));
       return json({ events: rows.results || [], lastRefresh: last, jobs: JOBS, done: JOBS.filter(j => st.get(j) && st.get(j).ok_at).length });
+    }
+    if (p === "metrics") {
+      const m = await metrics(env);
+      // fill one missing company on the spot so the page isn't empty before the cron has run
+      const missing = SYMBOLS.find(s => !m[s]);
+      if (missing && hasKey) { try { await series(env, missing, "1day"); return json(await metrics(env)); } catch (e) { /* shown as unknown */ } }
+      return json(m);
+    }
+    if (p === "rules") {
+      if (request.method === "PUT") {
+        const b = await request.json().catch(() => null);
+        if (!b || typeof b !== "object") return json({ error: "bad request" }, 400);
+        const clean = {};
+        for (const [k, v] of Object.entries(b)) if (/^[a-zA-Z]{1,30}$/.test(k) && (typeof v === "number" || typeof v === "boolean" || (typeof v === "string" && v.length < 200))) clean[k] = v;
+        await cachePut(env, "rules", clean);
+        return json({ ok: true });
+      }
+      const r = await cacheGet(env, "rules");
+      return json({ rules: r ? r.v : null });
     }
     if (p === "refresh" && request.method === "POST") {
       const job = url.searchParams.get("job") || "";
