@@ -717,3 +717,12 @@ body.is-phone .pg-box { width: 26px; height: 26px; margin: 5px 1px; }
 @media print { .ink-bar, .ink-ruler { display: none; } }
 body .view-content > .ink-layer, body .view-content > .ink-bar, body .view-content > .ink-ruler { animation: none; }
 body.ui-nova .view-content > .ink-layer, body.ui-nova .view-content > .ink-bar, body.ui-nova .view-content > .ink-ruler { animation: none; }
+/* working space for handwriting */
+.exam-host.ink-on .exam-wrap { position: relative; padding-bottom: 45vh; }   /* always room to write after the last question */
+.exam-host.ink-space-side .exam-wrap > * { max-width: 56%; }
+.exam-host.ink-space-side .exam-wrap::before { content: ''; position: absolute; top: 0; bottom: 0; right: 62px; width: calc(44% - 90px); border-left: 1px dashed var(--background-modifier-border); pointer-events: none;
+  background-image: radial-gradient(circle, rgba(148,163,184,.28) 1px, transparent 1.4px); background-size: 24px 24px; }
+.exam-host.ink-space-below .exam-q { padding-bottom: 300px; background: linear-gradient(var(--background-modifier-border), var(--background-modifier-border)) left calc(100% - 290px) / 100% 1px no-repeat; }
+.exam-host.ink-space-below .exam-q .exam-img { max-height: 46vh; }
+.ink-space { flex-direction: column; gap: 1px; height: auto; padding: 4px 0; }
+.ink-space small { font-size: 9.5px; line-height: 1; color: var(--text-muted); }

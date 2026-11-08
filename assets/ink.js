@@ -9,7 +9,14 @@
 const NS = 'http://www.w3.org/2000/svg';
 const COLORS = { k: 'var(--text-normal)', r: '#ef4444', b: '#3b82f6', g: '#10b981', y: '#facc15' };
 const TOOLS = { pen: { w: 2.6, o: 1 }, hi: { w: 16, o: .32 }, er: null };
-const ui = { tool: 'pen', color: 'k', mousePen: false, ruler: null };   // ruler: { x, y, a } in content px, kept across redraws
+const ui = { tool: 'pen', color: 'k', mousePen: false, ruler: null };
+/* working space: 'side' gives the right part of the page to blank writing room, 'below' opens a gap under
+   every question, 'auto' picks side when the paper is wide (landscape) and below when narrow (portrait) */
+const SPACES = ['auto', 'side', 'below', 'off'];
+const SPACE_LABEL = { auto: 'Auto', side: 'Side', below: 'Below', off: 'Off' };
+let spaceMode = 'auto';
+try { spaceMode = JSON.parse(localStorage.getItem('bv:ink:space')) || 'auto'; } catch (e) { /* default */ }
+if (!SPACES.includes(spaceMode)) spaceMode = 'auto';   // ruler: { x, y, a } in content px, kept across redraws
 
 const isField = el => !!(el && el.closest && el.closest('input, textarea, select, button, a, label.exam-opt, .ink-bar'));
 
@@ -196,6 +203,7 @@ function attach(host, wrap, opts) {
       Object.keys(COLORS).filter(c => c !== 'y' || ui.tool === 'hi').map(c => `<button data-color="${c}" class="ink-dot${ui.color === c ? ' is-on' : ''}" style="--c:${COLORS[c]}" aria-label="Colour"></button>`).join('') +
       '<span class="ink-sep"></span>' +
       btn('data-ruler', 'Ruler', !!ui.ruler, '<svg viewBox="0 0 24 24"><path d="M3 15l12-12 6 6-12 12zM7 11l2 2M10 8l2 2M13 5l2 2M9 17l-1.5-1.5"/></svg>') +
+      `<button data-space class="ink-btn ink-space" title="Working space: ${SPACE_LABEL[spaceMode]}. Tap to switch between beside the questions, below each question, automatic and off."><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM13 5v14M15.5 9h2M15.5 12h2M15.5 15h2"/></svg><small>${SPACE_LABEL[spaceMode]}</small></button>` +
       btn('data-undo', 'Undo the last stroke', false, '<svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3"/></svg>') +
       `<button data-clear class="ink-btn ink-clear${clearArmed ? ' is-armed' : ''}" title="Clear all writing on this page">${clearArmed ? 'Clear all?' : '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>'}</button>`;
   }
@@ -209,6 +217,11 @@ function attach(host, wrap, opts) {
       if (ui.ruler) ui.ruler = null;
       else { const hb = hostBox(), f = frame(); ui.ruler = { x: f.left + f.w / 2, y: host.scrollTop + hb.height * .45, a: 0 }; }
       placeRuler();
+    }
+    else if (b.hasAttribute('data-space')) {
+      spaceMode = SPACES[(SPACES.indexOf(spaceMode) + 1) % SPACES.length];
+      try { localStorage.setItem('bv:ink:space', JSON.stringify(spaceMode)); } catch (err) { /* ignore */ }
+      applySpace();
     }
     else if (b.hasAttribute('data-undo')) { if (strokes.length) { strokes.pop(); render(); persist(); } }
     else if (b.hasAttribute('data-clear')) {
@@ -226,8 +239,15 @@ function attach(host, wrap, opts) {
   const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); });
   ro.observe(wrap);
   // the toolbar is a column pinned to the top right of the paper's pane, so it is always in reach
+  function applySpace() {
+    const eff = spaceMode === 'auto' ? (host.clientWidth >= 900 ? 'side' : 'below') : spaceMode;
+    host.classList.toggle('ink-space-side', eff === 'side');
+    host.classList.toggle('ink-space-below', eff === 'below');
+  }
+  applySpace();
+  window.addEventListener('resize', applySpace);
   const placeBar = () => { const r = hostBox(); bar.style.top = (r.top + 10) + 'px'; bar.style.right = Math.max(6, window.innerWidth - r.right + 10) + 'px'; bar.style.maxHeight = Math.max(120, r.height - 20) + 'px'; };
-  const pro = new ResizeObserver(placeBar);
+  const pro = new ResizeObserver(() => { placeBar(); applySpace(); });   // panels folding away or the iPad turning changes the width
   pro.observe(host);
   window.addEventListener('resize', placeBar);
   host.classList.add('ink-on');
@@ -236,7 +256,7 @@ function attach(host, wrap, opts) {
 
   const api = {
     detach() {
-      ro.disconnect(); pro.disconnect(); window.removeEventListener('resize', placeBar); host.classList.remove('ink-on');
+      ro.disconnect(); pro.disconnect(); window.removeEventListener('resize', placeBar); window.removeEventListener('resize', applySpace); host.classList.remove('ink-on', 'ink-space-side', 'ink-space-below');
       host.removeEventListener('pointerdown', down); host.removeEventListener('pointermove', move);
       host.removeEventListener('pointerup', up); host.removeEventListener('pointercancel', up);
       host.removeEventListener('touchstart', stopPencilScroll); host.removeEventListener('touchmove', stopPencilScroll);
