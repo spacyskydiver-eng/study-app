@@ -15,7 +15,7 @@ const N = window.NovaUI;
 
 const MOD_COLORS = {
   'Molecular Biology and Genetics': '#34D399', 'Introduction to Biomedicine': '#A78BFA', 'Biological Chemistry': '#FBBF24',
-  'Cell Biology and Physiology': '#38BDF8', 'Professional Skills for Biosciences': '#FB7185',
+  'Cell Biology and Physiology': '#38BDF8', 'Professional Skills for Biosciences': '#FB7185', 'Biotech Investing': '#2DD4BF',
 };
 const hex = c => { const n = parseInt(c.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

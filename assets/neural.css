@@ -55,11 +55,13 @@ body {
 .subject-biochem  { --subj:#FBBF24; --subj-rgb:251,191,36;  --subj-name:"BIOLOGICAL CHEMISTRY"; }
 .subject-cell     { --subj:#38BDF8; --subj-rgb:56,189,248;  --subj-name:"CELL BIOLOGY AND PHYSIOLOGY"; }
 .subject-skills   { --subj:#FB7185; --subj-rgb:251,113,133; --subj-name:"PROFESSIONAL SKILLS FOR BIOSCIENCES"; }
+.subject-investing { --subj:#2DD4BF; --subj-rgb:45,212,191; --subj-name:"BIOTECH INVESTING"; }
 .subject-terms    { --subj:#FDE68A; --subj-rgb:253,230,138; --subj-name:"KEY TERM"; }
 .subject-home     { --subj:#8B9CFF; --subj-rgb:139,156,255; --subj-name:"BIOMEDICINE · YEAR 1"; }
 .theme-light .subject-terms { --subj:#B7791F; --subj-rgb:183,121,31; }
 .theme-light .subject-genetics { --subj:#0E9F6E; --subj-rgb:14,159,110; }
 .theme-light .subject-biomed { --subj:#7C5CE0; --subj-rgb:124,92,224; }
+.theme-light .subject-investing { --subj:#0F9488; --subj-rgb:15,148,136; }
 .theme-light .subject-home { --subj:#4F5FE0; --subj-rgb:79,95,224; }
 
 /* ---------- 2. page canvas + banner -------------------------------- */
@@ -245,6 +247,7 @@ body {
 .nav-folder-title[data-path="01 Year 1/Biological Chemistry"] .nav-folder-title-content { color: #FBBF24; font-weight: 650; }
 .nav-folder-title[data-path="01 Year 1/Cell Biology and Physiology"] .nav-folder-title-content { color: #38BDF8; font-weight: 650; }
 .nav-folder-title[data-path="01 Year 1/Professional Skills for Biosciences"] .nav-folder-title-content { color: #FB7185; font-weight: 650; }
+.nav-folder-title[data-path="03 Biotech Investing"] .nav-folder-title-content { color: #2DD4BF; font-weight: 650; }
 
 .workspace-tab-header.is-active .workspace-tab-header-inner-title { font-weight: 650; }
 .workspace-tabs .workspace-tab-header.is-active { box-shadow: inset 0 2px 0 var(--tab-accent, var(--interactive-accent)); }
@@ -253,6 +256,7 @@ body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview
 body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-biochem) { --tab-accent: #FBBF24; }
 body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-cell) { --tab-accent: #38BDF8; }
 body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-skills) { --tab-accent: #FB7185; }
+body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-investing) { --tab-accent: #2DD4BF; }
 body:has(.workspace-tabs.mod-active .workspace-leaf.mod-active .markdown-preview-view.subject-terms) { --tab-accent: #FDE68A; }
 .status-bar { border-radius: 10px 0 0 0; background: var(--bg0); }
 ::-webkit-scrollbar { width: 10px; height: 10px; }

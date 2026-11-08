@@ -19,12 +19,13 @@ const COLORS = {
   'Biological Chemistry': '#FBBF24',
   'Cell Biology and Physiology': '#38BDF8',
   'Professional Skills for Biosciences': '#FB7185',
+  'Biotech Investing': '#2DD4BF',
 };
 const colorOf = s => COLORS[s] || '#8B5CF6';
 // page changes from a click open out of the clicked element (nova-bits.js N.go)
 const goFrom = el => (N.go ? N.go(el.dataset.go) : B.go(el.dataset.go));
-const KIND = { lecture: 'Lectures', practical: 'Practicals', seminar: 'Seminars', extra: 'Extras' };
-const KIND_ONE = { lecture: 'Lecture', practical: 'Practical', seminar: 'Seminar', extra: 'Extra' };
+const KIND = { lecture: 'Lectures', practical: 'Practicals', seminar: 'Seminars', section: 'Sections', extra: 'Extras' };
+const KIND_ONE = { lecture: 'Lecture', practical: 'Practical', seminar: 'Seminar', section: 'Section', extra: 'Extra' };
 
 /* ---------------------------------------------------------------- model */
 let M = null;
@@ -57,7 +58,7 @@ function model() {
     (m.groups[hub.kind] = m.groups[hub.kind] || []).push(hub);
   }
   for (const m of modules) for (const k in m.groups) m.groups[k].sort((a, b) => (a.number - b.number) || B.collator.compare(nameOf(folderOf(a.id)), nameOf(folderOf(b.id))));
-  const order = ['Molecular Biology and Genetics', 'Introduction to Biomedicine', 'Biological Chemistry', 'Cell Biology and Physiology', 'Professional Skills for Biosciences'];
+  const order = ['Molecular Biology and Genetics', 'Introduction to Biomedicine', 'Biological Chemistry', 'Cell Biology and Physiology', 'Professional Skills for Biosciences', 'Biotech Investing'];
   modules.sort((a, b) => ((order.indexOf(a.title) + 99) % 99) - ((order.indexOf(b.title) + 99) % 99) || B.collator.compare(a.title, b.title));
   const topicHub = {};
   for (const hub of Object.values(hubs)) for (const t of hub.topics || []) topicHub[t] = hub.id;
