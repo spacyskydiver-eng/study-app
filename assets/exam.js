@@ -22,7 +22,12 @@ const changed = () => document.dispatchEvent(new Event('bv:exam-changed'));
 let listView = null;
 let ink = null;   // the handwriting layer on the open paper
 const inkOff = () => { if (ink) { ink.detach(); ink = null; } };
-const inkOn = (view, strokes, save) => { inkOff(); if (window.BVInk) ink = window.BVInk.attach(view, $('.exam-wrap', view), { strokes, save }); };   // the papers list, if it is the view on screen (redrawn when another device's results arrive)
+const inkOn = (view, strokes, save) => { inkOff(); focusOn(); if (window.BVInk) ink = window.BVInk.attach(view, $('.exam-wrap', view), { strokes, save }); };
+// a paper gets the whole screen: both side panels fold away while it is open and come back after
+let focus = null;
+function focusOn() { if (focus || !B.sides || B.isPhone()) return; focus = B.sides(); B.setSide('left', false); B.setSide('right', false); }
+function focusOff() { if (!focus) return; const f = focus; focus = null; B.setSide('left', f.left); B.setSide('right', f.right); }
+window.addEventListener('hashchange', () => { if (!decodeURIComponent(location.hash).includes('exam/')) { inkOff(); focusOff(); } });   // the papers list, if it is the view on screen (redrawn when another device's results arrive)
 
 /* ------------------------------------------------------------ cross-device sync
    flashcards.js keeps a copy of all exam data in the signed-in progress blob. Nothing is ever dropped:
@@ -142,7 +147,7 @@ function markPart(p, ans) {
 
 /* ------------------------------------------------------------ list */
 function list(view) {
-  inkOff();
+  inkOff(); focusOff();
   listView = view;
   const H = hist();
   view.innerHTML = `<div class="exam-wrap">

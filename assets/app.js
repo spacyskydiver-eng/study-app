@@ -1468,7 +1468,7 @@ function showCanvas(path) {
 /* ------------------------------------------------------------------ public API for the other views */
 window.BV = {
   get V() { return V; }, icon, esc, $, $$, h, store, isMobile, isPhone, clamp, ease, collator,
-  setSide, setLeftPane, setRightPane, toggleTheme, openUiModeMenu,
+  setSide, sides: () => ({ left: state.leftOpen, right: state.rightOpen }), setLeftPane, setRightPane, toggleTheme, openUiModeMenu,
   go, hashFor, titleOf, noteTitle, exists, hydrate, wireLinks, showMenu, toast, closePopover, noteHtml,
   registerView(id, def) { if (def.prefix) PREFIXED.push(def); else SPECIAL[id] = def; },
   onHydrate(f) { hooks.hydrate.push(f); },

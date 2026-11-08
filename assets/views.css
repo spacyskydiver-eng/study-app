@@ -691,15 +691,16 @@ body.is-phone .pg-box { width: 26px; height: 26px; margin: 5px 1px; }
 .ink-layer { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 3; overflow: visible; }
 .ink-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .exam-host.ink-mouse .exam-wrap { cursor: crosshair; }
-.ink-bar { position: sticky; bottom: 14px; z-index: 6; width: max-content; max-width: calc(100% - 24px); margin: -60px 12px 14px auto; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 6px 8px; border-radius: 14px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 28px rgba(0,0,0,.28); }
-.ink-btn { display: grid; place-items: center; min-width: 36px; height: 36px; padding: 0 6px; border: 0; border-radius: 9px; background: none; color: var(--text-muted); cursor: pointer; font: inherit; font-size: 12.5px; }
+.ink-bar { position: fixed; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 5px; overflow-y: auto; border-radius: 14px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 28px rgba(0,0,0,.28); scrollbar-width: none; }
+.exam-host.ink-on .exam-wrap { max-width: 980px; padding-right: 72px; }
+.ink-btn { flex: none; display: grid; place-items: center; min-width: 36px; height: 36px; padding: 0 6px; border: 0; border-radius: 9px; background: none; color: var(--text-muted); cursor: pointer; font: inherit; font-size: 12.5px; }
 .ink-btn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ink-btn:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .ink-btn.is-on { background: rgba(124,140,248,.2); color: var(--text-normal); }
-.ink-clear.is-armed { color: #ef4444; font-weight: 650; }
-.ink-dot { width: 24px; height: 24px; margin: 0 2px; border-radius: 50%; border: 2px solid transparent; background: var(--c); cursor: pointer; padding: 0; box-shadow: inset 0 0 0 2px var(--background-secondary); }
+.ink-clear.is-armed { color: #ef4444; font-weight: 650; width: 36px; font-size: 10.5px; line-height: 1.15; white-space: normal; padding: 3px 0; height: auto; }
+.ink-dot { flex: none; width: 24px; height: 24px; margin: 2px 0; border-radius: 50%; border: 2px solid transparent; background: var(--c); cursor: pointer; padding: 0; box-shadow: inset 0 0 0 2px var(--background-secondary); }
 .ink-dot.is-on { border-color: var(--text-normal); }
-.ink-sep { width: 1px; height: 22px; margin: 0 3px; background: var(--background-modifier-border); }
+.ink-sep { width: 22px; height: 1px; margin: 3px 0; background: var(--background-modifier-border); }
 .ink-ruler { position: absolute; left: 0; top: 0; z-index: 5; transform-origin: center; border-radius: 6px; background: rgba(226,232,240,.78); border: 1px solid rgba(15,23,42,.35); box-shadow: 0 6px 22px rgba(0,0,0,.25); cursor: grab; touch-action: none; backdrop-filter: blur(2px); }
 .ink-ruler-scale { position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background:

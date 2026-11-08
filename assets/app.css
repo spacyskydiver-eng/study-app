@@ -1,6 +1,7 @@
 /* Obsidian-like workspace. The vault's own theme (neural.css) loads on top. */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
+@supports (height: 100dvh) { html, body { height: 100dvh; } }   /* iPad Safari: fit the visible screen, not the one behind its toolbars */
 body {
   --font-text: var(--font-text-theme, 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif);
   --font-interface: var(--font-interface-theme, var(--font-text));

@@ -197,7 +197,7 @@ function attach(host, wrap, opts) {
       '<span class="ink-sep"></span>' +
       btn('data-ruler', 'Ruler', !!ui.ruler, '<svg viewBox="0 0 24 24"><path d="M3 15l12-12 6 6-12 12zM7 11l2 2M10 8l2 2M13 5l2 2M9 17l-1.5-1.5"/></svg>') +
       btn('data-undo', 'Undo the last stroke', false, '<svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3"/></svg>') +
-      `<button data-clear class="ink-btn ink-clear${clearArmed ? ' is-armed' : ''}" title="Clear all writing on this page">${clearArmed ? 'Tap again to clear' : '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>'}</button>`;
+      `<button data-clear class="ink-btn ink-clear${clearArmed ? ' is-armed' : ''}" title="Clear all writing on this page">${clearArmed ? 'Clear all?' : '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>'}</button>`;
   }
   bar.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -225,11 +225,18 @@ function attach(host, wrap, opts) {
   let raf = 0;
   const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); });
   ro.observe(wrap);
+  // the toolbar is a column pinned to the top right of the paper's pane, so it is always in reach
+  const placeBar = () => { const r = hostBox(); bar.style.top = (r.top + 10) + 'px'; bar.style.right = Math.max(6, window.innerWidth - r.right + 10) + 'px'; bar.style.maxHeight = Math.max(120, r.height - 20) + 'px'; };
+  const pro = new ResizeObserver(placeBar);
+  pro.observe(host);
+  window.addEventListener('resize', placeBar);
+  host.classList.add('ink-on');
+  placeBar();
   render();
 
   const api = {
     detach() {
-      ro.disconnect();
+      ro.disconnect(); pro.disconnect(); window.removeEventListener('resize', placeBar); host.classList.remove('ink-on');
       host.removeEventListener('pointerdown', down); host.removeEventListener('pointermove', move);
       host.removeEventListener('pointerup', up); host.removeEventListener('pointercancel', up);
       host.removeEventListener('touchstart', stopPencilScroll); host.removeEventListener('touchmove', stopPencilScroll);
