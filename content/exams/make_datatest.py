@@ -315,8 +315,73 @@ def papers():
         Q('BamHI cuts G^GATCC and BglII cuts A^GATCT, both leaving a 5′-GATC overhang.',
           mcq('A fragment cut with BamHI is mixed with a plasmid cut with BglII, plus DNA ligase. What happens?', ['Nothing: different enzymes never join', 'They join, because the sticky ends are complementary', 'They join only if blunt', 'The ligase cuts them again', 'Only the plasmid re-closes'], 1, 'Ligation only needs matching overhangs, not the same enzyme. Both leave GATC, which pairs with GATC, so the ends anneal and ligase seals them.')),
     ]})
+    # ============================================================== Mock 6 (big: 20 restriction mapping + 10 DNA concentration)
+    L6, S6 = 5600, {'KpnI': 0, 'XhoI': 1300, 'NotI': 3600}
+    f6 = lambda *e: frags(L6, [S6[x] for x in e])
+    assert f6('KpnI', 'XhoI') == [4300, 1300] and f6('KpnI', 'NotI') == [3600, 2000] and f6('XhoI', 'NotI') == [3300, 2300]
+    assert f6('KpnI', 'XhoI', 'NotI') == [2300, 2000, 1300]
+    g6 = gel('dat6_gel1.png', ['L', f6('KpnI'), f6('XhoI'), f6('NotI'), f6('KpnI', 'XhoI'), f6('KpnI', 'NotI'), f6('XhoI', 'NotI'), f6('KpnI', 'XhoI', 'NotI'), 'L'], '')
+    L6b, B6b, E6b = 4800, [0, 1000], 3000
+    assert frags(L6b, B6b) == [3800, 1000] and frags(L6b, B6b + [E6b]) == [2000, 1800, 1000]
+    g6b = gel('dat6_gel2.png', ['L', frags(L6b, B6b), frags(L6b, [E6b]), frags(L6b, B6b + [E6b]), 'L'], '')
+    p6 = plasmid('dat6_map.png', 5000, {'HindIII': 200, 'SphI': 700, 'BamHI': 1050, 'PstI': 1600, 'SalI': 2300, 'XbaI': 2600, 'EcoRV': 3500, 'NdeI': 4400},
+                 [('luc', 1150, 2200, '#86efac'), ('ori', 2800, 3300, '#fde047'), ('AmpR', 3700, 4300, '#fca5a5')], 'pLUC5')
+    m6, c6 = 22.4, 0.006
+    rng = np.random.default_rng(41)
+    xs6 = [0, 0.01, 0.02, 0.03, 0.05, 0.07]
+    ys6 = [round(m6 * x + c6 + (rng.normal(0, 0.025) if x else 0.002), 3) for x in xs6]
+    cv6 = curve('dat6_curve.png', xs6, ys6, [0.01, .02, .03, .03, .05, .05], m6, c6)
+    R = ['0.0', '0.1 to 0.5', '0.5 to 0.9', 'Greater than 0.9 but less than 1.0', '1.0']
+    out.append({'id': 'dat-6', 'title': 'Data analysis big practice test (30 questions)', 'lecture': 'In-class test (9 Nov)', 'marks': 60,
+                'hub': '01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics', 'note': 'Calculator allowed. 20 restriction mapping questions and 10 on the DNA concentration practical (no transformation). About three real tests long.',
+                'questions': [
+        Q('<strong>Figure 13.</strong> Restriction digests of plasmid pLX. Lanes 1 and 9: 1 kb ladder. Lane 2 KpnI; lane 3 XhoI; lane 4 NotI; lane 5 KpnI + XhoI; lane 6 KpnI + NotI; lane 7 XhoI + NotI; lane 8 KpnI + XhoI + NotI.',
+          mcq('How many XhoI sites are there in pLX?', ['0', '1', '2', '3', '4'], 1, 'Lane 3 (XhoI alone) has one band. One cut opens a circle into one piece, so one site.'),
+          mcq('What is the approximate size of pLX?', ['4600 bp', '5100 bp', '5600 bp', '6600 bp', '7600 bp'], 2, 'The single bands sit above the 5000 marker. Check with a double digest: lane 5 is 4300 + 1300 = 5600.'),
+          mcq('What is the shortest distance between the KpnI and NotI sites?', ['1300 bp', '2000 bp', '2300 bp', '3600 bp', '5600 bp'], 1, 'Use the lane with exactly those two enzymes: lane 6 (KpnI + NotI) gives 3600 + 2000. The smaller, 2000, is the short way round.'),
+          mcq('What is the shortest distance between the XhoI and NotI sites?', ['1300 bp', '2000 bp', '2300 bp', '3300 bp', '4300 bp'], 2, 'Lane 7 (XhoI + NotI) gives 3300 + 2300, so 2300 bp.'),
+          mcq('The smallest fragment in lane 8 was produced by digestion with which enzymes?', ['KpnI alone', 'KpnI and XhoI', 'KpnI and NotI', 'XhoI and NotI', 'NotI alone'], 1, 'The smallest band in lane 8 is 1300. The same 1300 band is in lane 5 (KpnI + XhoI), so it runs from a KpnI site to an XhoI site.'),
+          mcq('Which fragment in lane 8 has an XhoI end and a NotI end?', ['1300 bp', '2000 bp', '2300 bp', '3300 bp', '4300 bp'], 2, 'Look for the lane 8 band that is also in lane 7 (XhoI + NotI): 2300. The 3300 piece of lane 7 contains the KpnI site, so it is cut again in lane 8.'),
+          mcq('KpnI is placed at 0 and XhoI at 1300. Where is NotI?', ['700', '2000', '3300', '3600', '4300'], 3, 'NotI is 2000 from KpnI (lane 6), so at 2000 or 5600 − 2000 = 3600. Test against lane 7 (XhoI + NotI: 2300 + 3300): at 2000 the XhoI–NotI gap would be 700 (not on the gel); at 3600 it is 2300 (on the gel). So 3600.'),
+          mcq('Which lane has a band of about 3300 bp?', ['Lane 4', 'Lane 5', 'Lane 6', 'Lane 7', 'Lane 8'], 3, 'XhoI (1300) to NotI (3600) is 2300 one way and 5600 − 2300 = 3300 the other: lane 7.'),
+          img=g6),
+        Q('<strong>Figure 14.</strong> Digests of plasmid pRT. Lanes 1 and 5: 1 kb ladder. Lane 2 BamHI; lane 3 EcoRI; lane 4 BamHI + EcoRI.',
+          mcq('How many BamHI sites are there in pRT?', ['0', '1', '2', '3', '4'], 2, 'Lane 2 (BamHI alone) shows two bands, and on a circle bands = cuts. BamHI cuts twice; its bands (3800 and 1000) are the two gaps between its own sites.'),
+          mcq('What is the size of pRT?', ['1000 bp', '3800 bp', '4300 bp', '4800 bp', '5800 bp'], 3, 'Add any one lane: 3800 + 1000 = 4800, and lane 3 (EcoRI cuts once) shows the same 4800 as a single band.'),
+          mcq('Which BamHI fragment contains the EcoRI site?', ['The 1000 bp fragment', 'The 3800 bp fragment', 'Both', 'Neither', 'It cannot be worked out'], 1, 'Adding EcoRI (lane 4) leaves 1000 unchanged but the 3800 band is replaced by 2000 + 1800, which add up to 3800. So EcoRI cut the 3800 fragment.'),
+          mcq('In lane 4, which fragment has a BamHI site at both ends?', ['1000 bp', '1800 bp', '2000 bp', '3800 bp', '4800 bp'], 0, 'The 1000 band is the same as in BamHI alone and EcoRI did not cut it, so both its ends are BamHI sites.'),
+          img=g6b),
+        Q('A <strong>linear</strong> 6000 bp piece of DNA (not a plasmid) was cut with SalI and gave two bands, 2500 bp and 3500 bp.',
+          mcq('How many SalI sites does it have?', ['0', '1', '2', '3', '4'], 1, 'Linear DNA has two ends, so bands = cuts + 1. Two bands means one cut (2500 bp from one end).')),
+        Q('Restriction enzymes recognise palindromic sequences.',
+          mcq('EcoRI recognises 5′-GAATTC-3′. What is the sequence of the site on the other strand, written 5′ to 3′?', ['5′-CTTAAG-3′', '5′-GAATTC-3′', '5′-GTTAAC-3′', '5′-CAATTG-3′', '5′-GATC-3′'], 1, 'Complement: 3′-CTTAAG-5′. Read 5′ to 3′ (right to left) it is GAATTC again: a palindrome.'),
+          mcq('Which of these could be a restriction enzyme recognition site?', ['5′-AGTTCA-3′', '5′-AGTACT-3′', '5′-GGTACG-3′', '5′-CATCAT-3′', '5′-TTGGCC-3′'], 1, 'Only AGTACT reads the same on both strands: its complement is 3′-TCATGA-5′, which read 5′→3′ is AGTACT. Check each by writing the complement and reading it backwards.')),
+        Q('<strong>Figure 15.</strong> Restriction map of plasmid pLUC5 (5000 bp) showing the luciferase gene (luc, 1150 to 2200), the origin (ori) and AmpR.',
+          mcq('You want the whole luc gene on the smallest possible fragment. Which pair of enzymes should you use?', ['BamHI and PstI', 'BamHI and SalI', 'SphI and SalI', 'HindIII and XbaI', 'PstI and SalI'], 1, 'PstI (1600) cuts inside luc, so any pair with PstI breaks the gene. BamHI (1050) and SalI (2300) are the closest sites either side: 1250 bp. SphI + SalI works but is 1600; HindIII + XbaI is 2400.'),
+          mcq('Which enzyme cuts inside the luc gene?', ['BamHI', 'PstI', 'SalI', 'XbaI', 'NdeI'], 1, 'PstI at 1600 lies between 1150 and 2200. Cutting there would destroy the gene.'),
+          mcq('What fragments would a BamHI + EcoRV digest give?', ['1050 and 3950 bp', '2450 and 2550 bp', '1250 and 3750 bp', '3500 and 1500 bp', '2450 bp only'], 1, 'EcoRV 3500 − BamHI 1050 = 2450; the rest of the 5000 bp circle is 2550.'),
+          mcq('How many fragments would a HindIII + SalI + NdeI digest give?', ['2', '3', '4', '5', '6'], 1, 'Each enzyme cuts once here, so three cuts on a circle give three fragments.'),
+          img=p6),
+        Q('For the 1 kb ladder, distance migrated (mm) against log₁₀(size in bp) gave the line y = −35x + 150.',
+          mcq('A fragment migrated 30 mm. What is its approximate size?', ['1700 bp', '2200 bp', '2700 bp', '3200 bp', '3700 bp'], 2, '30 = −35x + 150 → x = (30 − 150) ÷ −35 = 3.43. x is log₁₀(size), so size = 10³·⁴³ ≈ 2700 bp.')),
+        Q('<strong>Figure 16.</strong> Standard curve: mean absorbance at 260 nm (± SD, n = 3) of DNA solutions of known concentration. Trend line y = 22.4x + 0.006.',
+          mcq('What absorbance would you expect for 0.035 mg/mL?', ['0.75', '0.77', '0.79', '0.81', '0.83'], 2, 'y = 22.4 × 0.035 + 0.006 = 0.784 + 0.006 = 0.790.'),
+          mcq('What DNA concentration would give an absorbance of 1.10?', ['0.045 mg/mL', '0.047 mg/mL', '0.049 mg/mL', '0.051 mg/mL', '0.053 mg/mL'], 2, 'Undo the + 0.006 first, then divide by the gradient: (1.10 − 0.006) ÷ 22.4 = 0.0488, so 0.049.'),
+          mcq('What is the most likely R² value?', R, 3, 'The points sit very close to the line but not exactly on it.'),
+          mcq('Which is the independent variable?', ['Absorbance', 'DNA concentration', 'Wavelength', 'R²', 'Volume of TE buffer'], 1, 'Concentration is set by the dilutions (x-axis); absorbance is measured in response (y-axis).'),
+          img=cv6),
+        Q('Standards were made from DNA sample A (0.5 mg/mL), each made up to 1000 µL with TE buffer.',
+          mcq('A tube has 120 µL of sample A and 880 µL of TE. What is its concentration?', ['0.006 mg/mL', '0.012 mg/mL', '0.06 mg/mL', '0.12 mg/mL', '0.6 mg/mL'], 2, '120 µL in 1000 µL is a 0.12 dilution: 0.5 × 0.12 = 0.06 mg/mL.'),
+          mcq('An unknown diluted 1 in 25 reads 0.030 mg/mL from the standard curve. What was the original concentration?', ['0.0012 mg/mL', '0.030 mg/mL', '0.30 mg/mL', '0.75 mg/mL', '1.2 mg/mL'], 3, 'The curve gives the diluted value; multiply back by the dilution factor: 0.030 × 25 = 0.75 mg/mL.'),
+          mcq('What is 0.06 mg/mL in µg/mL?', ['0.6 µg/mL', '6 µg/mL', '60 µg/mL', '600 µg/mL', '6000 µg/mL'], 2, '1 mg = 1000 µg, so 0.06 × 1000 = 60 µg/mL.')),
+        Q('Each standard was read three times.',
+          mcq('The readings for one tube were 1.21, 1.25 and 1.26. What is the mean?', ['1.22', '1.23', '1.24', '1.25', '1.26'], 2, '(1.21 + 1.25 + 1.26) ÷ 3 = 3.72 ÷ 3 = 1.24.'),
+          mcq('Another tube read 0.48, 0.47 and 0.71. What is the best value to use?', ['0.475', '0.55', '0.59', '0.71', '0.48'], 0, '0.71 is clearly anomalous, so leave it out: (0.48 + 0.47) ÷ 2 = 0.475. Including it gives 0.55, dragged up by the error.')),
+        Q('Tube 6 contained TE buffer only.',
+          mcq('Why is it included?', ['To give the highest absorbance', 'To zero the spectrophotometer, so only the DNA\'s absorbance is measured', 'To make the curve steeper', 'To check the wavelength', 'To dilute the unknown'], 1, 'The blank contains everything except DNA. Zeroing on it removes the buffer\'s and cuvette\'s absorbance, so the readings are due to DNA alone.')),
+    ]})
     for p in out:
-        assert sum(len(q['parts']) for q in p['questions']) == 10, p['id']
+        assert sum(len(q['parts']) for q in p['questions']) == (30 if p['id'] == 'dat-6' else 10), p['id']
     return out
 
 

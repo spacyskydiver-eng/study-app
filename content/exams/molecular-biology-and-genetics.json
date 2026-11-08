@@ -1177,6 +1177,530 @@
    ]
   },
   {
+   "id": "dat-6",
+   "title": "Data analysis big practice test (30 questions)",
+   "lecture": "In-class test (9 Nov)",
+   "marks": 60,
+   "hub": "01 Year 1/Molecular Biology and Genetics/Molecular Biology and Genetics",
+   "note": "Calculator allowed. 20 restriction mapping questions and 10 on the DNA concentration practical (no transformation). About three real tests long.",
+   "questions": [
+    {
+     "stem": "<strong>Figure 13.</strong> Restriction digests of plasmid pLX. Lanes 1 and 9: 1 kb ladder. Lane 2 KpnI; lane 3 XhoI; lane 4 NotI; lane 5 KpnI + XhoI; lane 6 KpnI + NotI; lane 7 XhoI + NotI; lane 8 KpnI + XhoI + NotI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many XhoI sites are there in pLX?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Lane 3 (XhoI alone) has one band. One cut opens a circle into one piece, so one site.",
+       "marks": 2,
+       "id": "dat-6-q1a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the approximate size of pLX?",
+       "options": [
+        "4600 bp",
+        "5100 bp",
+        "5600 bp",
+        "6600 bp",
+        "7600 bp"
+       ],
+       "answer": 2,
+       "explain": "The single bands sit above the 5000 marker. Check with a double digest: lane 5 is 4300 + 1300 = 5600.",
+       "marks": 2,
+       "id": "dat-6-q1b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the shortest distance between the KpnI and NotI sites?",
+       "options": [
+        "1300 bp",
+        "2000 bp",
+        "2300 bp",
+        "3600 bp",
+        "5600 bp"
+       ],
+       "answer": 1,
+       "explain": "Use the lane with exactly those two enzymes: lane 6 (KpnI + NotI) gives 3600 + 2000. The smaller, 2000, is the short way round.",
+       "marks": 2,
+       "id": "dat-6-q1c"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the shortest distance between the XhoI and NotI sites?",
+       "options": [
+        "1300 bp",
+        "2000 bp",
+        "2300 bp",
+        "3300 bp",
+        "4300 bp"
+       ],
+       "answer": 2,
+       "explain": "Lane 7 (XhoI + NotI) gives 3300 + 2300, so 2300 bp.",
+       "marks": 2,
+       "id": "dat-6-q1d"
+      },
+      {
+       "type": "mcq",
+       "stem": "The smallest fragment in lane 8 was produced by digestion with which enzymes?",
+       "options": [
+        "KpnI alone",
+        "KpnI and XhoI",
+        "KpnI and NotI",
+        "XhoI and NotI",
+        "NotI alone"
+       ],
+       "answer": 1,
+       "explain": "The smallest band in lane 8 is 1300. The same 1300 band is in lane 5 (KpnI + XhoI), so it runs from a KpnI site to an XhoI site.",
+       "marks": 2,
+       "id": "dat-6-q1e"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which fragment in lane 8 has an XhoI end and a NotI end?",
+       "options": [
+        "1300 bp",
+        "2000 bp",
+        "2300 bp",
+        "3300 bp",
+        "4300 bp"
+       ],
+       "answer": 2,
+       "explain": "Look for the lane 8 band that is also in lane 7 (XhoI + NotI): 2300. The 3300 piece of lane 7 contains the KpnI site, so it is cut again in lane 8.",
+       "marks": 2,
+       "id": "dat-6-q1f"
+      },
+      {
+       "type": "mcq",
+       "stem": "KpnI is placed at 0 and XhoI at 1300. Where is NotI?",
+       "options": [
+        "700",
+        "2000",
+        "3300",
+        "3600",
+        "4300"
+       ],
+       "answer": 3,
+       "explain": "NotI is 2000 from KpnI (lane 6), so at 2000 or 5600 − 2000 = 3600. Test against lane 7 (XhoI + NotI: 2300 + 3300): at 2000 the XhoI–NotI gap would be 700 (not on the gel); at 3600 it is 2300 (on the gel). So 3600.",
+       "marks": 2,
+       "id": "dat-6-q1g"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which lane has a band of about 3300 bp?",
+       "options": [
+        "Lane 4",
+        "Lane 5",
+        "Lane 6",
+        "Lane 7",
+        "Lane 8"
+       ],
+       "answer": 3,
+       "explain": "XhoI (1300) to NotI (3600) is 2300 one way and 5600 − 2300 = 3300 the other: lane 7.",
+       "marks": 2,
+       "id": "dat-6-q1h"
+      }
+     ],
+     "img": "assets/exam-img/dat6_gel1.png",
+     "id": "dat-6-q1"
+    },
+    {
+     "stem": "<strong>Figure 14.</strong> Digests of plasmid pRT. Lanes 1 and 5: 1 kb ladder. Lane 2 BamHI; lane 3 EcoRI; lane 4 BamHI + EcoRI.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many BamHI sites are there in pRT?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 2,
+       "explain": "Lane 2 (BamHI alone) shows two bands, and on a circle bands = cuts. BamHI cuts twice; its bands (3800 and 1000) are the two gaps between its own sites.",
+       "marks": 2,
+       "id": "dat-6-q2a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the size of pRT?",
+       "options": [
+        "1000 bp",
+        "3800 bp",
+        "4300 bp",
+        "4800 bp",
+        "5800 bp"
+       ],
+       "answer": 3,
+       "explain": "Add any one lane: 3800 + 1000 = 4800, and lane 3 (EcoRI cuts once) shows the same 4800 as a single band.",
+       "marks": 2,
+       "id": "dat-6-q2b"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which BamHI fragment contains the EcoRI site?",
+       "options": [
+        "The 1000 bp fragment",
+        "The 3800 bp fragment",
+        "Both",
+        "Neither",
+        "It cannot be worked out"
+       ],
+       "answer": 1,
+       "explain": "Adding EcoRI (lane 4) leaves 1000 unchanged but the 3800 band is replaced by 2000 + 1800, which add up to 3800. So EcoRI cut the 3800 fragment.",
+       "marks": 2,
+       "id": "dat-6-q2c"
+      },
+      {
+       "type": "mcq",
+       "stem": "In lane 4, which fragment has a BamHI site at both ends?",
+       "options": [
+        "1000 bp",
+        "1800 bp",
+        "2000 bp",
+        "3800 bp",
+        "4800 bp"
+       ],
+       "answer": 0,
+       "explain": "The 1000 band is the same as in BamHI alone and EcoRI did not cut it, so both its ends are BamHI sites.",
+       "marks": 2,
+       "id": "dat-6-q2d"
+      }
+     ],
+     "img": "assets/exam-img/dat6_gel2.png",
+     "id": "dat-6-q2"
+    },
+    {
+     "stem": "A <strong>linear</strong> 6000 bp piece of DNA (not a plasmid) was cut with SalI and gave two bands, 2500 bp and 3500 bp.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "How many SalI sites does it have?",
+       "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+       ],
+       "answer": 1,
+       "explain": "Linear DNA has two ends, so bands = cuts + 1. Two bands means one cut (2500 bp from one end).",
+       "marks": 2,
+       "id": "dat-6-q3a"
+      }
+     ],
+     "id": "dat-6-q3"
+    },
+    {
+     "stem": "Restriction enzymes recognise palindromic sequences.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "EcoRI recognises 5′-GAATTC-3′. What is the sequence of the site on the other strand, written 5′ to 3′?",
+       "options": [
+        "5′-CTTAAG-3′",
+        "5′-GAATTC-3′",
+        "5′-GTTAAC-3′",
+        "5′-CAATTG-3′",
+        "5′-GATC-3′"
+       ],
+       "answer": 1,
+       "explain": "Complement: 3′-CTTAAG-5′. Read 5′ to 3′ (right to left) it is GAATTC again: a palindrome.",
+       "marks": 2,
+       "id": "dat-6-q4a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which of these could be a restriction enzyme recognition site?",
+       "options": [
+        "5′-AGTTCA-3′",
+        "5′-AGTACT-3′",
+        "5′-GGTACG-3′",
+        "5′-CATCAT-3′",
+        "5′-TTGGCC-3′"
+       ],
+       "answer": 1,
+       "explain": "Only AGTACT reads the same on both strands: its complement is 3′-TCATGA-5′, which read 5′→3′ is AGTACT. Check each by writing the complement and reading it backwards.",
+       "marks": 2,
+       "id": "dat-6-q4b"
+      }
+     ],
+     "id": "dat-6-q4"
+    },
+    {
+     "stem": "<strong>Figure 15.</strong> Restriction map of plasmid pLUC5 (5000 bp) showing the luciferase gene (luc, 1150 to 2200), the origin (ori) and AmpR.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "You want the whole luc gene on the smallest possible fragment. Which pair of enzymes should you use?",
+       "options": [
+        "BamHI and PstI",
+        "BamHI and SalI",
+        "SphI and SalI",
+        "HindIII and XbaI",
+        "PstI and SalI"
+       ],
+       "answer": 1,
+       "explain": "PstI (1600) cuts inside luc, so any pair with PstI breaks the gene. BamHI (1050) and SalI (2300) are the closest sites either side: 1250 bp. SphI + SalI works but is 1600; HindIII + XbaI is 2400.",
+       "marks": 2,
+       "id": "dat-6-q5a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which enzyme cuts inside the luc gene?",
+       "options": [
+        "BamHI",
+        "PstI",
+        "SalI",
+        "XbaI",
+        "NdeI"
+       ],
+       "answer": 1,
+       "explain": "PstI at 1600 lies between 1150 and 2200. Cutting there would destroy the gene.",
+       "marks": 2,
+       "id": "dat-6-q5b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What fragments would a BamHI + EcoRV digest give?",
+       "options": [
+        "1050 and 3950 bp",
+        "2450 and 2550 bp",
+        "1250 and 3750 bp",
+        "3500 and 1500 bp",
+        "2450 bp only"
+       ],
+       "answer": 1,
+       "explain": "EcoRV 3500 − BamHI 1050 = 2450; the rest of the 5000 bp circle is 2550.",
+       "marks": 2,
+       "id": "dat-6-q5c"
+      },
+      {
+       "type": "mcq",
+       "stem": "How many fragments would a HindIII + SalI + NdeI digest give?",
+       "options": [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+       ],
+       "answer": 1,
+       "explain": "Each enzyme cuts once here, so three cuts on a circle give three fragments.",
+       "marks": 2,
+       "id": "dat-6-q5d"
+      }
+     ],
+     "img": "assets/exam-img/dat6_map.png",
+     "id": "dat-6-q5"
+    },
+    {
+     "stem": "For the 1 kb ladder, distance migrated (mm) against log₁₀(size in bp) gave the line y = −35x + 150.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "A fragment migrated 30 mm. What is its approximate size?",
+       "options": [
+        "1700 bp",
+        "2200 bp",
+        "2700 bp",
+        "3200 bp",
+        "3700 bp"
+       ],
+       "answer": 2,
+       "explain": "30 = −35x + 150 → x = (30 − 150) ÷ −35 = 3.43. x is log₁₀(size), so size = 10³·⁴³ ≈ 2700 bp.",
+       "marks": 2,
+       "id": "dat-6-q6a"
+      }
+     ],
+     "id": "dat-6-q6"
+    },
+    {
+     "stem": "<strong>Figure 16.</strong> Standard curve: mean absorbance at 260 nm (± SD, n = 3) of DNA solutions of known concentration. Trend line y = 22.4x + 0.006.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "What absorbance would you expect for 0.035 mg/mL?",
+       "options": [
+        "0.75",
+        "0.77",
+        "0.79",
+        "0.81",
+        "0.83"
+       ],
+       "answer": 2,
+       "explain": "y = 22.4 × 0.035 + 0.006 = 0.784 + 0.006 = 0.790.",
+       "marks": 2,
+       "id": "dat-6-q7a"
+      },
+      {
+       "type": "mcq",
+       "stem": "What DNA concentration would give an absorbance of 1.10?",
+       "options": [
+        "0.045 mg/mL",
+        "0.047 mg/mL",
+        "0.049 mg/mL",
+        "0.051 mg/mL",
+        "0.053 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "Undo the + 0.006 first, then divide by the gradient: (1.10 − 0.006) ÷ 22.4 = 0.0488, so 0.049.",
+       "marks": 2,
+       "id": "dat-6-q7b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is the most likely R² value?",
+       "options": [
+        "0.0",
+        "0.1 to 0.5",
+        "0.5 to 0.9",
+        "Greater than 0.9 but less than 1.0",
+        "1.0"
+       ],
+       "answer": 3,
+       "explain": "The points sit very close to the line but not exactly on it.",
+       "marks": 2,
+       "id": "dat-6-q7c"
+      },
+      {
+       "type": "mcq",
+       "stem": "Which is the independent variable?",
+       "options": [
+        "Absorbance",
+        "DNA concentration",
+        "Wavelength",
+        "R²",
+        "Volume of TE buffer"
+       ],
+       "answer": 1,
+       "explain": "Concentration is set by the dilutions (x-axis); absorbance is measured in response (y-axis).",
+       "marks": 2,
+       "id": "dat-6-q7d"
+      }
+     ],
+     "img": "assets/exam-img/dat6_curve.png",
+     "id": "dat-6-q7"
+    },
+    {
+     "stem": "Standards were made from DNA sample A (0.5 mg/mL), each made up to 1000 µL with TE buffer.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "A tube has 120 µL of sample A and 880 µL of TE. What is its concentration?",
+       "options": [
+        "0.006 mg/mL",
+        "0.012 mg/mL",
+        "0.06 mg/mL",
+        "0.12 mg/mL",
+        "0.6 mg/mL"
+       ],
+       "answer": 2,
+       "explain": "120 µL in 1000 µL is a 0.12 dilution: 0.5 × 0.12 = 0.06 mg/mL.",
+       "marks": 2,
+       "id": "dat-6-q8a"
+      },
+      {
+       "type": "mcq",
+       "stem": "An unknown diluted 1 in 25 reads 0.030 mg/mL from the standard curve. What was the original concentration?",
+       "options": [
+        "0.0012 mg/mL",
+        "0.030 mg/mL",
+        "0.30 mg/mL",
+        "0.75 mg/mL",
+        "1.2 mg/mL"
+       ],
+       "answer": 3,
+       "explain": "The curve gives the diluted value; multiply back by the dilution factor: 0.030 × 25 = 0.75 mg/mL.",
+       "marks": 2,
+       "id": "dat-6-q8b"
+      },
+      {
+       "type": "mcq",
+       "stem": "What is 0.06 mg/mL in µg/mL?",
+       "options": [
+        "0.6 µg/mL",
+        "6 µg/mL",
+        "60 µg/mL",
+        "600 µg/mL",
+        "6000 µg/mL"
+       ],
+       "answer": 2,
+       "explain": "1 mg = 1000 µg, so 0.06 × 1000 = 60 µg/mL.",
+       "marks": 2,
+       "id": "dat-6-q8c"
+      }
+     ],
+     "id": "dat-6-q8"
+    },
+    {
+     "stem": "Each standard was read three times.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "The readings for one tube were 1.21, 1.25 and 1.26. What is the mean?",
+       "options": [
+        "1.22",
+        "1.23",
+        "1.24",
+        "1.25",
+        "1.26"
+       ],
+       "answer": 2,
+       "explain": "(1.21 + 1.25 + 1.26) ÷ 3 = 3.72 ÷ 3 = 1.24.",
+       "marks": 2,
+       "id": "dat-6-q9a"
+      },
+      {
+       "type": "mcq",
+       "stem": "Another tube read 0.48, 0.47 and 0.71. What is the best value to use?",
+       "options": [
+        "0.475",
+        "0.55",
+        "0.59",
+        "0.71",
+        "0.48"
+       ],
+       "answer": 0,
+       "explain": "0.71 is clearly anomalous, so leave it out: (0.48 + 0.47) ÷ 2 = 0.475. Including it gives 0.55, dragged up by the error.",
+       "marks": 2,
+       "id": "dat-6-q9b"
+      }
+     ],
+     "id": "dat-6-q9"
+    },
+    {
+     "stem": "Tube 6 contained TE buffer only.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "Why is it included?",
+       "options": [
+        "To give the highest absorbance",
+        "To zero the spectrophotometer, so only the DNA's absorbance is measured",
+        "To make the curve steeper",
+        "To check the wavelength",
+        "To dilute the unknown"
+       ],
+       "answer": 1,
+       "explain": "The blank contains everything except DNA. Zeroing on it removes the buffer's and cuvette's absorbance, so the readings are due to DNA alone.",
+       "marks": 2,
+       "id": "dat-6-q10a"
+      }
+     ],
+     "id": "dat-6-q10"
+    }
+   ]
+  },
+  {
    "id": "gen-l1",
    "title": "Heredity and DNA",
    "lecture": "Lecture 1",
