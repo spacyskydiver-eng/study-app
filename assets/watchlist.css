@@ -143,3 +143,35 @@
   .wl-ohlc { right: 56px; font-size: .66em; }
   .wl-up { grid-template-columns: 78px 44px 1fr; font-size: .82em; }
 }
+
+/* Trading 212 */
+.wl-tag { font-size: .62em; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; padding: 2px 8px; border-radius: 99px; background: rgba(59,130,246,.15); color: #60A5FA; margin-left: 6px; vertical-align: 2px; }
+.wl-steps { margin: 8px 0 0; padding-left: 20px; font-size: .88em; line-height: 1.6; }
+.wl-steps code { font-size: .9em; padding: 1px 5px; border-radius: 4px; background: var(--background-modifier-hover); user-select: all; overflow-wrap: anywhere; }
+.wl-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 6px 0 4px; }
+.wl-stat { padding: 10px 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); min-width: 0; }
+.wl-stat span { display: block; font-size: .72em; color: var(--text-faint); margin-bottom: 2px; }
+.wl-stat b { font-size: 1.02em; white-space: nowrap; }
+.wl-stat small { font-weight: 500; opacity: .8; }
+.is-up { color: #10B981; } .is-down { color: #F43F5E; }
+.wl-positions { display: flex; flex-direction: column; }
+.wl-pos { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--background-modifier-border); font-size: .86em; }
+.wl-pos:last-child { border-bottom: 0; }
+.wl-pos-name { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.wl-pos-name span { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-pos-name .wl-tick-s { cursor: pointer; color: var(--co, var(--text-normal)); font-size: .92em; }
+.wl-pos-num { display: flex; flex-direction: column; color: var(--text-muted); font-size: .92em; }
+.wl-pos-val { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.wl-pos-val span { font-size: .88em; }
+.wl-jadd { display: grid; grid-template-columns: 130px 90px 90px minmax(0, 1fr) auto; gap: 6px; margin-bottom: 8px; }
+.wl-jadd input, .wl-jadd select, .wl-jfields textarea { font: inherit; font-size: .85em; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); min-width: 0; }
+.wl-jrow { border-bottom: 1px solid var(--background-modifier-border); padding: 6px 0; }
+.wl-jrow summary { display: flex; gap: 10px; align-items: baseline; cursor: pointer; font-size: .86em; list-style: none; flex-wrap: wrap; }
+.wl-jrow summary::-webkit-details-marker { display: none; }
+.wl-jrow summary em { margin-left: auto; font-size: .9em; }
+.wl-jfields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px 0 4px; position: relative; }
+.wl-jfields label span { display: block; font-size: .72em; color: var(--text-faint); margin-bottom: 3px; }
+.wl-jfields textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.wl-jfields .wl-x { position: absolute; right: 0; top: -26px; }
+@container (max-width: 760px) { .wl-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .wl-jfields { grid-template-columns: 1fr; } .wl-jadd { grid-template-columns: 1fr 1fr 1fr; } .wl-jadd input[name=thesis] { grid-column: 1 / -1; } .wl-jadd button { grid-column: 1 / -1; } }
+@container (max-width: 520px) { .wl-pos { grid-template-columns: minmax(0, 1fr) auto; } .wl-pos-num { grid-column: 1; grid-row: 2; flex-direction: row; gap: 8px; } .wl-pos-val { grid-row: 1 / 3; grid-column: 2; } }

@@ -1,4 +1,5 @@
 import { investApi, cronTick } from "./invest.js";
+import { t212Api } from "./t212.js";
 /* PIN-gates the whole site: every request must carry a valid signed session cookie, set by
    entering the PIN at /pin, before it's allowed through to the static assets. Mirrors the book
    engine's PIN/session scheme (same HMAC-signed-expiry cookie, same D1 pin_attempts rate limit,
@@ -870,6 +871,7 @@ export default {
       if (url.pathname === "/api/ping") return json({ ok: true, version: (env.CF_VERSION && env.CF_VERSION.id) || "" });
       if (url.pathname.startsWith("/api/fc/")) return handleFc(request, env, url);
       if (url.pathname.startsWith("/api/invest/")) return investApi(request, env, url, ctx);
+      if (url.pathname.startsWith("/api/t212/")) return t212Api(request, env, url);
       if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision|progress)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
       // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
       const res = await env.ASSETS.fetch(request);

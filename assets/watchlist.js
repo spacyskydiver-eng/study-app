@@ -13,6 +13,7 @@ const TYPES = {
   paper: { label: 'Paper', color: '#A3E635', short: 'P' },
   news: { label: 'News', color: '#94A3B8', short: 'N' },
   catalyst: { label: 'Coming up', color: '#F472B6', short: 'C' },
+  mine: { label: 'My trades', color: '#E5E7EB', short: 'B' },
 };
 const INTERVALS = [['5min', '5m'], ['1h', '1H'], ['1day', '1D'], ['1week', '1W']];
 const ZOOMS = [['1m', '1M', 31], ['3m', '3M', 92], ['6m', '6M', 183], ['1y', '1Y', 366], ['5y', '5Y', 1830], ['all', 'All', 0]];
@@ -27,6 +28,7 @@ const S = {
   style: store.get('wl:style', 'candles'), ma: store.get('wl:ma', true), show: store.get('wl:show', { key: true, trial: true, paper: true, news: true }),
   fSym: 'all', fType: 'all', shown: 40, sel: null,
 };
+let tz = { status: null, account: null, accErr: null, orders: [], journal: [], mine: [] };   // Trading 212
 let quotes = null, quoteErr = null, events = [], bars = null, barsErr = null, jobs = null, checking = null;
 let gen = 0;          // bumped each time the page opens, so a check started by an earlier visit stops
 let chart = null, mainSeries = null, volSeries = null, ma50 = null, ma200 = null, groups = new Map();
@@ -71,6 +73,7 @@ function shell(view) {
       <div class="wl-hint wl-dim">Drag to move, scroll or pinch to zoom, double-click to reset. Tap a marker to see what happened that day.</div>
       <div class="wl-pin" data-pinbox></div>
     </section>
+    <section class="wl-panel wl-t212" data-t212></section>
     <section class="wl-panel"><h2>Coming up</h2><div data-upcoming></div></section>
     <section class="wl-panel"><h2>Updates</h2>
       <div class="wl-chips" data-fsym></div><div class="wl-chips" data-ftype></div>
@@ -120,7 +123,7 @@ function tools(view) {
     ${seg('iv', INTERVALS, S.iv)}
     ${intraday() ? '' : seg('zoom', ZOOMS.map(z => [z[0], z[1]]), S.zoom)}
     <div class="wl-seg">${[['candles', 'Candles'], ['line', 'Line']].map(([k, l]) => `<button data-style="${k}" class="${S.style === k ? 'is-active' : ''}">${l}</button>`).join('')}<button data-ma class="${S.ma ? 'is-active' : ''}" title="50 and 200 bar moving averages">MA</button></div>
-    <div class="wl-marks">${Object.entries(TYPES).filter(([k]) => k !== 'catalyst').map(([k, t]) => `<button data-mark="${k}" class="${S.show[k] ? 'is-active' : ''}" style="--c:${t.color}"><i></i>${t.label}</button>`).join('')}</div>`;
+    <div class="wl-marks">${Object.entries(TYPES).filter(([k]) => k !== 'catalyst' && (k !== 'mine' || (tz.status && tz.status.configured))).map(([k, t]) => `<button data-mark="${k}" class="${S.show[k] ? 'is-active' : ''}" style="--c:${t.color}"><i></i>${t.label}</button>`).join('')}</div>`;
 }
 
 const css = name => getComputedStyle(document.body).getPropertyValue(name).trim();
@@ -143,7 +146,7 @@ function markerGroups() {
   if (!bars || !bars.length) return [];
   const days = bars.map(b => b[0].slice(0, 10));
   const first = days[0], last = days[days.length - 1];
-  for (const e of events) {
+  for (const e of events.concat(tz.mine)) {
     if (e.symbol !== S.sym || !S.show[e.type] || e.date < first || e.date > last) continue;
     let i;
     if (S.iv === '1week') { i = days.findIndex(d => d > e.date); i = i < 0 ? days.length - 1 : Math.max(0, i - 1); }
@@ -152,11 +155,15 @@ function markerGroups() {
     if (!groups.has(k)) groups.set(k, { i, es: [] });
     groups.get(k).es.push(e);
   }
-  const rank = { key: 0, trial: 1, paper: 2, news: 3 };
+  const rank = { mine: -1, key: 0, trial: 1, paper: 2, news: 3 };
   const marks = [];
   for (const [k, g] of groups) {
     g.es.sort((a, b) => rank[a.type] - rank[b.type]);
-    const top = g.es[0].type, n = g.es.length;
+    // your own buys and sells get their own arrows, under the bar for a buy and over it for a sell
+    for (const m of g.es.filter(e => e.type === 'mine')) marks.push({ time: timeOf(bars[g.i]), position: m.side === 'SELL' ? 'aboveBar' : 'belowBar', color: m.side === 'SELL' ? DOWN : UP, shape: m.side === 'SELL' ? 'arrowDown' : 'arrowUp', text: m.side === 'SELL' ? 'S' : 'B', size: 1.2, id: 'mine:' + k + m.id });
+    const others = g.es.filter(e => e.type !== 'mine');
+    if (!others.length) continue;
+    const top = others[0].type, n = others.length;
     marks.push({ time: timeOf(bars[g.i]), position: top === 'key' || top === 'news' ? 'aboveBar' : 'belowBar', color: TYPES[top].color,
       shape: top === 'key' ? 'arrowDown' : top === 'paper' ? 'square' : 'circle', text: n > 1 ? String(n) : TYPES[top].short, size: top === 'key' ? 1.4 : 1, id: k });
   }
@@ -255,6 +262,7 @@ const evRow = (e) => `<div class="wl-ev" style="--tc:${(TYPES[e.type] || TYPES.n
   <div class="wl-ev-title">${e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a>` : esc(e.title)}</div>
   ${e.detail ? `<div class="wl-ev-detail">${esc(e.detail)}</div>` : ''}</div>`;
 function pinDetail(view) {
+  if (!groups.get(S.sel)) return pinHint(view);
   const g = groups.get(S.sel); if (!g) return pinHint(view);
   const r = reaction(g.i, g.es[0].date);
   q(view, '[data-pinbox]').innerHTML = `<div class="wl-pin-head"><b>${fmtDate(g.es[0].date)}</b>${r ? `<span>Share price around this: ${r}</span>` : '<span></span>'}<button class="wl-x" data-unpin aria-label="Close">${icon('x')}</button></div>${g.es.map(evRow).join('')}`;
@@ -273,7 +281,7 @@ function chips(view) {
   const t = today(), counts = {}, per = {};
   for (const e of events) if (e.date <= t) { counts[e.type] = (counts[e.type] || 0) + 1; per[e.symbol] = (per[e.symbol] || 0) + 1; }
   q(view, '[data-fsym]').innerHTML = [['all', 'All companies']].concat(CFG.companies.map(c => [c.symbol, c.symbol])).map(([k, l]) => `<button data-fsym="${k}" class="${S.fSym === k ? 'is-active' : ''}"${k !== 'all' ? ` style="--co:${co(k).color}"` : ''}>${l}${k !== 'all' && per[k] ? ` <small>${per[k]}</small>` : ''}</button>`).join('');
-  q(view, '[data-ftype]').innerHTML = [['all', 'Everything']].concat(Object.entries(TYPES).filter(([k]) => k !== 'catalyst').map(([k, x]) => [k, x.label])).map(([k, l]) => `<button data-ftype="${k}" class="${S.fType === k ? 'is-active' : ''}">${l}${k !== 'all' && counts[k] ? ` <small>${counts[k]}</small>` : ''}</button>`).join('');
+  q(view, '[data-ftype]').innerHTML = [['all', 'Everything']].concat(Object.entries(TYPES).filter(([k]) => k !== 'catalyst' && k !== 'mine').map(([k, x]) => [k, x.label])).map(([k, l]) => `<button data-ftype="${k}" class="${S.fType === k ? 'is-active' : ''}">${l}${k !== 'all' && counts[k] ? ` <small>${counts[k]}</small>` : ''}</button>`).join('');
 }
 function feed(view) {
   const t = today();
@@ -295,6 +303,98 @@ function sources(view) {
   el.innerHTML = `<summary>${checking ? `Checking ${checking}…` : `Sources: ${jobs.length - bad.length - never.length} of ${jobs.length} working${last ? ', last update collected ' + ago(last) : ''}`}${bad.length ? ` <span class="wl-bad">${bad.length} failing</span>` : ''}</summary>
     <div class="wl-srclist">${jobs.map(j => { const [s, k] = j.job.split(':'); const err = /^error/.test(j.result);
       return `<div class="${err ? 'is-err' : ''}"><b>${s}</b> ${SRC[k]}<span>${!j.at ? 'not checked yet' : err ? esc(j.result.slice(7)) : `${esc(j.result)} found, ${ago(j.at)}`}</span></div>`; }).join('')}</div>`;
+}
+
+/* ------------------------------------------------------------ Trading 212 */
+const gbp = (v, cur) => v == null ? '–' : (v < 0 ? '−' : '') + ({ GBP: '£', USD: '$', EUR: '€' }[cur] || (cur ? cur + ' ' : '£')) + Math.abs(v).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pnlCls = v => v > 0 ? 'is-up' : v < 0 ? 'is-down' : '';
+function tzSetup() {
+  const live = tz.status && tz.status.env === 'live';
+  return `<h2>My Trading 212</h2>
+    <p class="wl-dim">Link your Trading 212 ${live ? 'real-money' : 'practice'} account to see your holdings here, your buys and sells on the chart, and a trading journal filled in from your orders. The link is read-only: the site can't place or cancel trades.</p>
+    <ol class="wl-steps">
+      <li>In the Trading 212 app, switch to the <b>practice</b> Invest account (☰ menu, switch at the bottom).</li>
+      <li>☰ → <b>Settings</b> → <b>API (Beta)</b> → accept the risk warning → <b>Generate API key</b>.</li>
+      <li>Tick only <b>Account data</b>, <b>Portfolio</b> and <b>History</b>. Leave <b>Orders</b> unticked.</li>
+      <li>Name it "study site". IP access: <b>unrestricted</b> (the site has no fixed address; the missing Orders permission is what keeps it safe).</li>
+      <li>Copy the API key and the secret (the secret is shown once). Don't paste them anywhere but the terminal.</li>
+      <li>In the study-app folder run <code>npx wrangler secret put T212_API_KEY</code> and paste the key, then <code>npx wrangler secret put T212_API_SECRET</code> and paste the secret. The site uses them straight away.</li>
+    </ol>`;
+}
+function tzPanel(view) {
+  const el = q(view, '[data-t212]'); if (!el) return;
+  if (!tz.status) { el.innerHTML = '<h2>My Trading 212</h2><div class="wl-empty"><span class="books-spinner"></span></div>'; return; }
+  if (!tz.status.configured) { el.innerHTML = tzSetup(); return; }
+  const a = tz.account, cur = a ? a.currency : 'GBP';
+  const tag = `<span class="wl-tag">${tz.status.env === 'live' ? 'Real money' : 'Practice'}</span>`;
+  if (tz.accErr && !a) { el.innerHTML = `<h2>My Trading 212 ${tag}</h2><div class="wl-notice">${esc(tz.accErr)}</div>`; return; }
+  if (!a) { el.innerHTML = `<h2>My Trading 212 ${tag}</h2><div class="wl-empty"><span class="books-spinner"></span> Loading your account…</div>`; return; }
+  const ret = a.cost ? 100 * (a.unrealised || 0) / a.cost : null;
+  const stat = (k, v, cls = '') => `<div class="wl-stat"><span>${k}</span><b class="${cls}">${v}</b></div>`;
+  const pos = a.positions.slice().sort((x, y) => (y.value || 0) - (x.value || 0)).map(x => {
+    const watched = co(x.symbol), pct = x.cost ? 100 * (x.pnl || 0) / x.cost : null;
+    return `<div class="wl-pos"${watched ? ` style="--co:${watched.color}"` : ''}>
+      <div class="wl-pos-name">${watched ? `<button class="wl-tick-s" data-sym="${x.symbol}">${esc(x.symbol)}</button>` : `<b class="wl-tick-s">${esc(x.symbol)}</b>`}<span>${esc(x.name)}</span></div>
+      <div class="wl-pos-num"><span>${x.quantity != null ? +x.quantity.toFixed(4) : '–'} @ ${money(x.avgPrice, x.currency)}</span><span>now ${money(x.price, x.currency)}</span></div>
+      <div class="wl-pos-val"><b>${gbp(x.value, cur)}</b><span class="${pnlCls(x.pnl)}">${x.pnl != null ? (x.pnl > 0 ? '+' : '') + gbp(x.pnl, cur) : ''}${pct != null ? ` (${signed(pct)})` : ''}</span></div>
+    </div>`; }).join('');
+  el.innerHTML = `<h2>My Trading 212 ${tag}${tz.account.stale ? '<span class="wl-dim wl-asof">saved copy, Trading 212 didn\'t answer</span>' : ''}</h2>
+    <div class="wl-stats">${stat('Account value', gbp(a.totalValue, cur))}${stat('Cash free', gbp(a.cash, cur))}${stat('Invested', gbp(a.invested, cur))}${stat('Open profit/loss', (a.unrealised > 0 ? '+' : '') + gbp(a.unrealised, cur) + (ret != null ? ` <small>${signed(ret)}</small>` : ''), pnlCls(a.unrealised))}${stat('Banked profit/loss', (a.realised > 0 ? '+' : '') + gbp(a.realised, cur), pnlCls(a.realised))}</div>
+    ${pos ? `<h3>Holdings</h3><div class="wl-positions">${pos}</div>` : '<p class="wl-dim">No open positions.</p>'}
+    <h3>Trading journal</h3>
+    <form class="wl-jadd" data-jadd>
+      <input type="date" name="date" value="${today()}" aria-label="Date">
+      <input name="ticker" placeholder="Ticker" maxlength="10" aria-label="Ticker" list="wl-syms">
+      <datalist id="wl-syms">${CFG.companies.map(c => `<option value="${c.symbol}">`).join('')}</datalist>
+      <select name="decision" aria-label="Decision"><option>Skip</option><option>Watch</option><option>Idea</option></select>
+      <input name="thesis" placeholder="Why (one sentence)" maxlength="400" aria-label="Why">
+      <button class="wl-btn" type="submit">Add note</button>
+    </form>
+    <div class="wl-journal" data-journal>${journalRows(cur)}</div>`;
+}
+function journalRows(cur) {
+  const notes = new Map(tz.journal.map(j => [j.id, j]));
+  const rows = tz.orders.filter(o => !o.status || o.status === 'FILLED' || o.quantity).map(o => ({ o, j: notes.get(o.id) || {}, date: (o.at || '').slice(0, 10) }));
+  for (const j of tz.journal) if (!tz.orders.some(o => o.id === j.id)) rows.push({ o: null, j, date: j.date });
+  rows.sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (!rows.length) return '<p class="wl-dim">Your orders appear here once you trade in the linked account. Add notes for things you decided not to buy, too.</p>';
+  const field = (id, k, label, v, ph) => `<label><span>${label}</span><textarea data-jid="${esc(id)}" data-jk="${k}" rows="2" placeholder="${ph}">${esc(v || '')}</textarea></label>`;
+  return rows.slice(0, 80).map(({ o, j, date }) => {
+    const id = o ? o.id : j.id, sym = o ? o.symbol : j.ticker, c = co(sym);
+    const head = o
+      ? `<b class="${o.side === 'SELL' ? 'is-down' : 'is-up'}">${o.side === 'SELL' ? 'Sold' : 'Bought'}</b> ${o.quantity != null ? +(+o.quantity).toFixed(4) : ''} ${esc(sym)} at ${money(o.price, o.currency)}${o.value != null ? ` · ${gbp(Math.abs(o.value), cur)}` : ''}${o.fees ? ` · fees ${gbp(o.fees, cur)}` : ''}${o.pnl ? ` · <span class="${pnlCls(o.pnl)}">${o.pnl > 0 ? '+' : ''}${gbp(o.pnl, cur)} banked</span>` : ''}`
+      : `<b>${esc(j.decision || 'Note')}</b> ${esc(sym || '')}`;
+    const done = j.thesis || j.lesson;
+    return `<details class="wl-jrow"${c ? ` style="--co:${c.color}"` : ''}${!done && o ? ' open' : ''}>
+      <summary><span class="wl-up-date">${date ? fmtDate(date) : ''}</span><span>${head}</span>${!done ? '<em class="wl-dim">add notes</em>' : ''}</summary>
+      <div class="wl-jfields">${field(id, 'thesis', 'Why', j.thesis, 'The reason, in one sentence')}${field(id, 'sell_rule', 'Sell rule', j.sell_rule, 'What would make you sell?')}${field(id, 'lesson', 'Lesson (later)', j.lesson, 'Fill in 2 to 4 weeks later')}
+      ${o ? '' : `<button class="wl-x" data-jdel="${esc(id)}" title="Delete note">${icon('x')}</button>`}</div>
+      <input type="hidden" data-jmeta="${esc(id)}" data-ticker="${esc(sym || '')}" data-date="${esc(date || '')}" data-decision="${esc(o ? o.side : j.decision || '')}">
+    </details>`;
+  }).join('');
+}
+async function saveJournal(view, id) {
+  const meta = q(view, `[data-jmeta="${CSS.escape(id)}"]`); if (!meta) return;
+  const val = k => { const t = q(view, `textarea[data-jid="${CSS.escape(id)}"][data-jk="${k}"]`); return t ? t.value : ''; };
+  const body = { id, ticker: meta.dataset.ticker, date: meta.dataset.date, decision: meta.dataset.decision, thesis: val('thesis'), sell_rule: val('sell_rule'), lesson: val('lesson') };
+  try { await api('../t212/journal', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); } catch (e) { return; }
+  const i = tz.journal.findIndex(j => j.id === id);
+  if (i >= 0) tz.journal[i] = Object.assign(tz.journal[i], body); else tz.journal.push(body);
+}
+async function loadT212(view) {
+  try { tz.status = await api('../t212/status'); } catch (e) { tz.status = { configured: false }; }
+  tools(view); tzPanel(view);
+  if (!tz.status.configured) return;
+  const [acc, ord, jr] = await Promise.all([api('../t212/account').catch(() => null), api('../t212/orders').catch(() => null), api('../t212/journal').catch(() => null)]);
+  if (acc && !acc.error) { tz.account = acc; tz.accErr = null; } else tz.accErr = (acc && acc.message) || 'Couldn\'t reach Trading 212.';
+  if (ord && ord.orders) {
+    tz.orders = ord.orders;
+    tz.mine = ord.orders.filter(o => o.at && o.quantity).map(o => ({ id: o.id, symbol: o.symbol, side: o.side, date: o.at.slice(0, 10), type: 'mine', source: tz.status.env === 'live' ? 'Trading 212' : 'Trading 212 practice',
+      title: `${o.side === 'SELL' ? 'You sold' : 'You bought'} ${+(+o.quantity).toFixed(4)} at ${money(o.price, o.currency)}`, detail: o.value != null ? `${gbp(Math.abs(o.value), tz.account ? tz.account.currency : 'GBP')} including fees of ${gbp(o.fees || 0, tz.account ? tz.account.currency : 'GBP')}` : '' }));
+  }
+  if (jr && jr.entries) tz.journal = jr.entries;
+  tzPanel(view);
+  if (chart && mainSeries) mainSeries.setMarkers(markerGroups());
 }
 
 /* ------------------------------------------------------------ data */
@@ -355,8 +455,19 @@ function show(view) {
     shell(view); cards(view); chartTop(view); tools(view); drawChart(view);
     loadQuotes(view); loadBars(view);
     loadEvents(view).then(() => alive && check(view, false));
+    if (S.show.mine === undefined) S.show.mine = true;
+    loadT212(view);
     timer = setInterval(() => { if (!document.hidden) loadQuotes(view); }, 120000);
     const save = () => { store.set('wl:sym', S.sym); store.set('wl:iv', S.iv); store.set('wl:zoom', S.zoom); store.set('wl:style', S.style); store.set('wl:ma', S.ma); store.set('wl:show', S.show); };
+    view.addEventListener('focusout', e => { const t = e.target; if (t.matches && t.matches('textarea[data-jid]')) saveJournal(view, t.dataset.jid); });
+    view.addEventListener('submit', async e => {
+      const f = e.target.closest('[data-jadd]'); if (!f) return;
+      e.preventDefault();
+      const d = Object.fromEntries(new FormData(f));
+      if (!d.ticker && !d.thesis) return;
+      try { const r = await api('../t212/journal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: d.ticker, date: d.date, decision: d.decision, thesis: d.thesis }) });
+        tz.journal.push({ id: r.id, ticker: (d.ticker || '').toUpperCase(), date: d.date, decision: d.decision, thesis: d.thesis }); tzPanel(view); } catch (err) { /* stays in the form */ }
+    });
     view.ondblclick = e => { if (e.target.closest('[data-chart]')) applyZoom(); };
     view.onclick = async e => {
       const t = e.target;
@@ -367,6 +478,8 @@ function show(view) {
       const st = t.closest('[data-style]'); if (st) { S.style = st.dataset.style; save(); tools(view); drawChart(view, true); return; }
       if (t.closest('[data-ma]')) { S.ma = !S.ma; save(); tools(view); drawChart(view, true); return; }
       const mk = t.closest('[data-mark]'); if (mk) { S.show[mk.dataset.mark] = !S.show[mk.dataset.mark]; save(); tools(view); if (mainSeries) mainSeries.setMarkers(markerGroups()); if (!groups.has(S.sel)) pinHint(view); return; }
+      const jd = t.closest('[data-jdel]');
+      if (jd) { const id = jd.dataset.jdel; try { await api('../t212/journal', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, delete: true }) }); } catch (err) { return; } tz.journal = tz.journal.filter(j => j.id !== id); tzPanel(view); return; }
       if (t.closest('[data-unpin]')) { S.sel = null; pinHint(view); return; }
       const fs = t.closest('[data-fsym]'); if (fs && fs.tagName === 'BUTTON') { S.fSym = fs.dataset.fsym; S.shown = 40; chips(view); feed(view); return; }
       const ft = t.closest('[data-ftype]'); if (ft && ft.tagName === 'BUTTON') { S.fType = ft.dataset.ftype; S.shown = 40; chips(view); feed(view); return; }
@@ -396,6 +509,6 @@ B.registerView('watchlist', { title: () => 'Live watchlist', icon: 'trending-up'
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261109'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261110'; document.head.appendChild(l);
 }
 })();
