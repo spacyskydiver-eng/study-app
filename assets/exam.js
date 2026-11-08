@@ -1,6 +1,7 @@
 /* Exam practice: exam-style papers answered in full, then auto-marked against a mark scheme.
    Papers come from data/exams.json (content/exams, built by tools/curate.py).
-   Drafts, marks and history are kept in this browser. */
+   Drafts, marks and history are kept in this browser and, when signed in on the Flashcards page,
+   travel with the flashcard progress so they show on every device (see examSync below). */
 (() => {
 'use strict';
 const B = window.BV;
@@ -17,6 +18,55 @@ async function load() {
 }
 const draftKey = id => 'exam:draft:' + id;
 const hist = () => store.get('exam:history', {});
+const changed = () => document.dispatchEvent(new Event('bv:exam-changed'));
+let listView = null;   // the papers list, if it is the view on screen (redrawn when another device's results arrive)
+
+/* ------------------------------------------------------------ cross-device sync
+   flashcards.js keeps a copy of all exam data in the signed-in progress blob. Nothing is ever dropped:
+   attempts are merged by their time, an edited mark (ed) beats an older one, the newest draft wins,
+   and a draft older than a submitted attempt is finished, so it goes. */
+function snapshot() {
+  const out = { history: hist(), last: {}, drafts: {} };
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) || '';
+      let m;
+      if ((m = k.match(/^bv:exam:last:(.+)$/))) { const v = store.get('exam:last:' + m[1], null); if (v) out.last[m[1]] = v; }
+      else if ((m = k.match(/^bv:exam:draft:(.+)$/))) { const v = store.get(draftKey(m[1]), null); if (v) out.drafts[m[1]] = { t: store.get('exam:draftAt:' + m[1], 0), a: v }; }
+    }
+  } catch (e) { /* storage unavailable */ }
+  return out;
+}
+const newer = (a, b) => !a ? b : !b ? a : ((b.at || 0) - (a.at || 0) || (b.ed || 0) - (a.ed || 0)) > 0 ? b : a;
+function merge(a, b) {
+  a = a || {}; b = b || {};
+  const out = { history: {}, last: {}, drafts: {} };
+  const ha = a.history || {}, hb = b.history || {};
+  for (const id of new Set([...Object.keys(ha), ...Object.keys(hb)])) {
+    const byAt = new Map();
+    for (const r of (ha[id] || []).concat(hb[id] || [])) { const o = byAt.get(r.at); if (!o || (r.ed || 0) > (o.ed || 0)) byAt.set(r.at, r); }
+    out.history[id] = [...byAt.values()].sort((x, y) => x.at - y.at);
+  }
+  const la = a.last || {}, lb = b.last || {};
+  for (const id of new Set([...Object.keys(la), ...Object.keys(lb)])) out.last[id] = newer(la[id], lb[id]);
+  const da = a.drafts || {}, db = b.drafts || {};
+  for (const id of new Set([...Object.keys(da), ...Object.keys(db)])) {
+    const d = !da[id] ? db[id] : !db[id] ? da[id] : (db[id].t || 0) > (da[id].t || 0) ? db[id] : da[id];
+    if (!(out.last[id] && out.last[id].at >= (d.t || 0))) out.drafts[id] = d;
+  }
+  return out;
+}
+function apply(m) {
+  if (!m) return;
+  const before = JSON.stringify(snapshot());
+  store.set('exam:history', m.history || {});
+  for (const [id, v] of Object.entries(m.last || {})) store.set('exam:last:' + id, v);
+  const mine = snapshot().drafts;
+  for (const id of Object.keys(mine)) if (!(m.drafts || {})[id]) { try { localStorage.removeItem('bv:' + draftKey(id)); localStorage.removeItem('bv:exam:draftAt:' + id); } catch (e) { /* ignore */ } }
+  for (const [id, d] of Object.entries(m.drafts || {})) { store.set(draftKey(id), d.a); store.set('exam:draftAt:' + id, d.t || 0); }
+  if (JSON.stringify(snapshot()) !== before && listView && listView.isConnected && X) list(listView);
+}
+B.examSync = { snapshot, merge, apply };
 const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
 const fmt = n => (Math.round(n * 2) / 2).toString();
 const letter = j => '(' + 'abcdefgh'[j] + ')';
@@ -80,9 +130,10 @@ function markPart(p, ans) {
 
 /* ------------------------------------------------------------ list */
 function list(view) {
+  listView = view;
   const H = hist();
   view.innerHTML = `<div class="exam-wrap">
-    <div class="exam-head"><h1>Exam practice</h1><p>Answer every part in full, then submit to have it marked against the mark scheme. There is no time limit, and your answers are saved as you type.</p></div>
+    <div class="exam-head"><h1>Exam practice</h1><p>Answer every part in full, then submit to have it marked against the mark scheme. There is no time limit, and your answers are saved as you type.${store.get('fcUser', null) ? '' : ` Results stay on this device until you sign in on the <a href="${B.hashFor('flashcards')}" class="exam-sync-link">Flashcards</a> page, which syncs them too.`}</p></div>
     ${X.subjects.map(s => `<section class="exam-subject"><h2>${esc(s.subject)} <span>${esc(s.module || '')}</span></h2>
       <div class="exam-grid">${s.papers.map(p => {
         const h = H[p.id] || [];
@@ -122,6 +173,7 @@ function input(p, a) {
 }
 
 function paper(view, p) {
+  listView = null;
   const draft = store.get(draftKey(p.id), {});
   let qn = 0;
   view.innerHTML = `<div class="exam-wrap">
@@ -152,7 +204,7 @@ function paper(view, p) {
   const left = $('.exam-left', form);
   const status = () => { const n = unanswered(collect()); left.textContent = n ? `${n} part${n > 1 ? 's' : ''} not answered` : 'All parts answered'; };
   let t = null, armed = false;
-  form.addEventListener('input', () => { clearTimeout(t); armed = false; t = setTimeout(() => { store.set(draftKey(p.id), collect()); status(); }, 300); });
+  form.addEventListener('input', () => { clearTimeout(t); armed = false; t = setTimeout(() => { store.set(draftKey(p.id), collect()); store.set('exam:draftAt:' + p.id, Date.now()); status(); changed(); }, 300); });
   status();
   form.addEventListener('submit', e => {
     e.preventDefault();
@@ -162,9 +214,10 @@ function paper(view, p) {
     const res = { at: Date.now(), answers: a, adj: {} };
     store.set('exam:last:' + p.id, res);
     store.set(draftKey(p.id), null);
-    try { localStorage.removeItem('bv:' + draftKey(p.id)); } catch (err) { /* ignore */ }
+    try { localStorage.removeItem('bv:' + draftKey(p.id)); localStorage.removeItem('bv:exam:draftAt:' + p.id); } catch (err) { /* ignore */ }
     const marks = score(p, res);
     const H = hist(); (H[p.id] = H[p.id] || []).push({ at: res.at, score: marks.got, max: marks.max }); store.set('exam:history', H);
+    changed();
     review(view, p, res);
   });
   view.querySelector('[data-go]').onclick = e => { e.preventDefault(); B.go('exam'); };
@@ -197,10 +250,11 @@ function schemeView(pt, m) {
 }
 
 function review(view, p, res) {
+  listView = null;
   const draw = () => {
     const S = score(p, res);
     const H = hist(); const h = H[p.id] || [];
-    const rec = h.find(r => r.at === res.at); if (rec && rec.score !== S.got) { rec.score = S.got; store.set('exam:history', H); }
+    const rec = h.find(r => r.at === res.at); if (rec && rec.score !== S.got) { rec.score = S.got; rec.ed = res.ed || Date.now(); store.set('exam:history', H); changed(); }
     let qn = 0;
     const per = pct(S.got, S.max);
     view.innerHTML = `<div class="exam-wrap">
@@ -221,7 +275,7 @@ function review(view, p, res) {
     $$('[data-adj]', view).forEach(b => b.onclick = () => {
       const id = b.dataset.adj; const pt = p.questions.flatMap(q => q.parts).find(x => x.id === id);
       const cur = S.parts[id].got; const nv = Math.max(0, Math.min(pt.marks, cur + parseFloat(b.dataset.d)));
-      res.adj[id] = nv; store.set('exam:last:' + p.id, res);
+      res.adj[id] = nv; res.ed = Date.now(); store.set('exam:last:' + p.id, res);
       const top = view.scrollTop; draw(); view.scrollTop = top;
     });
   };
@@ -250,4 +304,5 @@ B.registerView('exam-paper', {
     }).catch(() => fail(view));
   },
 });
+document.dispatchEvent(new Event('bv:exam-ready'));
 })();

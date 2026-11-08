@@ -63,6 +63,9 @@ function mergeProgress(local, remote) {
     const a = local.habits[h] || {}, b = remote.habits[h] || {}, o = out.habits[h] = {};
     for (const d of new Set([...Object.keys(a), ...Object.keys(b)])) o[d] = Math.abs(b[d] || 0) > Math.abs(a[d] || 0) ? b[d] : a[d];
   }
+  // exam practice (exam.js owns the format and the merge)
+  const EX = B.examSync;
+  out.exam = EX ? EX.merge(local.exam, remote.exam) : (remote.exam || local.exam);
   return out;   // newPerDay, goal, name, created come from local
 }
 async function api(path, opts = {}) {
@@ -81,9 +84,11 @@ function sync() {
         if (got.gate) { dirty = true; return; }     // the PIN has run out; the flashcard sign-in is still good
         if (got.status === 401) { account.user = null; store.set('fcUser', null); refreshAccountBar(); return; }
         if (!got.ok) { dirty = true; return; }
+        if (B.examSync) S.exam = B.examSync.merge(S.exam, B.examSync.snapshot());   // what exam.js has saved here
         let remote = null;
         try { remote = got.data.data ? JSON.parse(got.data.data) : null; } catch (e) { remote = null; }
         if (remote && remote.v === 1) { S = mergeProgress(S, Object.assign(blank(), remote)); store.set(KEY, S); }
+        if (B.examSync && S.exam) B.examSync.apply(S.exam);
         account.base = got.data.updated || 0;
         dirty = false;
         const put = await api('/api/fc/progress', { method: 'PUT', body: JSON.stringify({ data: JSON.stringify(S), base: account.base }) });
@@ -109,6 +114,7 @@ function schedulePush() {
 function pushNow() {
   if (!account.user || !dirty || account.base == null) return;
   clearTimeout(pushTimer);
+  if (B.examSync) S.exam = B.examSync.merge(S.exam, B.examSync.snapshot());
   const body = JSON.stringify({ data: JSON.stringify(S), base: account.base });
   fetch('/api/fc/progress', { method: 'PUT', credentials: 'same-origin', keepalive: body.length < 63000, headers: { 'Content-Type': 'application/json' }, body })
     .then(r => (r.ok ? r.json() : null)).then(d => { if (d && d.updated) { account.base = d.updated; dirty = false; } }).catch(() => {});
@@ -116,6 +122,11 @@ function pushNow() {
 window.addEventListener('pagehide', pushNow);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') pushNow(); else if (account.user) sync(); });
 window.addEventListener('online', () => sync());
+// exam practice saves go up with the flashcard progress; exam-ready catches the first load, where
+// flashcards.js runs (and syncs) before exam.js has registered
+const examSaved = () => { dirty = true; schedulePush(); };
+document.addEventListener('bv:exam-changed', examSaved);
+document.addEventListener('bv:exam-ready', examSaved);
 
 const hhmm = t => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 function accountBarHtml() {
