@@ -41,7 +41,7 @@ function snapshot() {
       let m;
       if ((m = k.match(/^bv:exam:last:(.+)$/))) { const v = store.get('exam:last:' + m[1], null); if (v) out.last[m[1]] = v; }
       else if ((m = k.match(/^bv:exam:draft:(.+)$/))) { const v = store.get(draftKey(m[1]), null); if (v) out.drafts[m[1]] = { t: store.get('exam:draftAt:' + m[1], 0), a: v }; }
-      else if ((m = k.match(/^bv:exam:ink:(.+)$/))) { const v = store.get('exam:ink:' + m[1], null); if (v && v.s && v.s.length) out.ink[m[1]] = v; }
+      else if ((m = k.match(/^bv:exam:ink:(.+)$/))) { const v = store.get('exam:ink:' + m[1], null); if (v && v.s) out.ink[m[1]] = v; /* an empty page is kept: it records a clear, so other devices clear too */ }
     }
   } catch (e) { /* storage unavailable */ }
   return out;

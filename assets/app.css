@@ -1,7 +1,10 @@
 /* Obsidian-like workspace. The vault's own theme (neural.css) loads on top. */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
-@supports (height: 100dvh) { html, body { height: 100dvh; } }   /* iPad Safari: fit the visible screen, not the one behind its toolbars */
+/* the app is the screen: pin the page so iPad Safari/Chrome can't scroll or pan the whole page (a second,
+   outer scroll) when something pokes a pixel past the edge; each pane scrolls on its own */
+body { position: fixed; inset: 0; width: auto; height: auto; overscroll-behavior: none; }
+.app-container { overflow: hidden; }
 body {
   --font-text: var(--font-text-theme, 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif);
   --font-interface: var(--font-interface-theme, var(--font-text));
@@ -37,6 +40,7 @@ button { font: inherit; color: inherit; }
 .workspace-split.is-collapsed { width: 0 !important; border: none; }
 .workspace-split.mod-root { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--background-primary); }
 .resize-handle { width: 5px; margin: 0 -2px; cursor: col-resize; z-index: 6; flex: none; }
+.mod-left-split.is-collapsed + .resize-handle, .resize-handle:has(+ .mod-right-split.is-collapsed) { display: none; }
 .resize-handle:hover, .resize-handle.is-dragging { background: var(--interactive-accent); opacity: .6; }
 
 .sidebar-tabs { display: flex; gap: 2px; padding: 6px 8px; border-bottom: 1px solid var(--background-modifier-border); flex: none; height: var(--header-height); align-items: center; }
