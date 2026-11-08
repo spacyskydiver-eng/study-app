@@ -692,7 +692,8 @@ body.is-phone .pg-box { width: 26px; height: 26px; margin: 5px 1px; }
 .ink-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .exam-host.ink-mouse .exam-wrap { cursor: crosshair; }
 .ink-bar { position: fixed; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 5px; overflow-y: auto; border-radius: 14px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 28px rgba(0,0,0,.28); scrollbar-width: none; }
-.exam-host.ink-on .exam-wrap { max-width: 980px; padding-right: 72px; }
+.view-content.exam-host.ink-on { overflow-x: hidden; }
+.exam-host.ink-on .exam-wrap { max-width: none; padding: 22px 72px 80px 26px; }   /* the paper uses the full width; the tool column sits in the right margin */
 .ink-btn { flex: none; display: grid; place-items: center; min-width: 36px; height: 36px; padding: 0 6px; border: 0; border-radius: 9px; background: none; color: var(--text-muted); cursor: pointer; font: inherit; font-size: 12.5px; }
 .ink-btn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ink-btn:hover { background: var(--background-modifier-hover); color: var(--text-normal); }

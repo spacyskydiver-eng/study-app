@@ -20,7 +20,7 @@ function attach(host, wrap, opts) {
   host.appendChild(layer);
   const bar = document.createElement('div');
   bar.className = 'ink-bar';
-  host.appendChild(bar);
+  document.body.appendChild(bar);   // outside the scrolling pane, so iPad scrolling can't drag or shake it
   let rulerEl = null;
 
   /* ---------- geometry: content px <-> stored units (1000 = paper width, y from the anchor's top) */
@@ -58,7 +58,7 @@ function attach(host, wrap, opts) {
     return p;
   }
   function render() {
-    layer.setAttribute('width', host.scrollWidth);
+    layer.setAttribute('width', host.clientWidth);
     layer.setAttribute('height', Math.max(host.scrollHeight, wrap.offsetTop + wrap.offsetHeight));
     const g = geo(); fw = g.f.w;
     layer.replaceChildren(...strokes.map(s => pathEl(s, toPx(s, g))));
