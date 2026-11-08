@@ -2,6 +2,78 @@
  "_about": "A year of past events for the live watchlist, researched on 8 November 2026. The Worker adds these to the feed; new events after this are collected automatically.",
  "events": [
   {
+   "symbol": "ARCT",
+   "date": "2025-11-10",
+   "type": "key",
+   "title": "Q3 2025 results: revenue $17.2M, cash $237.3M, runway into 2028",
+   "detail": "The U.S. filing for the KOSTAIVE COVID vaccine was delayed indefinitely, a third ARCT-032 cohort is testing 15 mg, more Q4 cost cuts are planned, and the CF Phase 3 start was pushed to 2027.",
+   "url": "https://www.businesswire.com/news/home/20251110988919/en",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "ARCT",
+   "date": "2025-12-15",
+   "type": "news",
+   "title": "CFO Andy Sassine to leave; controller named interim finance chief",
+   "detail": "Sassine left the board on 11 December and his employment ends on 31 December 2025.",
+   "url": "https://www.sec.gov/Archives/edgar/data/1768224/000119380525001734/e665044_8k-arct.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "ARCT",
+   "date": "2026-03-03",
+   "type": "key",
+   "title": "Q4/FY2025 results: FY revenue $82.0M, cash $232.8M, runway into Q2 2028",
+   "detail": "The safety committee cleared ARCT-032 for a 12-week Phase 2 study in up to 20 patients, and KOSTAIVE won UK MHRA approval in January.",
+   "url": "https://ir.arcturusrx.com/news-releases/news-release-details/arcturus-therapeutics-announces-fourth-quarter-and-fiscal-year-1",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "ARCT",
+   "date": "2026-05-07",
+   "type": "key",
+   "title": "Q1 2026 results: revenue $2.1M, cash $213.4M; ARCT-032 12-week cohort enrolling",
+   "detail": "Cohort 4 enrolment started in March, earlier than planned; an FDA Type C meeting in March set a path to a pediatric ARCT-810 study; and the company named a new CFO and CMO.",
+   "url": "https://ir.arcturusrx.com/news-releases/news-release-details/arcturus-therapeutics-announces-first-quarter-2026-financial",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "ARCT",
+   "date": "2026-07-02",
+   "type": "news",
+   "title": "Thermo Fisher collaboration to advance ARCT-032 for CF",
+   "detail": "Thermo Fisher will provide financial support, Phase 3 manufacturing and clinical services (through PPD) and get exclusive commercial manufacturing rights; the stock rose about 8%.",
+   "url": "https://www.businesswire.com/news/home/20260702861323/en/Arcturus-Therapeutics-Announces-Strategic-Collaboration-with-Thermo-Fisher-Scientific-to-Advance-ARCT-032-for-Cystic-Fibrosis",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "ARCT",
+   "date": "2026-08-06",
+   "type": "key",
+   "title": "Q2 2026 results; CSL Seqirus deal terminated, Arcturus regains KOSTAIVE rights",
+   "detail": "CSL pays $12M in cash and releases about $16M of liabilities; cash was $191.5M with runway through end-2028, and the ARCT-032 Phase 3 decision is due in Q4 2026.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0001768224/000119380526001039/e665679_ex99-1.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "ARCT",
+   "date": "2026-09-23",
+   "type": "key",
+   "title": "ARCT-810 OTC deficiency interim Phase 2 data; LUNAR 2.0 platform unveiled",
+   "detail": "At 0.5 mg/kg, mean glutamine reached the normal range and the drug was well tolerated; the next-generation candidate ARCT-2601 is planned, and Arcturus agreed to buy the AI company myNEO.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0001768224/000119380526001277/e665798_ex99-2.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "ARCT",
+   "date": "2026-11-05",
+   "type": "key",
+   "title": "Q3 2026 results: revenue $18.3M (incl. $12M CSL payment), cash $184.8M",
+   "detail": "ARCT-032 Phase 2 enrolment should finish by year-end and Cohort 4 data are due in Q2 2027; new PKU and gout programmes were added, and the myNEO acquisition closed.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0001768224/000119380526001439/e665874_ex99-1.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
    "symbol": "FDMT",
    "date": "2025-11-06",
    "type": "key",
@@ -164,6 +236,240 @@
    "source": "Researched 8 Nov 2026"
   },
   {
+   "symbol": "KRYS",
+   "date": "2025-11-03",
+   "type": "key",
+   "title": "Q3 2025 results: Vyjuvek revenue $97.8M",
+   "detail": "Vyjuvek revenue rose from $83.8M a year earlier, net income was $79.4M including a $31.4M tax benefit, and cash plus investments stood at $864.2M.",
+   "url": "https://www.globenewswire.com/news-release/2025/11/03/3179099/0/en/Krystal-Biotech-Announces-Third-Quarter-2025-Financial-and-Operating-Results.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-01-08",
+   "type": "key",
+   "title": "KB407 (CF) CORAL-1 top-dose interim data show CFTR delivered to lungs",
+   "detail": "In 6 evaluable patients, the inhaled HSV-1 gene therapy reached 29–42% of conducting-airway cells, with no KB407-related serious adverse events; the repeat-dose CORAL-3 study was set to start in 2Q 2026.",
+   "url": "https://ir.krystalbio.com/node/11076",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-01-11",
+   "type": "news",
+   "title": "JPM business update: preliminary Q4 2025 Vyjuvek revenue $106–107M",
+   "detail": "Preliminary full-year 2025 Vyjuvek revenue was $388–389M, with about $955M in cash and investments at year-end, ahead of the 12 January J.P. Morgan presentation.",
+   "url": "https://www.boardroomalpha.com/sec/krys-8-k-2026-01-12-0001711279-26-000008",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-02-09",
+   "type": "key",
+   "title": "FDA grants RMAT designation to KB707 for advanced NSCLC",
+   "detail": "This regenerative-medicine designation was based on durable responses seen with inhaled KB707 in the KYANITE-1 study and is Krystal's second RMAT.",
+   "url": "https://www.barchart.com/story/news/105649/krystal-biotech-announces-rmat-designation-granted-by-fda-to-kb707-for-the-treatment-of-advanced-or-metastatic-non-small-cell-lung-cancer",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-02-17",
+   "type": "key",
+   "title": "Q4/FY2025 results: Q4 Vyjuvek $107.1M, FY $389.1M",
+   "detail": "FY2025 net income was $204.8M and cash plus investments were $955.9M; 2026 non-GAAP R&D+SG&A guidance was set at $175–195M, and the KB304 Phase 2 start moved to 2027.",
+   "url": "https://www.globenewswire.com/news-release/2026/02/17/3239069/0/en/Krystal-Biotech-Announces-Fourth-Quarter-and-Full-Year-2025-Financial-and-Operating-Results.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-05-04",
+   "type": "key",
+   "title": "Q1 2026 results: Vyjuvek $116.4M (+32%)",
+   "detail": "Net income was $55.9M and cash was about $1.0B; the KB803 IOLITE trial was fully enrolled, and the FDA gave KB407 and KB111 platform technology designations in April.",
+   "url": "https://www.globenewswire.com/news-release/2026/05/04/3286550/0/en/Krystal-Biotech-Announces-First-Quarter-2026-Financial-and-Operating-Results.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-05-18",
+   "type": "key",
+   "title": "UK MHRA approves Vyjuvek for DEB from birth",
+   "detail": "This was Vyjuvek's fourth major approval after the US, EU and Japan; the MHRA granted it on 15 May, and the UK launch depends on reimbursement.",
+   "url": "https://ir.krystalbio.com/node/11341",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-05-20",
+   "type": "trial",
+   "title": "KB407 CORAL-1 interim results presented orally at ATS 2026",
+   "detail": "The cystic fibrosis gene therapy data were presented at the American Thoracic Society meeting; the presentation was scheduled in Krystal's 30 April release.",
+   "url": "https://www.globenewswire.com/news-release/2026/04/30/3284768/0/en/Krystal-Biotech-to-Present-at-Upcoming-Scientific-Conferences.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-05-31",
+   "type": "trial",
+   "title": "ASCO 2026: inhaled KB707 + pembrolizumab in NSCLC",
+   "detail": "In late-line lung cancer patients the combination gave a 31% objective response rate and a 75% disease control rate.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0001711279/000171127926000058/a2q26-ex991xpressrelease.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-07-20",
+   "type": "news",
+   "title": "Krystal set to join the S&P MidCap 400",
+   "detail": "Krystal moved up from the S&P SmallCap 600 effective 24 July, which brings index-fund buying.",
+   "url": "https://press.spglobal.com/2026-07-20-Krystal-Biotech-Set-to-Join-S-P-MidCap-400-Tutor-Perini-and-V2X-to-Join-S-P-SmallCap-600",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-08-03",
+   "type": "key",
+   "title": "Q2 2026 results: Vyjuvek $119.2M (+24%)",
+   "detail": "Net income was $54.8M and cash was about $1.1B; updated KB707 data and registrational plans were pushed to 1H 2027, and KB408 interim data to 2027.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0001711279/000171127926000058/a2q26-ex991xpressrelease.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-10-15",
+   "type": "trial",
+   "title": "KB113 shows broad basal cell carcinoma regression in Gorlin syndrome",
+   "detail": "In 3 patients, 83% of 83 lesions regressed, including 85% of lesions that were not injected; Krystal has started FDA discussions.",
+   "url": "https://www.globenewswire.com/news-release/2026/10/15/3381506/0/en/krystal-biotech-announces-positive-clinical-data-for-new-dermatology-program-kb113-demonstrating-broad-basal-cell-carcinoma-regression-in-patients-with-gorlin-syndrome.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "KRYS",
+   "date": "2026-11-02",
+   "type": "key",
+   "title": "Q3 2026 results: Vyjuvek $127.3M (+30%), $400M buyback; timelines slip to 2027",
+   "detail": "Net income was $63.1M and cash was $1.2B; KB803 topline moved to early 2027 and KB407 interim data to 1H 2027, and the stock fell despite beating forecasts.",
+   "url": "https://www.globenewswire.com/news-release/2026/11/2/3392990/0/en/krystal-biotech-announces-third-quarter-2026-financial-and-operating-results.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2025-11-03",
+   "type": "news",
+   "title": "Matthew Hawryluk appointed Chief Business Officer",
+   "detail": "He oversees business development, corporate strategy and alliance management.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-appoints-matthew-hawryluk-phd-mba-chief-business",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2025-11-07",
+   "type": "key",
+   "title": "Q3 2025 results: cash $227.0M, runway into 2027; new Wilson disease data at AASLD",
+   "detail": "The net loss was $50.6M, the AATD IND/CTA filing was guided for mid-2026, and new preclinical PM577 data were presented at the AASLD liver meeting.",
+   "url": "https://www.sec.gov/Archives/edgar/data/1894562/000162828025050415/q320258-kex991xpressrelease.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2025-12-07",
+   "type": "key",
+   "title": "NEJM publishes PM359 data in chronic granulomatous disease; ASH poster",
+   "detail": "Two patients reached 69% and 83% DHR+ neutrophils by Day 30, well above the 20% threshold expected for clinical benefit.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-announces-new-england-journal-medicine",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-03-03",
+   "type": "key",
+   "title": "FY2025 results: cash $191.4M, runway into 2027",
+   "detail": "The FY net loss was $201.1M; Prime plans a PM359 BLA after FDA alignment and expects preclinical CF proof-of-concept data in 2026.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-reports-full-year-2025-financial-results-and",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-04-16",
+   "type": "news",
+   "title": "Svetlana Makhni appointed Chief Financial Officer",
+   "detail": "She brings more than 20 years of biotech CFO and investment banking experience ahead of the first clinical trials of Prime's liver programmes.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-appoints-svetlana-makhni-chief-financial-officer",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-05-07",
+   "type": "key",
+   "title": "Q1 2026 results: cash $149.2M, runway into 2027",
+   "detail": "The net loss was $49.1M, with G&A costs up because of the Beam arbitration.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-reports-first-quarter-2026-financial-results-and",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-06-18",
+   "type": "trial",
+   "title": "New Zealand clears CTA for PM577a in Wilson disease",
+   "detail": "This is Prime's first clinical authorisation for an in vivo prime-editing therapy.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-announces-new-zealand-clearance-clinical-trial",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-06-22",
+   "type": "key",
+   "title": "FDA grants RMAT designation to PM359 for chronic granulomatous disease",
+   "detail": "RMAT makes the drug eligible for rolling and priority review of a BLA, which is planned for 1H 2027.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-receives-us-fda-regenerative-medicine-advanced",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-07-08",
+   "type": "key",
+   "title": "Prime wins binding arbitration with Beam over AATD programme PM647",
+   "detail": "The tribunal found PM647 is within Prime's field, found no breach and awarded no damages, which keeps the AATD programme going.",
+   "url": "https://investors.primemedicine.com/news-releases/news-release-details/prime-medicine-announces-positive-resolution-arbitration-beam",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-07-23",
+   "type": "key",
+   "title": "FDA clears IND for PM577a in Wilson disease",
+   "detail": "Together with the New Zealand clearance, this allows a global Phase 1/2 trial, with initial data expected in 2027.",
+   "url": "https://www.globenewswire.com/news-release/2026/07/23/3332566/0/en/index.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-08-06",
+   "type": "key",
+   "title": "Q2 2026 results: cash $108.8M, runway into 2027",
+   "detail": "The net loss was $42.1M, and the PM647 IND/CTA filing was guided for Q3 2026.",
+   "url": "https://www.sec.gov/Archives/edgar/data/0001894562/000162828026053878/q220268-kex991xpressrelease.htm",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-09-24",
+   "type": "key",
+   "title": "FDA clears IND for PM647 in alpha-1 antitrypsin deficiency",
+   "detail": "The first-in-human Phase 1/2 trial will start with lung-only adults, and initial data are expected in 2027.",
+   "url": "https://finviz.com/news/395375/prime-medicine-announces-us-fda-clearance-of-investigational-new-drug-application-for-pm647-in-alpha-1-antitrypsin-deficiency",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "PRME",
+   "date": "2026-10-05",
+   "type": "trial",
+   "title": "First patient dosed in global Phase 1/2 trial of PM577a in Wilson disease",
+   "detail": "This is Prime's first in vivo prime-editing patient; the FDA also granted PM577 Rare Pediatric Disease designation.",
+   "url": "https://finviz.com/news/398593/prime-medicine-announces-first-patient-dosed-in-global-phase-12-clinical-trial-of-pm577a-for-h1069q-mutated-wilson-disease",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
    "symbol": "SION",
    "date": "2025-11-05",
    "type": "key",
@@ -287,6 +593,267 @@
    "title": "Stifel 2026 Healthcare Conference fireside chat",
    "detail": "Scheduled for 8:40 a.m. ET, with a webcast on Sionna's investor site.",
    "url": "https://www.stocktitan.net/news/SION/sionna-therapeutics-to-participate-in-upcoming-november-2026-p6li05rnznll.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2025-11-03",
+   "type": "key",
+   "title": "Q3 2025 results: revenue $3.08B (+11%); FY25 guidance narrowed to $11.9–12.0B",
+   "detail": "Non-GAAP EPS was $4.80 versus $4.38 a year earlier, and CASGEVY sales of about $17M came in below what analysts expected.",
+   "url": "https://news.vrtx.com/news-releases/news-release-details/vertex-reports-third-quarter-2025-financial-results",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2025-11-03",
+   "type": "trial",
+   "title": "Zimislecel (T1D) Phase 3 dosing paused pending internal manufacturing analysis",
+   "detail": "Enrollment was complete, but finishing dosing was put on hold, which put the planned 2026 filing for the type 1 diabetes cell therapy in doubt.",
+   "url": "https://cckb.closeconcerns.com/r/29fc3cd3",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2025-11-08",
+   "type": "news",
+   "title": "Updated RUBY-3 povetacicept data in IgAN and pMN presented at ASN Kidney Week 2025",
+   "detail": "Longer-term Phase 1/2 data showed proteinuria kept falling in both kidney diseases, and Vertex held an investor event at the meeting.",
+   "url": "https://www.bakersfield.com/ap/news/vertex-presents-updated-phase-1-2-data-from-ruby-3-study-that-continue-to-demonstrate/article_95451799-148d-5e09-9cb8-777975e59010.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2025-12-06",
+   "type": "news",
+   "title": "First CASGEVY data in children aged 5–11 presented at ASH; global filings planned",
+   "detail": "Pivotal pediatric data were consistent with results in patients 12 and older, and Vertex said it would file worldwide to widen the age range.",
+   "url": "https://www.thepharmaletter.com/biotech-news/vertex-presents-new-data-on-casgevy-at-ash",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-01-11",
+   "type": "news",
+   "title": "JPM pipeline update: CASGEVY passed $100M in 2025; FDA priority voucher for pediatric filing",
+   "detail": "Vertex set its 2026 milestones, including completing the povetacicept IgAN BLA in 1H26 and expecting JOURNAVX prescriptions to more than triple.",
+   "url": "https://www.businesswire.com/news/home/20260111805110/en/Vertex-Provides-Pipeline-and-Business-Updates-in-Advance-of-Upcoming-Investor-Meetings",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-02-02",
+   "type": "news",
+   "title": "Exclusive global license from WuXi Biologics for a trispecific T-cell engager",
+   "detail": "Vertex paid an undisclosed upfront fee for a preclinical immunology asset, adding to its pipeline.",
+   "url": "https://tools.prnewswire.com/en-us/live/20823/release/20260202EN77232",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-02-12",
+   "type": "key",
+   "title": "Q4 2025 results: revenue $3.19B (+10%); FY26 guidance $12.95–13.1B",
+   "detail": "Full-year 2025 revenue was $12.0B (+9%), and Vertex guided to at least $500M from non-CF products in 2026.",
+   "url": "https://www.businesswire.com/news/home/20260212596146/en/Vertex-Reports-Fourth-Quarter-and-Full-Year-2025-Financial-Results/",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-03-05",
+   "type": "news",
+   "title": "JOURNAVX Phase 4 data at AAPM: 90.9% opioid-free after aesthetic surgery",
+   "detail": "In an open-label study of 99 patients, 90.7% rated the non-opioid painkiller's effectiveness as good or better.",
+   "url": "https://businesswire.com/news/home/20260305209438/en/Vertex-to-Present-New-Data-on-JOURNAVX-That-Demonstrates-Effective-Pain-Management-Following-Aesthetic-and-Reconstructive-Procedures",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-03-09",
+   "type": "key",
+   "title": "Phase 3 RAINIER: povetacicept meets primary and all secondary endpoints in IgAN",
+   "detail": "Week-36 interim analysis showed a 49.8% placebo-adjusted cut in proteinuria (p<0.0001), clearing the way for an accelerated-approval filing.",
+   "url": "https://www.hcplive.com/view/ranier-povetacicept-achieves-primary-and-all-secondary-endpoints-for-igan",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-03-31",
+   "type": "key",
+   "title": "Rolling BLA for povetacicept in IgAN completed with priority review voucher",
+   "detail": "Using the voucher shortens the expected FDA review to 6 months from acceptance instead of 10.",
+   "url": "https://www.stocktitan.net/sec-filings/VRTX/8-k-vertex-pharmaceuticals-inc-ma-reports-material-event-67ce0deab32f.html",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-04-01",
+   "type": "key",
+   "title": "FDA expands ALYFTREK and TRIKAFTA labels to cover ~95% of US CF patients",
+   "detail": "The labels now cover 564 (ALYFTREK) and 521 (TRIKAFTA) CFTR variants, with ALYFTREK approved from age 6 and TRIKAFTA from age 2.",
+   "url": "https://www.hcplive.com/view/fda-expands-cftr-modulator-labels-covering-95-of-us-cystic-fibrosis-patients",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-05-04",
+   "type": "key",
+   "title": "Q1 2026 results: revenue $2.99B (+8%); FY26 guidance reiterated",
+   "detail": "Non-GAAP EPS was $4.47 versus $4.06, and the US CASGEVY filing for ages 5–11 was completed.",
+   "url": "https://www.biospace.com/press-releases/vertex-reports-first-quarter-2026-financial-results",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-05-04",
+   "type": "trial",
+   "title": "VX-522 inhaled mRNA CF therapy (with Moderna) discontinued over tolerability",
+   "detail": "The Phase 1/2 study was stopped early for persistent tolerability problems, ending the program aimed at the roughly 10% of CF patients who can't use modulators.",
+   "url": "https://www.fiercebiotech.com/biotech/vertex-drops-moderna-partnered-inhaled-cystic-fibrosis-candidate-after-unresolved",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-05-04",
+   "type": "trial",
+   "title": "Zimislecel T1D study resumes dosing after manufacturing analysis",
+   "detail": "The manufacturing analysis was finished and several patients have been dosed since the restart, with updated timelines promised later in 2026.",
+   "url": "https://www.biospace.com/press-releases/vertex-reports-first-quarter-2026-financial-results",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-05-06",
+   "type": "news",
+   "title": "CASGEVY reimbursement agreement reached in Germany",
+   "detail": "The deal secures paid access for SCD and TDT patients 12 and older in a major European market.",
+   "url": "https://news.vrtx.com/press-releases",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-06-01",
+   "type": "key",
+   "title": "FDA accepts povetacicept BLA for IgAN accelerated approval; PDUFA Nov 30, 2026",
+   "detail": "Acceptance set a decision date for what could be Vertex's first kidney-disease drug.",
+   "url": "https://news.vrtx.com/node/35066",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-06-05",
+   "type": "key",
+   "title": "Pivotal ALYFTREK data in ages 2–5 presented at European CF Conference",
+   "detail": "Switching from TRIKAFTA cut sweat chloride by a further 9.6 mmol/L, with 92% of children below the 60 mmol/L diagnostic threshold.",
+   "url": "https://cysticfibrosisnewstoday.com/news/alyftrek-improved-cftr-function-young-children-cf/",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-06-11",
+   "type": "news",
+   "title": "CASGEVY data in ages 5–11 presented at EHA; more global filings announced",
+   "detail": "This was the first European presentation of the pediatric data, and Vertex said it had filed in Saudi Arabia and the UK for children 5 and older.",
+   "url": "https://news.vrtx.com/press-releases",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-07-01",
+   "type": "key",
+   "title": "FDA approves CASGEVY for SCD and TDT patients aged 2 and older",
+   "detail": "The expansion, approved under a Commissioner's National Priority Voucher, makes about 5,500 more US children eligible.",
+   "url": "https://news.vrtx.com/node/35146",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-07-06",
+   "type": "news",
+   "title": "Vertex to acquire Crinetics for $85/share (~$10B), a 102% premium",
+   "detail": "The deal adds the approved acromegaly drug PALSONIFY and Phase 3 atumelnant, which together could reach more than $5B in peak sales; VRTX fell about 2% after hours.",
+   "url": "https://wdez.com/2026/07/06/vertex-to-buy-crinetics-in-10-billion-deal/",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-08-03",
+   "type": "key",
+   "title": "Q2 2026 results: revenue $3.33B (+12%); FY26 guidance raised to $13.1–13.2B",
+   "detail": "Non-GAAP EPS was $4.73 versus $4.52 a year earlier, and guidance did not yet include the pending Crinetics deal.",
+   "url": "https://investors.vrtx.com/static-files/b75d6a38-e69d-47f0-81fb-71cd084fac84",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-08-03",
+   "type": "trial",
+   "title": "FDA clears IND for VX-017, a stem-cell islet therapy for T1D",
+   "detail": "A Phase 1/2 start was planned for the near term, alongside the ongoing zimislecel study.",
+   "url": "https://investors.vrtx.com/static-files/b75d6a38-e69d-47f0-81fb-71cd084fac84",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-09-01",
+   "type": "news",
+   "title": "Crinetics deal closes; Jonathan Poole named next CFO in leadership reshuffle",
+   "detail": "Poole becomes CFO on Jan 1, 2027, COO Charles Wagner takes on the integration, and Jasper van Grunsven (ex-Amgen) joins as EVP.",
+   "url": "https://pulse2.com/vertex-completes-10-billion-acquisition-of-crinetics-pharmaceuticals/",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-09-22",
+   "type": "key",
+   "title": "Phase 2b AMPLIFIED inaxaplin data positive; AMPLITUDE enrollment complete",
+   "detail": "In AMKD patients with modest proteinuria, UACR fell 42.7% at week 13, and interim data from the Phase 2/3 AMPLITUDE trial are due early 2027.",
+   "url": "https://www.hcplive.com/view/inaxaplin-cuts-proteinuria-in-broader-apol1-kidney-disease-population",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-10-23",
+   "type": "news",
+   "title": "RAINIER povetacicept results published in NEJM and presented at ASN Kidney Week",
+   "detail": "42.2% of patients on povetacicept reached UPCR below 0.5 g/g versus 6.2% on placebo, five weeks before the PDUFA date.",
+   "url": "https://news.vrtx.com/node/35441",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-10-30",
+   "type": "key",
+   "title": "UK MHRA approves CASGEVY for patients aged 5 and older",
+   "detail": "The UK authorisation was widened from age 12 and over to children 5 and over with severe SCD or TDT.",
+   "url": "https://www.gov.uk/government/news/mhra-approves-gene-editing-treatment-for-children-aged-five-and-over-with-serious-inherited-blood-disorders",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-11-02",
+   "type": "key",
+   "title": "Q3 2026 results: revenue $3.44B (+12%); FY26 revenue guidance raised to $13.15–13.25B",
+   "detail": "Non-GAAP EPS was $4.76; ALYFTREK made $706M, CASGEVY $99M and JOURNAVX $58M, and expense guidance rose after the Crinetics deal.",
+   "url": "https://news.vrtx.com/node/35446",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-11-02",
+   "type": "trial",
+   "title": "VX-017 chosen as lead T1D cell therapy over zimislecel; first VX-828 CF data",
+   "detail": "VX-017 works regardless of blood type and should enter pivotal development in 2027; VX-828 triple therapy cut sweat chloride by 9.4 mmol/L versus TRIKAFTA.",
+   "url": "https://news.vrtx.com/node/35446",
+   "source": "Researched 8 Nov 2026"
+  },
+  {
+   "symbol": "VRTX",
+   "date": "2026-11-30",
+   "type": "catalyst",
+   "title": "FDA PDUFA date: povetacicept for IgA nephropathy (accelerated approval)",
+   "detail": "The FDA's decision on Vertex's first kidney drug is the next big binary catalyst for the stock.",
+   "url": "https://news.vrtx.com/node/35066",
    "source": "Researched 8 Nov 2026"
   }
  ]
