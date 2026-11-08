@@ -204,7 +204,8 @@ function paper(view, p) {
       ${q.table ? table(q.table) : ''}${q.img ? `<img class="exam-img" src="${esc(q.img)}" alt="" loading="lazy">` : ''}
       ${q.parts.map((pt, j) => `<div class="exam-part" data-part="${esc(pt.id)}">
         <div class="exam-part-stem">${q.parts.length > 1 ? `<span class="exam-letter">${letter(j)}</span>` : ''}<div>${pt.stem}</div><span class="exam-marks">[${pt.marks}]</span></div>
-        ${input(pt, draft[pt.id])}</div>`).join('')}
+        ${input(pt, draft[pt.id])}<button type="button" class="exam-check-one" data-checkpart="${esc(pt.id)}">${icon('check')} Check</button><div class="exam-check-res" data-res="${esc(pt.id)}"></div></div>`).join('')}
+      <div class="exam-check-row"><button type="button" class="exam-btn exam-check" data-check="${qn - 1}">${icon('check')} Check question ${qn}</button><span class="exam-check-score" data-qscore="${qn - 1}"></span></div>
     </div></section>`; }).join('')}
     <div class="exam-submit"><span class="exam-left"></span><button type="submit" class="exam-btn">${icon('check')} Submit for marking</button></div>
     </form></div>`;
@@ -221,10 +222,40 @@ function paper(view, p) {
   };
   const unanswered = a => p.questions.flatMap(q => q.parts).filter(pt => { const v = a[pt.id]; return Array.isArray(v) ? !v.some(x => x.trim()) : !String(v || '').trim(); }).length;
   const left = $('.exam-left', form);
-  const status = () => { const n = unanswered(collect()); left.textContent = n ? `${n} part${n > 1 ? 's' : ''} not answered` : 'All parts answered'; };
+  let checkSum = '';
+  const status = () => { const n = unanswered(collect()); left.textContent = (n ? `${n} part${n > 1 ? 's' : ''} not answered` : 'All parts answered') + checkSum; };
   let t = null, armed = false;
-  form.addEventListener('input', () => { clearTimeout(t); armed = false; t = setTimeout(() => { store.set(draftKey(p.id), collect()); store.set('exam:draftAt:' + p.id, Date.now()); status(); changed(); }, 300); });
+  form.addEventListener('input', () => { clearTimeout(t); armed = false; t = setTimeout(() => { const d = collect(); d.__checked = [...checked]; store.set(draftKey(p.id), d); store.set('exam:draftAt:' + p.id, Date.now()); status(); changed(); }, 300); });
   status();
+  // mark one part, or one question, at a time without submitting the paper (kept in the draft, so it survives a reload)
+  const allParts = p.questions.flatMap((q, qi) => q.parts.map(pt => ({ pt, qi })));
+  const checked = new Set((draft.__checked || []).map(String).filter(id => allParts.some(x => x.pt.id === id)));
+  const showPart = (pt, a) => {
+    const m = markPart(pt, a[pt.id]);
+    const box = form.querySelector(`[data-res="${CSS.escape(pt.id)}"]`);
+    const ok = m.got === pt.marks, part = m.got > 0 && !ok;
+    box.innerHTML = `<div class="exam-verdict ${ok ? 'ok' : part ? 'part' : 'no'}">${ok ? '✓ Right' : part ? '◐ Partly right' : '✗ Not quite'} · ${m.got}/${pt.marks}</div>${schemeView(pt, m)}`;
+    checked.add(pt.id);
+  };
+  const refresh = a => {
+    let sumGot = 0, sumMax = 0;
+    p.questions.forEach((q, qi) => {
+      const done = q.parts.filter(pt => checked.has(pt.id));
+      const got = done.reduce((n, pt) => n + markPart(pt, a[pt.id]).got, 0), max = done.reduce((n, pt) => n + pt.marks, 0);
+      sumGot += got; sumMax += max;
+      const sc = form.querySelector(`[data-qscore="${qi}"]`);
+      sc.textContent = max ? `${got}/${max}${done.length < q.parts.length ? ' so far' : ''}` : '';
+      sc.className = 'exam-check-score ' + (!max ? '' : got === max ? 'ok' : got ? 'part' : 'no');
+    });
+    checkSum = sumMax ? ` · checked so far ${sumGot}/${sumMax}` : ''; status();
+    const d = collect(); d.__checked = [...checked]; store.set(draftKey(p.id), d); store.set('exam:draftAt:' + p.id, Date.now()); changed();
+  };
+  const checkPart = id => { const a = collect(), x = allParts.find(y => y.pt.id === id); if (x) { showPart(x.pt, a); refresh(a); } };
+  const checkQ = qi => { const a = collect(); p.questions[qi].parts.forEach(pt => showPart(pt, a)); refresh(a); };
+  form.addEventListener('click', e => { const b = e.target.closest('[data-checkpart]'); if (b) checkPart(b.dataset.checkpart); });
+  form.addEventListener('click', e => { const b = e.target.closest('[data-check]'); if (b) checkQ(+b.dataset.check); });
+  form.addEventListener('change', e => { const part = e.target.closest('[data-part]'); if (part) { const r = part.querySelector('.exam-check-res'); if (r) r.innerHTML = ''; } });
+  if (checked.size) { const a = collect(); allParts.filter(x => checked.has(x.pt.id)).forEach(x => showPart(x.pt, a)); refresh(a); }
   form.addEventListener('submit', e => {
     e.preventDefault();
     const a = collect();
