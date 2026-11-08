@@ -1,0 +1,31 @@
+/* Tables in notes. A wide table keeps readable columns and scrolls inside its own box (sideways, and
+   down when it is taller than the screen) with the header row and first column held in place, instead
+   of being squashed into the column or cut off. "Expand" opens the table full screen. */
+.markdown-rendered { --tbl-bg: var(--bg1, #0D1120); }
+body.ui-nova .markdown-rendered { --tbl-bg: #0B0C1A; }
+.markdown-rendered .el-table { position: relative; max-width: 100%; overflow: auto; margin: .4em 0 1.2em; border: 1px solid var(--table-border-color, var(--background-modifier-border)); border-radius: 12px; overscroll-behavior-x: contain; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.markdown-rendered .el-table > table { display: table !important; width: max-content !important; min-width: 100%; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; overflow: visible !important; border-collapse: separate; border-spacing: 0; }
+.markdown-rendered .el-table th, .markdown-rendered .el-table td { min-width: 6.5em; max-width: 16em; vertical-align: top; overflow-wrap: normal !important; word-break: normal !important; hyphens: manual !important; line-height: 1.45; }
+.markdown-rendered .el-table thead th { position: sticky; top: 0; z-index: 2; background-color: var(--tbl-bg); }
+body.ui-nova .markdown-rendered .el-table thead th { background-image: linear-gradient(color-mix(in srgb, var(--mod, #977DFF) 12%, transparent), color-mix(in srgb, var(--mod, #977DFF) 12%, transparent)); }
+.markdown-rendered .el-table th:first-child, .markdown-rendered .el-table td:first-child { position: sticky; left: 0; z-index: 1; background-color: var(--tbl-bg); box-shadow: 1px 0 0 var(--table-border-color, var(--background-modifier-border)); }
+.markdown-rendered .el-table thead th:first-child { z-index: 3; }
+/* in Nova's side-by-side columns a table may not be taller than the column, or the rest is cut off */
+body.ui-nova .nv-cols .el-table { max-height: min(62vh, 560px); }
+body.is-phone .markdown-rendered .el-table { max-height: 70vh; }
+body.is-phone .markdown-rendered .el-table th, body.is-phone .markdown-rendered .el-table td { max-width: 13em; }
+.tbl-bar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: .9em; font-size: 12px; color: var(--text-faint); }
+.tbl-bar button { font: inherit; display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 7px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); cursor: pointer; }
+.tbl-bar button:hover { color: var(--text-normal); border-color: var(--background-modifier-border-hover, var(--text-faint)); }
+.tbl-bar svg { width: 13px; height: 13px; }
+.tbl-bar + .el-table { margin-top: .35em; }
+.tbl-modal { position: fixed; inset: 0; z-index: 1000; background: rgba(3, 4, 10, .72); backdrop-filter: blur(6px); display: flex; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); }
+.tbl-modal-box { margin: auto; max-width: min(1400px, 100%); max-height: 100%; display: flex; flex-direction: column; background: var(--bg1, #0D1120); border: 1px solid var(--background-modifier-border); border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px -20px rgba(0,0,0,.6); }
+.tbl-modal-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--background-modifier-border); font-weight: 600; font-size: 14px; }
+.tbl-modal-head span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tbl-modal-head button { border: 0; background: none; color: var(--text-muted); cursor: pointer; padding: 4px; }
+.tbl-modal-head svg { width: 18px; height: 18px; }
+.tbl-modal .markdown-rendered { padding: 0; overflow: auto; min-height: 0; }
+.tbl-modal .el-table { margin: 0; border: 0; border-radius: 0; max-height: none !important; overflow: visible; }
+.tbl-modal .el-table th, .tbl-modal .el-table td { max-width: 24em; font-size: 14px; padding: 9px 14px; }
+.markdown-rendered .el-table th { text-align: left; }
