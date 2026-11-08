@@ -253,3 +253,40 @@
 .wl-case-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: .85em; }
 .wl-flash { animation: wl-flash 1.6s ease; }
 @keyframes wl-flash { 0%, 60% { box-shadow: 0 0 0 2px #60A5FA; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* lessons */
+.wl-ltabs { display: flex; gap: 4px; margin: 4px 0 12px; border-bottom: 1px solid var(--background-modifier-border); overflow-x: auto; }
+.wl-ltabs button { font: inherit; font-size: .86em; padding: 8px 12px; border: 0; background: none; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.wl-ltabs button.is-active { color: var(--text-normal); border-bottom-color: #60A5FA; font-weight: 600; }
+.wl-lwrap.has-side { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 14px; }
+.wl-lside { max-height: 760px; overflow-y: auto; scrollbar-width: thin; }
+.wl-lside .wl-caselist { grid-template-columns: 1fr; margin-top: 0; }
+.wl-lessonlist { display: flex; flex-direction: column; gap: 6px; }
+.wl-lessonlist button { text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 8px 10px; border-radius: 9px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-left: 3px solid var(--co); }
+.wl-lessonlist button.is-active, .wl-lessonlist button:hover { border-color: var(--co); }
+.wl-lessonlist span { display: flex; justify-content: space-between; gap: 6px; }
+.wl-lessonlist i { font-style: normal; font-size: .8em; font-weight: 600; }
+.wl-lessonlist small { font-size: .72em; color: var(--text-faint); }
+.wl-tchart { position: relative; height: 420px; margin-bottom: 10px; }
+.tc-host { position: relative; }
+.tc-chart { position: absolute; inset: 0; }
+.tc-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 3; font-family: inherit; }
+.wl-lesson h4 { margin: 2px 0 8px; font-size: 1em; }
+.wl-lesson p { margin: 0 0 8px; font-size: .9em; line-height: 1.6; }
+.wl-small { font-size: .78em !important; }
+.wl-lgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.wl-lgrid > div { padding: 10px 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); }
+.wl-lgrid span { display: block; font-size: .72em; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--co, #60A5FA); margin-bottom: 4px; }
+.wl-lgrid p { font-size: .86em; margin: 0; }
+.wl-rstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 8px 0 10px; }
+.wl-rstats div { padding: 8px 10px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); }
+.wl-rstats span { display: block; font-size: .72em; color: var(--text-faint); }
+.wl-rstats b { font-size: 1.1em; }
+@container (max-width: 760px) { .wl-lwrap.has-side { grid-template-columns: 1fr; } .wl-lside { max-height: none; } .wl-lessonlist { flex-direction: row; overflow-x: auto; } .wl-lessonlist button { min-width: 150px; } .wl-lside .wl-caselist { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } .wl-lgrid { grid-template-columns: 1fr; } .wl-rstats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .wl-tchart { height: 340px; } }
+
+.wl-trades { margin: 8px 0; font-size: .84em; }
+.wl-trades summary { cursor: pointer; font-weight: 600; }
+.wl-tradelist { max-height: 240px; overflow-y: auto; margin-top: 6px; }
+.wl-tradelist div { display: grid; grid-template-columns: 100px 40px 70px minmax(0, 1fr); gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--background-modifier-border); }
+.wl-case + .wl-tchart { margin-top: 12px; }
+.wl-morecases summary { cursor: pointer; font-size: .84em; font-weight: 600; margin-bottom: 8px; }

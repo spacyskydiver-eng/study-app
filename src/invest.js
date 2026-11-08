@@ -334,6 +334,16 @@ export async function investApi(request, env, url, ctx) {
       const last = Math.max(0, ...[...st.values()].map(r => r.ok_at || 0));
       return json({ events: rows.results || [], lastRefresh: last, jobs: JOBS, done: JOBS.filter(j => st.get(j) && st.get(j).ok_at).length });
     }
+    // every company's cached daily bars (last ~2 years) for the lessons; fills one missing company per call
+    if (p === "bars-all") {
+      const out = {}; let filled = false;
+      for (const sym of SYMBOLS) {
+        let hit = await cacheGet(env, `bars:${sym}:1day`);
+        if (!hit && hasKey && !filled) { filled = true; try { await series(env, sym, "1day"); hit = await cacheGet(env, `bars:${sym}:1day`); } catch (e) { /* later */ } }
+        out[sym] = hit ? hit.v.bars.slice(-520) : null;
+      }
+      return json({ bars: out });
+    }
     if (p === "metrics") {
       const m = await metrics(env);
       // fill one missing company on the spot so the page isn't empty before the cron has run
