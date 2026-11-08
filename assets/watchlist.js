@@ -17,6 +17,7 @@ const TYPES = {
 const INTERVALS = [['5min', '5m'], ['1h', '1H'], ['1day', '1D'], ['1week', '1W']];
 const ZOOMS = [['1m', '1M', 31], ['3m', '3M', 92], ['6m', '6M', 183], ['1y', '1Y', 366], ['5y', '5Y', 1830], ['all', 'All', 0]];
 const TERMS = ['52-week range', 'Biotech catalyst', 'PDUFA date', 'Phase 2 trial', 'Cash runway', 'Cash burn', 'Market capitalisation', 'Position sizing'];
+const GUIDE = '03 Biotech Investing/03 Reading Charts and Trading/Reading Charts and Trading';
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const UP = '#10B981', DOWN = '#F43F5E';
 
@@ -58,7 +59,7 @@ function lib() {
 function shell(view) {
   view.innerHTML = `<div class="wl">
     <header class="wl-head">
-      <div><h1>Live watchlist</h1><p class="wl-sub">Cystic fibrosis companies. Prices from Twelve Data; trials, papers and news collected by the site every few hours.</p></div>
+      <div><h1>Live watchlist</h1><p class="wl-sub">Cystic fibrosis companies. Prices from Twelve Data; trials, papers and news collected by the site every few hours.${B.exists(GUIDE) ? ` <a class="internal-link" data-note="${esc(GUIDE)}" href="${B.hashFor(GUIDE)}">How to read all of this</a>` : ''}</p></div>
       <button class="wl-btn" data-refresh title="Check every source now">${icon('refresh')}<span>Check now</span></button>
     </header>
     <div class="wl-notice" data-notice hidden></div>
