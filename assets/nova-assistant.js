@@ -35,7 +35,15 @@ function pageContext() {
   }
   const id = el ? (el.dataset.note || el.dataset.askNote) : B.currentId();
   const n = id && B.V.notes[id];
-  if (!n) return null;
+  if (!n) {
+    // the investing pages aren't notes: send the lesson that's open, or the market page's companies
+    const les = $('.wl-clesson', view), wl = $('.wl', view);
+    if (!les && !wl) return null;
+    const box = les || wl;
+    const title = (($('h1, h2', box) || {}).textContent || (les ? 'Biotech investing lesson' : 'Markets')).trim();
+    return { noteId: null, selection: title, page: { title, text: clip(box.innerText || '', 6000) },
+      ctx: { note: { id: '', title, subject: 'Biotech investing', lecture: '', summary: '' }, section: { heading: title, text: clip(box.innerText || '', 3600) }, block: '' } };
+  }
   const p = n.props || {};
   const title = (p.title || n.title || '').replace(/^\d+\s+/, '');
   const text = el ? (el.innerText || el.textContent || '') : n.text;
@@ -397,6 +405,24 @@ async function runActions(actions, a, st) {
 }
 
 /* ---------------------------------------------------------------- asking */
+// what he last highlighted on the page (typing into the chat clears the selection, so it's remembered here)
+let lastSel = { text: '', at: 0 };
+document.addEventListener('selectionchange', () => {
+  const s = window.getSelection(); if (!s || s.isCollapsed || !s.rangeCount) return;
+  const el = s.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement);
+  if (!el || !el.closest('#view') || el.closest('input, textarea')) return;
+  const t = String(s).replace(/\s+/g, ' ').trim();
+  if (t.length >= 2 && t.length <= 1500) lastSel = { text: t, at: Date.now() };
+});
+const FINANCE = /\b(candles?|candlesticks?|wicks?|stocks?|shares?|share price|charts?|trend|moving averages?|ma\d+|volume|markets?|trading|trader?s?|invest\w*|portfolio|dividends?|earnings|isk|buy orders?|sell orders?|support|resistance|rsi|macd|bull\w*|bear\w*|ticker|catalysts?|valuation|p\/e|etf|index fund|broker|spread|profit|loss|runway|cash|dilution|biotech|pipeline|fda|phase [123]|52.week|t212|trading 212|risk)\b/;
+async function tutorAsk(q, pc, history) {
+  const sel = lastSel.text && Date.now() - lastSel.at < 5 * 60000 ? lastSel.text : '';
+  const page = pc ? (pc.page || { title: pc.ctx.note.title, text: pc.ctx.section.text }) : null;
+  const res = await fetch('/api/tutor', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, selection: sel, page, history }) });
+  const d = (res.headers.get('content-type') || '').includes('json') ? await res.json() : { error: 'The site returned ' + res.status + '.' };
+  if (!res.ok || d.error) throw Object.assign(new Error(d.error || 'The AI did not answer.'), { kind: 'http' });
+  return { answer: d.answer, sources: [] };
+}
 async function ask(q, ctx = {}) {
   q = String(q || '').trim();
   if (!q && state && state.attach) q = 'Explain this. What is it showing and what are the key parts?';
@@ -529,7 +555,12 @@ async function ask(q, ctx = {}) {
     const body = pc
       ? { question: q, selection: pc.selection, ...pc.ctx, history: st.history.slice(-4) }
       : { question: q, selection: 'General question', note: { id: '', title: 'Biomedicine notes', subject: '', lecture: '', summary: '' }, section: { heading: '', text: '' }, block: '', history: st.history.slice(-4) };
-    const r = await B.ask.explain(body);
+    // finance, charts, the investing pages, and anything with no note behind it go to the tutor;
+    // biomedicine questions go to the textbook engine (with its book citations), and the tutor if that fails
+    const onInvest = ['watchlist', 'markets'].includes(B.currentId()) || (pc && pc.page);
+    let r;
+    if (onInvest || FINANCE.test(lq) || !pc) r = await tutorAsk(q, pc, st.history.slice(-6));
+    else { try { r = await B.ask.explain(body); if (!r.answer) throw new Error('empty'); } catch (e) { if (e.kind === 'auth' && intent && intent.kind === 'book') throw e; r = await tutorAsk(q, pc, st.history.slice(-6)); } }
     if (state !== st) return;
     st.history.push({ q, a: r.answer });
     a.innerHTML = B.ask.linkTerms(B.ask.md(r.answer), pc ? pc.noteId : null);

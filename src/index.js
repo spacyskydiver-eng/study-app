@@ -548,6 +548,7 @@ async function syncedApi(env, url, request, ctx) {
   if (p === "/api/todos") return todosApi(env, request, ctx);
   if (p === "/api/progress") return progressApi(env, request);
   if (p === "/api/vision" && request.method === "POST") return vision(env, request);
+  if (p === "/api/tutor" && request.method === "POST") return tutor(env, request);
   if (!last) return json({ notConnected: true });
   if (p === "/api/ms/mail") {
     if (q.get("id")) {
@@ -747,6 +748,53 @@ const STOP = new Set("a an the and or of to in on at for from with about is are 
 const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 const londonDate = t => new Date(t).toLocaleString("en-GB", { timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const londonDay = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+// the tutor: general explanations (finance, charts, how something works, anything not in the textbooks),
+// using the page he's on and what he highlighted. Gemini first, Workers AI if that's unavailable.
+const TUTOR_SYSTEM = `You are Jarvis, the tutor on Alex's study site. Alex is a first-year BSc Biomedicine student at UEA. He is also learning investing and how to read stock charts (biotech companies), as a learner, alongside his degree.
+How to explain:
+- Answer the question directly first, in one or two plain sentences. Then explain.
+- Use a concrete worked example with real numbers (for a candle: opened at $100, closed at $104, high $106, low $98) and walk through it step by step without skipping steps.
+- For "how do I" or method questions, finish with a short reusable step list or rule.
+- If a page or highlighted text is given, explain that specifically, in terms of what the page says, and build on its examples.
+- Plain words, clear and casual British tone, UK English, no exclamation marks. Short markdown: bold the key terms, short lists. Under about 250 words unless he asks for more.
+- Finance: explain concepts and how to read things. It's learning, not personal financial advice: don't tell him to buy or sell a particular stock.
+- If you're not sure of something, say so rather than guessing.`;
+async function tutor(env, request) {
+  let d; try { d = await request.json(); } catch (e) { return json({ error: "bad request" }, 400); }
+  const q = String(d.question || "").slice(0, 2000);
+  if (!q) return json({ error: "no question" }, 400);
+  const page = d.page && typeof d.page === "object" ? `PAGE HE IS ON: ${String(d.page.title || "").slice(0, 200)}\n${String(d.page.text || "").slice(0, 6000)}` : "";
+  const sel = d.selection ? `HE HIGHLIGHTED: "${String(d.selection).slice(0, 1500)}"` : "";
+  const history = (Array.isArray(d.history) ? d.history : []).slice(-6).map(h => [String(h.q || "").slice(0, 600), String(h.a || "").slice(0, 1500)]);
+  const ask = [page, sel, "QUESTION: " + q].filter(Boolean).join("\n\n");
+  if (env.GEMINI_API_KEY) {
+    try {
+      const contents = [];
+      for (const [hq, ha] of history) contents.push({ role: "user", parts: [{ text: hq }] }, { role: "model", parts: [{ text: ha }] });
+      contents.push({ role: "user", parts: [{ text: ask }] });
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_TEXT_MODEL || "gemini-3.8-flash"}:generateContent`, {
+        method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: TUTOR_SYSTEM }] }, contents, generationConfig: { temperature: 0.4, maxOutputTokens: 1500 } }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        const answer = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("").trim();
+        if (answer) return json({ answer, model: "gemini" });
+      }
+    } catch (e) { /* fall back below */ }
+  }
+  if (!env.AI) return json({ error: "The AI isn't available right now." }, 503);
+  const messages = [{ role: "system", content: TUTOR_SYSTEM }];
+  for (const [hq, ha] of history) messages.push({ role: "user", content: hq }, { role: "assistant", content: ha });
+  messages.push({ role: "user", content: ask });
+  try {
+    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages, max_tokens: 1200, temperature: 0.4 });
+    const answer = String((r && r.response) || "").trim();
+    if (answer) return json({ answer, model: "llama" });
+  } catch (e) { /* below */ }
+  return json({ error: "The AI didn't answer. Try again in a moment." }, 502);
+}
+
 async function jarvis(env, request) {
   if (!env.AI) return json({ error: "The AI isn't switched on for this site yet (Workers AI binding missing)." }, 503);
   let d; try { d = await request.json(); } catch (e) { return json({ error: "bad request" }, 400); }
@@ -874,7 +922,7 @@ export default {
       if (url.pathname.startsWith("/api/invest/")) return investApi(request, env, url, ctx);
       if (url.pathname.startsWith("/api/t212/")) return t212Api(request, env, url);
       if (url.pathname === "/api/tts") return ttsApi(request, env, ctx);
-      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision|progress)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
+      if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision|progress|tutor)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
       // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
       const res = await env.ASSETS.fetch(request);
       if (!(res.headers.get("content-type") || "").includes("text/html")) return res;
