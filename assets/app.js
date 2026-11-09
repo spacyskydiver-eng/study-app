@@ -31,6 +31,7 @@ const ICON = {
   'canvas': '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
   'x': '<path d="M18 6 6 18M6 6l12 12"/>',
   'trending-up': '<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+  'candles': '<path d="M6 3v3"/><rect x="4" y="6" width="4" height="9" rx="1"/><path d="M6 15v6"/><path d="M17 2v5"/><rect x="15" y="7" width="4" height="7" rx="1"/><path d="M17 14v5"/>',
   'refresh': '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
   'plus': '<path d="M12 5v14M5 12h14"/>',
   'minus': '<path d="M5 12h14"/>',
@@ -163,7 +164,8 @@ function shell() {
     <button class="clickable-icon" data-act="open" data-id="progress" title="Progress">${icon('chart')}</button>
     <button class="clickable-icon" data-act="open" data-id="exam" title="Exam practice">${icon('clipboard-list')}</button>
     <button class="clickable-icon" data-act="open" data-id="books" title="Book library">${icon('library')}</button>
-    <button class="clickable-icon" data-act="open" data-id="watchlist" title="Live watchlist">${icon('trending-up')}</button>
+    <button class="clickable-icon" data-act="open" data-id="watchlist" title="Biotech investing">${icon('trending-up')}</button>
+    <button class="clickable-icon" data-act="open" data-id="markets" title="Markets">${icon('candles')}</button>
     <button class="clickable-icon" data-act="home" title="Home">${icon('home')}</button>
     <button class="clickable-icon" data-act="random" title="Random note">${icon('shuffle')}</button>
     <div class="spacer"></div>
@@ -332,7 +334,7 @@ let novaLoading = null;
 function loadNovaComponents() {
   if (novaLoading) return novaLoading;
   const add = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-  novaLoading = add('assets/nova-components.js?v=20261109').then(() => add('assets/nova-layout.js?v=20261110')).then(() => isPhone() ? null : add('assets/nova-map.js?v=20261109')).then(() => add('assets/nova-outlook.js?v=20261055')).then(() => add('assets/nova-bits.js?v=20261109')).then(() => add('assets/nova-research.js?v=20261055')).then(() => add('assets/nova-assistant.js?v=20261055')).then(relayout);
+  novaLoading = add('assets/nova-components.js?v=20261109').then(() => add('assets/nova-layout.js?v=20261111')).then(() => isPhone() ? null : add('assets/nova-map.js?v=20261109')).then(() => add('assets/nova-outlook.js?v=20261055')).then(() => add('assets/nova-bits.js?v=20261109')).then(() => add('assets/nova-research.js?v=20261055')).then(() => add('assets/nova-assistant.js?v=20261055')).then(relayout);
   return novaLoading;
 }
 function openUiModeMenu(anchorEl) {
@@ -429,7 +431,7 @@ function renderBookmarks() {
   }).join('');
   $('#bookmarks').innerHTML = `<div class="pane-header">Bookmarks</div>` + (items || '<div class="pane-empty">No bookmarks</div>') +
     `<div class="pane-header">Views</div>` +
-    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['progress', 'chart', 'Progress'], ['books', 'library', 'Book library'], ['exam', 'clipboard-list', 'Exam practice'], ['watchlist', 'trending-up', 'Live watchlist']].filter(([id]) => exists(id))
+    [['graph', 'graph', 'Graph view'], ['flashcards', 'cards', 'Flashcards'], ['progress', 'chart', 'Progress'], ['books', 'library', 'Book library'], ['exam', 'clipboard-list', 'Exam practice'], ['watchlist', 'trending-up', 'Biotech investing'], ['markets', 'candles', 'Markets']].filter(([id]) => exists(id))
       .map(([id, ic, t]) => `<div class="tree-item" data-id="${id}">${icon(ic)} ${t}</div>`).join('') +
     `<a class="tree-item" href="legacy/index.html">${icon('layers')} Old study app</a>`;
   $('#bookmarks').onclick = e => { const t = e.target.closest('.tree-item[data-id]'); if (!t) return; go(t.dataset.id); if (isMobile()) setSide('left', false); };
@@ -549,7 +551,8 @@ SPECIAL.newtab = {
         <div class="empty-state-action" data-nt="graph">Open graph view <span>Ctrl G</span></div>
         ${exists('flashcards') ? '<div class="empty-state-action" data-nt="flashcards">Flashcards</div>' : ''}
         ${exists('books') ? '<div class="empty-state-action" data-nt="books">Book library</div>' : ''}
-        ${exists('watchlist') ? '<div class="empty-state-action" data-nt="watchlist">Live watchlist</div>' : ''}
+        ${exists('watchlist') ? '<div class="empty-state-action" data-nt="watchlist">Biotech investing</div>' : ''}
+        ${exists('markets') ? '<div class="empty-state-action" data-nt="markets">Markets</div>' : ''}
         <div class="empty-state-action" data-nt="${esc(V.home)}">Home</div>
         <div class="empty-state-action" data-act="close-tab">Close</div>
       </div>

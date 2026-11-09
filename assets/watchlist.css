@@ -385,3 +385,8 @@
 .wl-cmeta { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .wl-listen { display: inline-flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: normal; font-size: 13.5px; }
 .wl-listen svg { width: 16px; height: 16px; }
+
+/* Markets page: topic filter and the seminar it belongs to */
+.wl-topics { margin: 4px 0 6px; }
+.wl-topics button small { opacity: .6; margin-left: 2px; }
+.wl-seminar { margin: 0 0 12px; font-size: .88em; color: var(--text-muted); }

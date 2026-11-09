@@ -9,6 +9,7 @@ const TD = "https://api.twelvedata.com";
 const UA = "BiomedVault-watchlist/1.0 (personal study site)";
 const DAY = 86400000;
 const SYMBOLS = CFG.companies.map(c => c.symbol);
+const CF_SYMBOLS = CFG.companies.filter(c => (c.topics || ["cf"]).includes("cf")).map(c => c.symbol);
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 const today = () => new Date().toISOString().slice(0, 10);
@@ -27,7 +28,20 @@ async function cacheGet(env, k) {
 const cachePut = (env, k, v) => env.DB.prepare("INSERT OR REPLACE INTO inv_cache (k, v, at) VALUES (?, ?, ?)").bind(k, JSON.stringify(v), Date.now()).run();
 
 /* ------------------------------------------------------------ prices */
-async function twelve(env, path, params) {
+// Twelve Data's free plan allows 8 credits a minute (a quote costs one per symbol, a chart one).
+// Count what this minute has used, so a page with lots of companies fills in over a few minutes
+// instead of hitting the limit and getting nothing.
+async function spend(env, cost) {
+  const minute = Math.floor(Date.now() / 60000);
+  const r = await cacheGet(env, "tdrate");
+  const used = r && r.v.m === minute ? r.v.n : 0;
+  if (used + cost > 8) return false;
+  await cachePut(env, "tdrate", { m: minute, n: used + cost });
+  return true;
+}
+const credits = async env => { const r = await cacheGet(env, "tdrate"); return 8 - (r && r.v.m === Math.floor(Date.now() / 60000) ? r.v.n : 0); };
+async function twelve(env, path, params, cost = 1) {
+  if (!(await spend(env, cost))) throw Object.assign(new Error("Twelve Data minute limit reached"), { code: 429 });
   const u = new URL(TD + path);
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   u.searchParams.set("apikey", String(env.TWELVE_DATA_KEY).trim());
@@ -46,24 +60,30 @@ function quoteOf(q) {
     marketOpen: !!q.is_market_open, asOf: q.datetime || "", ts: num(q.timestamp),
   };
 }
-async function quotes(env) {
-  const hit = await cacheGet(env, "quotes");
-  const anyOpen = hit && Object.values(hit.v).some(q => q && q.marketOpen);
-  const ttl = !hit || anyOpen ? 5 * 60000 : 30 * 60000;
-  if (hit && Date.now() - hit.at < ttl) return { quotes: hit.v, at: hit.at };
-  try {
-    const body = await twelve(env, "/quote", { symbol: SYMBOLS.join(",") });
-    const out = {};
-    for (const s of SYMBOLS) {
-      const q = SYMBOLS.length === 1 ? body : body[s];
-      out[s] = q && q.status !== "error" && q.close != null ? quoteOf(q) : null;
-    }
-    await cachePut(env, "quotes", out);
-    return { quotes: out, at: Date.now() };
-  } catch (e) {
-    if (hit) return { quotes: hit.v, at: hit.at, stale: true, error: e.message };
-    throw e;
+// prices are cached one company at a time; each call refreshes the stale ones it can afford this minute
+async function quotes(env, syms) {
+  const hits = {};
+  for (const sym of syms) hits[sym] = await cacheGet(env, "q:" + sym);
+  const ttl = h => h && h.v && h.v.marketOpen ? 10 * 60000 : 60 * 60000;
+  const stale = syms.filter(sym => !hits[sym] || Date.now() - hits[sym].at > ttl(hits[sym]))
+    .sort((a, b) => (hits[a] ? hits[a].at : 0) - (hits[b] ? hits[b].at : 0));
+  const take = stale.slice(0, Math.max(0, await credits(env)));
+  let error = null;
+  if (take.length) {
+    try {
+      const body = await twelve(env, "/quote", { symbol: take.join(",") }, take.length);
+      for (const sym of take) {
+        const q = take.length === 1 ? body : body[sym];
+        if (q && q.status !== "error" && q.close != null) { const v = quoteOf(q); await cachePut(env, "q:" + sym, v); hits[sym] = { v, at: Date.now() }; }
+      }
+    } catch (e) { error = e.message; }
   }
+  const out = {}, ats = {};
+  for (const sym of syms) { out[sym] = hits[sym] ? hits[sym].v : null; if (hits[sym]) ats[sym] = hits[sym].at; }
+  const at = Math.min(...Object.values(ats), Date.now());
+  const waiting = syms.filter(sym => !hits[sym]).length;
+  if (!Object.keys(ats).length && error) throw Object.assign(new Error(error), { code: /limit/i.test(error) ? 429 : 502 });
+  return { quotes: out, at, ats, waiting, stale: !!error && Object.keys(ats).length > 0, error: error || undefined };
 }
 // one request per interval gets the whole history the chart can zoom through
 const INTERVALS = {
@@ -275,7 +295,7 @@ export async function runJob(env, job) {
 // price trend figures for the decision check, from the cached daily bars (no extra Twelve Data calls)
 async function metrics(env) {
   const out = {};
-  for (const sym of SYMBOLS) {
+  for (const sym of CF_SYMBOLS) {
     const hit = await cacheGet(env, `bars:${sym}:1day`);
     const bars = hit && hit.v.bars;
     if (!bars || bars.length < 30) { out[sym] = null; continue; }
@@ -302,7 +322,7 @@ export async function cronTick(env) {
   const st = await jobState(env);
   // never-run jobs first, then the oldest; a job is due again after six hours
   const due = JOBS.map(j => [j, st.get(j)]).filter(([, r]) => !r || Date.now() - r.at > 6 * 3600000).sort((a, b) => (a[1] ? a[1].at : 0) - (b[1] ? b[1].at : 0));
-  for (const [j] of due.slice(0, 2)) await runJob(env, j);
+  for (const [j] of due.slice(0, 3)) await runJob(env, j);
 }
 
 /* ------------------------------------------------------------ routes */
@@ -319,7 +339,8 @@ export async function investApi(request, env, url, ctx) {
     }
     if (p === "quotes") {
       if (!hasKey) return json({ error: "nokey" }, 200);
-      return json(await quotes(env));
+      const want = (url.searchParams.get("s") || "").toUpperCase().split(",").filter(x => SYMBOLS.includes(x));
+      return json(await quotes(env, want.length ? want : CF_SYMBOLS));
     }
     if (p === "series") {
       if (!hasKey) return json({ error: "nokey" }, 200);
@@ -337,7 +358,7 @@ export async function investApi(request, env, url, ctx) {
     // every company's cached daily bars (last ~2 years) for the lessons; fills one missing company per call
     if (p === "bars-all") {
       const out = {}; let filled = false;
-      for (const sym of SYMBOLS) {
+      for (const sym of CF_SYMBOLS) {
         let hit = await cacheGet(env, `bars:${sym}:1day`);
         if (!hit && hasKey && !filled) { filled = true; try { await series(env, sym, "1day"); hit = await cacheGet(env, `bars:${sym}:1day`); } catch (e) { /* later */ } }
         out[sym] = hit ? hit.v.bars.slice(-520) : null;
@@ -347,7 +368,7 @@ export async function investApi(request, env, url, ctx) {
     if (p === "metrics") {
       const m = await metrics(env);
       // fill one missing company on the spot so the page isn't empty before the cron has run
-      const missing = SYMBOLS.find(s => !m[s]);
+      const missing = CF_SYMBOLS.find(s => !m[s]);
       if (missing && hasKey) { try { await series(env, missing, "1day"); return json(await metrics(env)); } catch (e) { /* shown as unknown */ } }
       return json(m);
     }

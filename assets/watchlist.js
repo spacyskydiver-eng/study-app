@@ -26,7 +26,7 @@ let CFG = null;
 const S = {
   sym: store.get('wl:sym', 'VRTX'), iv: store.get('wl:iv', '1day'), zoom: store.get('wl:zoom', '1y'),
   style: store.get('wl:style', 'candles'), ma: store.get('wl:ma', true), show: store.get('wl:show', { key: true, trial: true, paper: true, news: true }),
-  fSym: 'all', fType: 'all', shown: 40, sel: null, explain: store.get('wl:explain', false), wtab: store.get('wl:wtab', 'learn'),
+  topic: store.get('mk:topic', 'all'), fSym: 'all', fType: 'all', shown: 40, sel: null, explain: store.get('wl:explain', false), wtab: store.get('wl:wtab', 'learn'),
 };
 let tz = { status: null, account: null, accErr: null, orders: [], journal: [], mine: [] };   // Trading 212
 let quotes = null, quoteErr = null, events = [], bars = null, barsErr = null, jobs = null, checking = null;
@@ -39,6 +39,13 @@ const api = async (path, opts) => {
   return res.json();
 };
 const co = sym => CFG.companies.find(c => c.symbol === sym);
+// two pages share this code: 'cf' is Biotech investing (the CF companies, with the lessons); 'markets' is
+// just the markets for every topic on the seminar list, with a topic filter
+let MODE = 'cf';
+const topicsOf = c => c.topics || ['cf'];
+const cos = () => !CFG ? [] : MODE === 'cf' ? CFG.companies.filter(c => topicsOf(c).includes('cf'))
+  : S.topic === 'all' ? CFG.companies : CFG.companies.filter(c => topicsOf(c).includes(S.topic));
+const shownSym = sym => cos().some(c => c.symbol === sym);
 const today = () => new Date().toISOString().slice(0, 10);
 const fmtDate = d => { const [y, m, dd] = d.slice(0, 10).split('-'); return `${+dd} ${MON[+m - 1]} ${y}`; };
 const money = (v, cur) => v == null ? '–' : (cur === 'USD' || !cur ? '$' : cur + ' ') + (v >= 1000 ? v.toLocaleString('en-GB', { maximumFractionDigits: 0 }) : v.toFixed(2));
@@ -59,7 +66,38 @@ function lib() {
 
 /* ------------------------------------------------------------ page */
 const WTABS = [['learn', 'Learn', 'graduation-cap'], ['market', 'Market', 'trending-up'], ['decide', 'Decide', 'check-square'], ['practice', 'Practice', 'target']];
+function marketsShell(view) {
+  const tops = [{ id: 'all', label: 'All topics' }].concat(CFG.topics || []);
+  const t = (CFG.topics || []).find(x => x.id === S.topic);
+  view.innerHTML = `<div class="wl wl-markets${S.explain ? ' is-explain' : ''}">
+    <header class="wl-head">
+      <div><h1>Markets</h1><p class="wl-sub">Prices, charts, trials, papers and news for companies working on the seminar topics.</p></div>
+      <div class="wl-headbtns"><button class="wl-btn wl-iconbtn${S.explain ? ' is-on' : ''}" data-explain title="Show or hide explanations under every part of the page">ⓘ<span>Explain</span></button></div>
+    </header>
+    <div class="wl-chips wl-topics" data-topics>${tops.map(x => `<button data-topic="${x.id}" class="${S.topic === x.id ? 'is-active' : ''}">${esc(x.label)} <small>${x.id === 'all' ? CFG.companies.length : CFG.companies.filter(c => topicsOf(c).includes(x.id)).length}</small></button>`).join('')}</div>
+    ${t ? `<p class="wl-seminar">Seminar: ${esc(t.seminar)}</p>` : ''}
+    <div class="wl-notice" data-notice hidden></div>
+    <p class="wl-ex">Each card is one company. The big number is the latest share price in US dollars, then today's change (green up, red down). "Live" means the US market is open (14:30 to 21:00 UK time). The bar is the 52-week range. Tap a card to chart it. Prices fill in a few at a time: the free price plan allows 8 a minute.</p>
+    <div class="wl-cards" data-cards></div>
+    <section class="wl-panel wl-chartpanel">
+      <div class="wl-chart-top" data-charttop></div>
+      <div class="wl-tools" data-tools></div>
+      <div class="wl-chartwrap"><div class="wl-ohlc" data-ohlc></div><div class="wl-chart" data-chart></div></div>
+      <div class="wl-hint wl-dim">Drag to move, pinch or scroll to zoom, double-tap to reset. Tap a marker to see what happened that day.</div>
+      <div class="wl-pin" data-pinbox></div>
+    </section>
+    <section class="wl-panel"><div class="wl-sechead"><h2>Coming up</h2></div><p class="wl-ex">Dated events still ahead (mostly trial completion dates from ClinicalTrials.gov), and what each company has said is next.</p><div data-upcoming></div></section>
+    <section class="wl-panel"><div class="wl-sechead"><h2>Updates</h2><button class="wl-btn wl-small-btn" data-refresh title="Check every source for these companies now">${icon('refresh')}<span>Check now</span></button></div>
+      <p class="wl-ex">Key events, trial registry changes, new papers and news, newest first. Tap a ticker to see that day on the chart.</p>
+      <div class="wl-chips" data-fsym></div><div class="wl-chips" data-ftype></div>
+      <div class="wl-feed" data-feed></div>
+      <details class="wl-sources" data-sources></details>
+    </section>
+    <p class="wl-foot">Research and learning, not financial advice. Each price is as of the time shown on it, and the free plan's prices can lag.</p>
+  </div>`;
+}
 function shell(view) {
+  if (MODE === 'markets') return marketsShell(view);
   view.innerHTML = `<div class="wl${S.explain ? ' is-explain' : ''}">
     <header class="wl-head">
       <div><h1>Biotech investing</h1><p class="wl-sub">Learn, watch your six CF companies, decide, and practise.</p></div>
@@ -110,7 +148,7 @@ function showPane(view) {
 }
 function picker(view) {
   const el = q(view, '[data-picker]'); if (!el) return;
-  el.innerHTML = CFG.companies.map(c => { const x = quotes && quotes.quotes ? quotes.quotes[c.symbol] : null;
+  el.innerHTML = cos().map(c => { const x = quotes && quotes.quotes ? quotes.quotes[c.symbol] : null;
     return `<button data-sym="${c.symbol}" class="${S.sym === c.symbol ? 'is-active' : ''}" style="--co:${c.color}"><b>${c.symbol}</b><span>${esc(c.short)}</span>${x ? `<small class="${dir(x.pct)}">${money(x.price)}</small>` : ''}</button>`; }).join('');
 }
 
@@ -195,12 +233,13 @@ function notice(view) {
   if (quoteErr === 'nokey') msg = `<b>Prices are off until the Twelve Data key is set.</b> In the study-app folder run <code>npx wrangler secret put TWELVE_DATA_KEY</code>, paste the key from twelvedata.com when it asks, then redeploy. Updates below work without it.`;
   else if (quoteErr === 'limit') msg = `Twelve Data's free limit was reached for the moment, so prices are the last saved ones. Try again in a minute.`;
   else if (quoteErr) msg = `Couldn't get prices just now (${esc(quoteErr)}).`;
+  else if (quotes && quotes.waiting) msg = `${quotes.waiting} price${quotes.waiting > 1 ? 's are' : ' is'} still loading (the free plan allows 8 a minute). They fill in by themselves.`;
   else if (quotes && quotes.stale) msg = `Showing saved prices from ${ago(quotes.at)}. Twelve Data didn't answer.`;
   el.hidden = !msg; el.innerHTML = msg;
 }
 
 function cards(view) {
-  q(view, '[data-cards]').innerHTML = CFG.companies.map(c => {
+  q(view, '[data-cards]').innerHTML = cos().map(c => {
     const x = quotes && quotes.quotes ? quotes.quotes[c.symbol] : null;
     let bar = '';
     if (x && x.low52 != null && x.high52 > x.low52) {
@@ -377,20 +416,20 @@ function pinHint(view) { q(view, '[data-pinbox]').innerHTML = ''; }
 /* ------------------------------------------------------------ lists */
 function upcoming(view) {
   const t = today();
-  const fut = events.filter(e => e.date >= t).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const fut = events.filter(e => e.date >= t && shownSym(e.symbol)).sort((a, b) => (a.date < b.date ? -1 : 1));
   const rows = fut.slice(0, 15).map(e => { const c = co(e.symbol); return `<div class="wl-up" style="--co:${c.color}"><span class="wl-up-date">${fmtDate(e.date)}</span><b class="wl-tick-s">${c.symbol}</b><span class="wl-up-title">${e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a>` : esc(e.title)}</span></div>`; }).join('');
-  const notes = CFG.companies.map(c => `<div class="wl-up" style="--co:${c.color}"><span class="wl-up-date">Guided</span><b class="wl-tick-s">${c.symbol}</b><span class="wl-up-title">${esc(c.next)}</span></div>`).join('');
+  const notes = cos().map(c => `<div class="wl-up" style="--co:${c.color}"><span class="wl-up-date">Guided</span><b class="wl-tick-s">${c.symbol}</b><span class="wl-up-title">${esc(c.next)}</span></div>`).join('');
   q(view, '[data-upcoming]').innerHTML = (rows ? `<h3>Dated</h3>${rows}` : '') + `<h3>What each company has said</h3>${notes}`;
 }
 function chips(view) {
   const t = today(), counts = {}, per = {};
-  for (const e of events) if (e.date <= t) { counts[e.type] = (counts[e.type] || 0) + 1; per[e.symbol] = (per[e.symbol] || 0) + 1; }
-  q(view, '[data-fsym]').innerHTML = [['all', 'All companies']].concat(CFG.companies.map(c => [c.symbol, c.symbol])).map(([k, l]) => `<button data-fsym="${k}" class="${S.fSym === k ? 'is-active' : ''}"${k !== 'all' ? ` style="--co:${co(k).color}"` : ''}>${l}${k !== 'all' && per[k] ? ` <small>${per[k]}</small>` : ''}</button>`).join('');
+  for (const e of events) if (e.date <= t && shownSym(e.symbol)) { counts[e.type] = (counts[e.type] || 0) + 1; per[e.symbol] = (per[e.symbol] || 0) + 1; }
+  q(view, '[data-fsym]').innerHTML = [['all', 'All companies']].concat(cos().map(c => [c.symbol, c.symbol])).map(([k, l]) => `<button data-fsym="${k}" class="${S.fSym === k ? 'is-active' : ''}"${k !== 'all' ? ` style="--co:${co(k).color}"` : ''}>${l}${k !== 'all' && per[k] ? ` <small>${per[k]}</small>` : ''}</button>`).join('');
   q(view, '[data-ftype]').innerHTML = [['all', 'Everything']].concat(Object.entries(TYPES).filter(([k]) => k !== 'catalyst' && k !== 'mine').map(([k, x]) => [k, x.label])).map(([k, l]) => `<button data-ftype="${k}" class="${S.fType === k ? 'is-active' : ''}">${l}${k !== 'all' && counts[k] ? ` <small>${counts[k]}</small>` : ''}</button>`).join('');
 }
 function feed(view) {
   const t = today();
-  const list = events.filter(e => e.date <= t && (S.fSym === 'all' || e.symbol === S.fSym) && (S.fType === 'all' || e.type === S.fType));
+  const list = events.filter(e => e.date <= t && shownSym(e.symbol) && (S.fSym === 'all' || e.symbol === S.fSym) && (S.fType === 'all' || e.type === S.fType));
   const el = q(view, '[data-feed]');
   if (!list.length) { el.innerHTML = `<div class="wl-empty">${checking ? '<span class="books-spinner"></span> Collecting updates…' : 'Nothing here yet.'}</div>`; return; }
   el.innerHTML = list.slice(0, S.shown).map(e => { const c = co(e.symbol);
@@ -652,7 +691,7 @@ function allLessons() {
   if (lessonsCache) return lessonsCache;
   const T = window.WLTeach; if (!T || !allBars) return [];
   const order = { support: 0, breakout: 1, pullback: 2, trend: 3, breakdown: 4, none: 9 };
-  lessonsCache = CFG.companies.flatMap(c => T.setups(c.symbol, c.short, allBars[c.symbol], events)).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : (order[a.key] - order[b.key])));
+  lessonsCache = cos().flatMap(c => T.setups(c.symbol, c.short, allBars[c.symbol], events)).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : (order[a.key] - order[b.key])));
   return lessonsCache;
 }
 // [[term]] or [[term|words]] → a tappable word that opens a short definition with a picture
@@ -709,7 +748,7 @@ function lessonsPanel(view) {
     }
   } else if (LS.tab === 'replay') {
     const sym = LS.sym || S.sym, bs = allBars[sym];
-    const chips = `<div class="wl-chips">${CFG.companies.map(c => `<button data-lsym="${c.symbol}" class="${sym === c.symbol ? 'is-active' : ''}" style="--co:${c.color}">${c.symbol}</button>`).join('')}</div>
+    const chips = `<div class="wl-chips">${cos().map(c => `<button data-lsym="${c.symbol}" class="${sym === c.symbol ? 'is-active' : ''}" style="--co:${c.color}">${c.symbol}</button>`).join('')}</div>
       <div class="wl-chips">${Object.entries(T.RULES).map(([k, r]) => `<button data-lrule="${k}" class="${LS.rule === k ? 'is-active' : ''}">${r.name}</button>`).join('')}</div>
       <div class="wl-chips">${[[182, 'Last 6 months'], [365, 'Last year'], [700, 'Last 2 years']].map(([d, l]) => `<button data-lper="${d}" class="${LS.period === d ? 'is-active' : ''}">${l}</button>`).join('')}</div>`;
     if (!bs || bs.length < 120) body = chips + '<div class="wl-empty">Price history for this company is still loading.</div>';
@@ -774,8 +813,14 @@ async function loadLessons(view) {
 }
 
 /* ------------------------------------------------------------ data */
+let quoteRetry = null;
 async function loadQuotes(view) {
-  try { const r = await api('quotes'); if (r.error) quoteErr = r.error; else { quotes = r; quoteErr = null; } }
+  clearTimeout(quoteRetry);
+  try {
+    const r = await api('quotes?s=' + cos().map(c => c.symbol).join(','));
+    if (r.error && !r.quotes) quoteErr = r.error;
+    else { quotes = { ...r, quotes: Object.assign({}, quotes && quotes.quotes, r.quotes) }; quoteErr = null; if (r.waiting) quoteRetry = setTimeout(() => loadQuotes(view), 62000); }
+  }
   catch (e) { if (e.auth) return; quoteErr = 'network'; }
   notice(view); cards(view); picker(view); chartTop(view); decidePanel(view);
 }
@@ -805,7 +850,7 @@ async function check(view, force) {
   const mine = gen;
   await loadStatus(view);
   if (!jobs) return;
-  const todo = jobs.filter(j => force || !j.at || Date.now() - j.at > 3 * 3600000).map(j => j.job);
+  const todo = jobs.filter(j => shownSym(j.job.split(':')[0])).filter(j => force || !j.at || Date.now() - j.at > 3 * 3600000).map(j => j.job);
   if (!todo.length) return;
   const btn = q(view, '[data-refresh]'); if (btn) btn.disabled = true;
   for (let n = 0; n < todo.length; n++) {
@@ -821,24 +866,30 @@ async function check(view, force) {
   await Promise.all([loadEvents(view), loadStatus(view)]);
 }
 
-function show(view) {
+function show(view, mode) {
+  MODE = mode || 'cf';
+  quotes = null;
   view.innerHTML = '<div class="fc-loading"><span class="books-spinner"></span> Loading watchlist…</div>';
   let alive = true, timer = null;
   gen++; checking = null;
   fetch('data/watchlist.json', { cache: 'no-cache' }).then(r => r.json()).then(cfg => {
     if (!alive) return;
     CFG = cfg;
-    if (!co(S.sym)) S.sym = CFG.companies[0].symbol;
+    S.sym = store.get(MODE === 'cf' ? 'wl:sym' : 'mk:sym', S.sym);
+    if (!shownSym(S.sym)) S.sym = cos()[0].symbol;
+    S.fSym = 'all';
     shell(view); cards(view); chartTop(view); tools(view); drawChart(view);
     loadQuotes(view); loadBars(view);
     loadEvents(view).then(() => alive && check(view, false));
     if (S.show.mine === undefined) S.show.mine = true;
-    loadT212(view).then(() => decidePanel(view));
-    loadDecide(view);
-    loadLessons(view);
-    loadCourse(view);
+    if (MODE === 'cf') {
+      loadT212(view).then(() => decidePanel(view));
+      loadDecide(view);
+      loadLessons(view);
+      loadCourse(view);
+    }
     timer = setInterval(() => { if (!document.hidden) loadQuotes(view); }, 120000);
-    const save = () => { store.set('wl:sym', S.sym); store.set('wl:iv', S.iv); store.set('wl:zoom', S.zoom); store.set('wl:style', S.style); store.set('wl:ma', S.ma); store.set('wl:show', S.show); };
+    const save = () => { store.set(MODE === 'cf' ? 'wl:sym' : 'mk:sym', S.sym); store.set('wl:iv', S.iv); store.set('wl:zoom', S.zoom); store.set('wl:style', S.style); store.set('wl:ma', S.ma); store.set('wl:show', S.show); };
     view.addEventListener('change', e => {
       const t = e.target;
       if (t.matches('[data-cfonly]')) { cfOnly = t.checked; store.set('wl:cfonly', cfOnly); decidePanel(view); return; }
@@ -860,6 +911,14 @@ function show(view) {
     view.ondblclick = e => { if (e.target.closest('[data-chart]')) applyZoom(); };
     view.onclick = async e => {
       const t = e.target;
+      const tp = t.closest('[data-topic]');
+      if (tp) {
+        S.topic = tp.dataset.topic; store.set('mk:topic', S.topic); S.fSym = 'all'; S.shown = 40;
+        const keep = shownSym(S.sym); if (!keep) { S.sym = cos()[0].symbol; S.sel = null; save(); }
+        destroyChart(); marketsShell(view); cards(view); chartTop(view); tools(view); upcoming(view); chips(view); feed(view); sources(view); notice(view);
+        drawChart(view); loadBars(view); loadQuotes(view);
+        return;
+      }
       const card = t.closest('[data-sym]');
       if (card && !t.closest('a')) { S.sym = card.dataset.sym; S.sel = null; save(); cards(view); picker(view); chartTop(view); decidePanel(view); loadBars(view); return; }
       const wt = t.closest('[data-wtab]'); if (wt) { S.wtab = wt.dataset.wtab; store.set('wl:wtab', S.wtab); showPane(view); if (S.wtab === 'learn') coursePanel(view); if (S.wtab === 'practice') lessonsPanel(view); q(view, '.wl-wtabs').scrollIntoView({ block: 'start' }); return; }
@@ -911,13 +970,14 @@ function show(view) {
       if (t.closest('[data-refresh]')) { check(view, true); }
     };
   }).catch(() => { view.innerHTML = '<div class="pane-empty">Could not load the watchlist.</div>'; });
-  return () => { alive = false; clearInterval(timer); destroyChart(); if (teachChart) { teachChart.destroy(); teachChart = null; } if (courseChart) { courseChart.forEach(c => c.destroy()); courseChart = null; } };
+  return () => { alive = false; clearInterval(timer); clearTimeout(quoteRetry); destroyChart(); if (teachChart) { teachChart.destroy(); teachChart = null; } if (courseChart) { courseChart.forEach(c => c.destroy()); courseChart = null; } };
 }
 
-B.registerView('watchlist', { title: () => 'Live watchlist', icon: 'trending-up', cls: 'wl-host', show });
+B.registerView('watchlist', { title: () => 'Biotech investing', icon: 'trending-up', cls: 'wl-host', show: v => show(v, 'cf') });
+B.registerView('markets', { title: () => 'Markets', icon: 'candles', cls: 'wl-host', show: v => show(v, 'markets') });
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261124'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261109m'; document.head.appendChild(l);
 }
 })();

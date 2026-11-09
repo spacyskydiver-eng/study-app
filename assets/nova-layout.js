@@ -180,7 +180,8 @@ function navPane(root) {
     ${tool('progress', 'chart', 'Progress')}
     ${tool('exam', 'clipboard-list', 'Exam practice')}
     ${tool('books', 'library', 'Book library')}
-    ${tool('watchlist', 'trending-up', 'Live watchlist')}
+    ${tool('watchlist', 'trending-up', 'Biotech investing')}
+    ${tool('markets', 'candles', 'Markets')}
     <button class="nv-nav-item nv-docked" data-navmap>${icon('graph')}<span>Neural map</span></button>
   </nav>`;
   paintChecks(root); loadDone();
