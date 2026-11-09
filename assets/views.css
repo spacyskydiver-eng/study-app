@@ -728,7 +728,7 @@ body.ui-nova .view-content > .ink-layer, body.ui-nova .view-content > .ink-bar, 
 .ink-space small { font-size: 9.5px; line-height: 1; color: var(--text-muted); }
 
 /* ---------------------------------------------------------------- read aloud (assets/reader.js) */
-::highlight(rd-sent) { background-color: rgba(124,140,248,.20); }
+::highlight(rd-sent) { background-color: rgba(124,140,248,.12); }
 ::highlight(rd-word) { background-color: rgba(250,204,21,.55); color: #111; }
 .rd-chip { position: fixed; z-index: 90; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 0; border-radius: 999px; background: #7c8cf8; color: #fff; font: 600 14px/1 inherit; box-shadow: 0 8px 24px rgba(0,0,0,.35); cursor: pointer; }
 .rd-chip svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

@@ -92,8 +92,11 @@ function rangeAt(g0, g1) {
 /* ---------------------------------------------------------------- player state */
 const P = { el: null, text: '', segs: [], sents: [], pos: 0, playing: false, token: 0, rate: ls.get('rate', 1), utterStart: 0, t0: 0, timed: false, tick: 0, userScroll: 0, dragging: false };
 const HL = window.CSS && CSS.highlights && window.Highlight;
+let hlLast = '';
 function highlight(pos) {
   if (!HL) return;
+  const key = sentIndex(pos) + ':' + wordStart(pos);
+  if (key === hlLast) return; hlLast = key;   // only repaint when the word changes
   const si = sentIndex(pos), st = P.sents[si];
   const sr = st && rangeAt(st.s, st.e);
   CSS.highlights.set('rd-sent', sr ? new Highlight(sr) : new Highlight());
@@ -107,7 +110,7 @@ function highlight(pos) {
     }
   }
 }
-function clearHighlight() { if (HL) { CSS.highlights.delete('rd-sent'); CSS.highlights.delete('rd-word'); } }
+function clearHighlight() { hlLast = ''; if (HL) { CSS.highlights.delete('rd-sent'); CSS.highlights.delete('rd-word'); } }
 const sentIndex = pos => { let i = P.sents.findIndex(s => pos < s.e); return i < 0 ? P.sents.length - 1 : i; };
 function wordAt(pos) {
   const t = P.text; if (pos >= t.length) return null;
@@ -210,6 +213,87 @@ function chunksOf(sents, text) {
 const chunkIndex = pos => { let i = P.chunks.findIndex(c => pos < c.e); return i < 0 ? P.chunks.length - 1 : i; };
 const chunkText = i => speakable(P.text.slice(P.chunks[i].s, P.chunks[i].e));
 function prefetch(ci, n = 3) { for (let i = ci; i <= ci + n && i < P.chunks.length; i++) clip(chunkText(i)).catch(() => {}); }
+/* ---- following the AI voice word by word. The voice gives no timings, so they are worked out from the clip:
+   find the pauses in the audio (where it goes quiet), match them to the commas and full stops in the text,
+   and spread the words between those anchors by how long each takes to say (roughly its syllables). */
+const aligns = new Map();   // clip url + chunk -> Promise<[{g, t}]> word start positions and times
+function syllables(word) {
+  const bare = word.replace(/[^A-Za-z0-9]/g, '');
+  if (/^[A-Z]{2,5}s?$/.test(bare) && !/^(I|A)$/.test(bare)) return [...bare].reduce((n, c) => n + (c === 'W' ? 3 : 1), 0);   // DNA, PCR: said letter by letter
+  const w = speakable(word).toLowerCase();
+  let n = 0;
+  for (const part of w.split(/\s+/)) {
+    if (/\d/.test(part)) n += Math.max(1, part.replace(/\D/g, '').length * 1.6);
+    else n += Math.max(1, (part.match(/[aeiouy]+/g) || []).length - (/[^aeiou]e$/.test(part) && part.length > 3 ? 1 : 0));
+  }
+  return n;
+}
+async function envelope(url) {
+  const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const ab = await new AC(1, 2, 24000).decodeAudioData(await (await fetch(url)).arrayBuffer());
+  const d = ab.getChannelData(0), hop = Math.max(1, Math.round(ab.sampleRate * 0.01)), env = [];
+  for (let i = 0; i + hop <= d.length; i += hop) { let x = 0; for (let j = i; j < i + hop; j++) x += d[j] * d[j]; env.push(Math.sqrt(x / hop)); }
+  return { env, dur: ab.duration, step: hop / ab.sampleRate };
+}
+function align(url, ch) {
+  const key = url + '|' + ch.s + '|' + ch.e;
+  if (!aligns.has(key)) aligns.set(key, (async () => {
+    const text = P.text.slice(ch.s, ch.e), words = [];
+    for (let m, re = /\S+/g; (m = re.exec(text));) {
+      const w = m[0], end = /[.!?]["'”’)\]]*$/.test(w) ? 3 : /[,;:]$|^[–—-]$/.test(w) ? 1.5 : 0;
+      words.push({ g: ch.s + m.index, u: syllables(w), pause: end });
+    }
+    if (!words.length) return [];
+    const { env, dur, step } = await envelope(url);
+    const sorted = env.slice().sort((a, b) => a - b), peak = sorted[Math.floor(sorted.length * 0.95)] || 1e-6, thr = peak * 0.07;
+    let first = env.findIndex(v => v > thr), last = env.length - 1; while (last > 0 && env[last] <= thr) last--;
+    if (first < 0) first = 0;
+    const t0 = first * step, t1 = Math.max(t0 + 0.1, (last + 1) * step);
+    const gaps = [];   // quiet stretches of at least 0.12 s inside the speech
+    for (let i = first, run = -1; i <= last; i++) {
+      if (env[i] <= thr) { if (run < 0) run = i; }
+      else { if (run >= 0 && (i - run) * step >= 0.12) gaps.push({ a: run * step, b: i * step }); run = -1; }
+    }
+    // unit positions: each word takes its syllables, each comma or full stop adds a pause
+    let U = 0; for (const w of words) { w.at = U; U += w.u; w.endAt = U; U += w.pause; }
+    const anchors = [[0, t0]];
+    let gi = 0, lastT = t0;
+    for (const w of words) {
+      if (!w.pause) continue;
+      const guess = t0 + (w.endAt + w.pause / 2) / U * (t1 - t0), tol = Math.max(0.5, 0.15 * (t1 - t0));
+      let best = -1, bd = Infinity;
+      for (let k = gi; k < gaps.length; k++) { const c = (gaps[k].a + gaps[k].b) / 2, dd = Math.abs(c - guess); if (gaps[k].a >= lastT && dd < bd) { bd = dd; best = k; } if (c > guess + tol) break; }
+      if (best >= 0 && bd < tol) { anchors.push([w.endAt, gaps[best].a], [w.endAt + w.pause, gaps[best].b]); lastT = gaps[best].b; gi = best + 1; }
+    }
+    anchors.push([U, t1]);
+    // syllable beats: loudness peaks in the speech. Between two anchors, a word that starts a third of the way
+    // through the syllables starts at the beat a third of the way through, not a third of the way through the time.
+    const sm = env.map((v, i) => (env[i - 1] || v) * .25 + v * .5 + (env[i + 1] || v) * .25), beats = [];
+    for (let i = first + 1; i < last; i++) {
+      if (sm[i] > thr * 2.5 && sm[i] >= sm[i - 1] && sm[i] > sm[i + 1]) {
+        let lo = i; while (lo > first && sm[lo - 1] < sm[lo]) lo--;   // a real beat rises out of a dip
+        const t = i * step;
+        if (sm[i] - sm[lo] > peak * .08 && (!beats.length || t - beats[beats.length - 1].t > 0.09)) beats.push({ t, on: lo * step });
+      }
+    }
+    const timeAt = u => {
+      let k = 1; while (k < anchors.length - 1 && anchors[k][0] < u) k++;
+      const [ua, ta] = anchors[k - 1], [ub, tb] = anchors[k];
+      if (ub <= ua) return ta;
+      const f = (u - ua) / (ub - ua), inside = beats.filter(x => x.t > ta && x.t < tb);
+      if (inside.length < 3) return ta + f * (tb - ta);
+      const x = f * inside.length, j = Math.floor(x), fr = x - j;   // the word starts on beat j (counting from 0)
+      const on = i => i < inside.length ? Math.max(ta, inside[i].on) : tb;
+      return on(j) + fr * (on(j + 1) - on(j));
+    };
+    return words.map(w => ({ g: w.g, t: timeAt(w.at) }));
+  })().catch(() => null));
+  return aligns.get(key);
+}
+// where in the clip a page position is, and which word is being said at a moment in the clip
+const timeOfPos = (al, pos) => { let t = 0; for (const w of al) { if (w.g > pos) break; t = w.t; } return t; };
+const posOfTime = (al, t) => { let g = al.length ? al[0].g : 0; for (const w of al) { if (w.t > t + 0.04) break; g = w.g; } return g; };
+
 function speakAI(pos, tok) {
   if (!P.chunks || !P.chunks.length) P.chunks = chunksOf(P.sents, P.text);
   const ci = chunkIndex(pos), ch = P.chunks[ci];
@@ -219,10 +303,16 @@ function speakAI(pos, tok) {
   clip(chunkText(ci)).then(url => {
     if (tok !== P.token) return;
     P.aiLoading = false;
-    audio.onloadedmetadata = () => {
+    P.align = null;
+    const al = align(url, ch);
+    al.then(a => { if (tok === P.token && a && a.length) P.align = a; });
+    audio.onloadedmetadata = async () => {
+      if (tok !== P.token) return;
+      const a = pos - ch.s > 2 ? await Promise.race([al, new Promise(r => setTimeout(r, 400))]) : null;   // starting mid-clip: use the word timings if they're ready
       if (tok !== P.token) return;
       const frac = Math.max(0, Math.min(.98, (pos - ch.s) / Math.max(1, ch.e - ch.s)));
-      if (frac > 0.02 && isFinite(audio.duration)) audio.currentTime = frac * audio.duration;
+      if (a && a.length) audio.currentTime = timeOfPos(a, pos);
+      else if (frac > 0.02 && isFinite(audio.duration)) audio.currentTime = frac * audio.duration;
       audio.playbackRate = P.rate;
       audio.play().catch(() => { if (tok === P.token) pause(); });
     };
@@ -294,14 +384,15 @@ function startTick() { stopTick(); P.tick = setInterval(() => {
   if (!P.playing || P.dragging) return;
   if (useAI()) {   // follow the clip: position = how far through the sentence's audio we are
     const st = P.chunks && P.chunks[P.aiChunk];
-    if (st && !P.aiLoading && audio.duration && isFinite(audio.duration)) { P.pos = st.s + (audio.currentTime / audio.duration) * (st.e - st.s); paint(); }
+    if (st && !P.aiLoading && P.align) { P.pos = posOfTime(P.align, audio.currentTime); paint(); }
+    else if (st && !P.aiLoading && audio.duration && isFinite(audio.duration)) { P.pos = st.s + (audio.currentTime / audio.duration) * (st.e - st.s); paint(); }
     return;
   }
   if (P.timed) return;
   const st = P.sents[sentIndex(P.utterStart)];
   const est = P.utterStart + (performance.now() - P.t0) / 1000 * CPS * P.rate;
   P.pos = Math.min(est, st ? st.e - 1 : est); paint();
-}, 120); }
+}, 60); }
 function stopTick() { clearInterval(P.tick); }
 
 /* ---------------------------------------------------------------- player bar */
