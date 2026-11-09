@@ -214,6 +214,8 @@ function researchTopic(q) {
   const w = s.split(' ');
   if (w[0] && (near(w[0], 'research') || near(w[0], 'reasearch'))) { w[0] = 'research'; s = w.join(' '); }
   if (/\b(e-?mails?|inbox|outlook|calendar|timetable|diary|to-?do|flag(ged)?)\b/.test(s)) return null;
+  // trading and investing aren't in the biomedicine textbooks: those questions go to the tutor
+  if (FINANCE.test(s) || ['watchlist', 'markets'].includes(B.currentId())) return null;
   if (/\b(lecture|lec|practical|seminar|workshop|week)\s?\d/.test(s)) return null;
   const bookish = w.some(x => BOOKISH.some(t => near(x, t)));
   let t = s.replace(/^(?:(?:hey|ok|okay|so|right|yo)\s+)?(?:(?:nova|jarvis)\s+)?(?:please\s+)?(?:(?:can|could|would|will) you\s+|i (?:want|need) you to\s+|help me\s+|i want to\s+|i need to\s+|lets?\s+)?(?:please\s+)?/, '');
