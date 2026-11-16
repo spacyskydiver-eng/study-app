@@ -1,0 +1,710 @@
+{
+ "subject": "Online quizzes",
+ "module": "Point-scored practice quizzes found online",
+ "papers": [
+  {
+   "id": "oq-chem-1",
+   "title": "Thermodynamics and equilibrium quiz",
+   "lecture": "Biological Chemistry",
+   "hub": "",
+   "marks": 14,
+   "questions": [
+    {
+     "stem": "Which of the following statements is true about a reaction that has an equilibrium constant K &lt; 1?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "At equilibrium there are equal amounts of products and reactants",
+        "At equilibrium there are more products than reactants",
+        "All reactants have been converted to products",
+        "At equilibrium there are more reactants than products"
+       ],
+       "answer": 3,
+       "explain": "K = [products] ÷ [reactants]. If K is less than 1, the bottom is bigger, so there are more reactants than products at equilibrium.",
+       "marks": 1,
+       "id": "oq-chem-1-q1a"
+      }
+     ],
+     "id": "oq-chem-1-q1"
+    },
+    {
+     "stem": "For a non-spontaneous reaction (complete the sentence)…",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "(TΔS − ΔH) must be positive",
+        "ΔS must be negative",
+        "ΔH must be negative",
+        "ΔH must be positive",
+        "(ΔH − TΔS) must be positive"
+       ],
+       "answer": 4,
+       "explain": "ΔG = ΔH − TΔS, and non-spontaneous means ΔG &gt; 0, so (ΔH − TΔS) is positive. (TΔS − ΔH) positive would mean ΔG is negative. ΔH or ΔS alone can't decide it.",
+       "marks": 1,
+       "id": "oq-chem-1-q2a"
+      }
+     ],
+     "id": "oq-chem-1-q2"
+    },
+    {
+     "stem": "For a reversible reaction, which of the following statements is true?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "If ΔG &gt; 0 the forward reaction is spontaneous",
+        "If ΔG = 0 the forward reaction is spontaneous",
+        "If ΔG &gt; 0 the reverse reaction is spontaneous",
+        "If ΔG &lt; 0 the reverse reaction is spontaneous",
+        "If ΔG = 0 the reverse reaction is spontaneous"
+       ],
+       "answer": 2,
+       "explain": "ΔG &gt; 0 means the forward reaction is not spontaneous, so the reverse one is. ΔG = 0 is equilibrium: neither direction.",
+       "marks": 1,
+       "id": "oq-chem-1-q3a"
+      }
+     ],
+     "id": "oq-chem-1-q3"
+    },
+    {
+     "stem": "For the reaction A + B ⇌ C + heat at equilibrium, decreasing the temperature will favour the ___ reaction.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "forward",
+        "back"
+       ],
+       "answer": 0,
+       "explain": "Heat is a product, so the forward reaction is exothermic. Cooling favours the direction that releases heat.",
+       "marks": 1,
+       "id": "oq-chem-1-q4a"
+      }
+     ],
+     "id": "oq-chem-1-q4"
+    },
+    {
+     "stem": "Which one of the following is NOT associated with an increase in entropy?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "A reaction that releases heat into the environment",
+        "The melting of ice to yield liquid water",
+        "The breakdown of glycogen into its glucose subunits",
+        "The folding of a polypeptide chain into a more compact three-dimensional shape",
+        "The evaporation of sweat from the surface of the skin"
+       ],
+       "answer": 3,
+       "explain": "Folding into a compact shape makes the chain more ordered, so its entropy falls. The others all increase disorder (released heat raises the surroundings' entropy).",
+       "marks": 1,
+       "id": "oq-chem-1-q5a"
+      }
+     ],
+     "id": "oq-chem-1-q5"
+    },
+    {
+     "stem": "True or false: 'Bond formation (in chemical reactions) generates energy.'",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "True",
+        "False"
+       ],
+       "answer": 0,
+       "explain": "Forming bonds releases energy; breaking bonds takes energy in.",
+       "marks": 1,
+       "id": "oq-chem-1-q6a"
+      }
+     ],
+     "id": "oq-chem-1-q6"
+    },
+    {
+     "stem": "A protein folds with ΔH° = −20.4 kJ mol⁻¹ and ΔS° = −302.2 J mol⁻¹ K⁻¹. At 37 °C, which is true?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "The reaction is endergonic and therefore not spontaneous",
+        "The reaction is exergonic and therefore spontaneous",
+        "The reaction is exergonic and therefore not spontaneous",
+        "The spontaneity is impossible to tell from the information",
+        "The reaction is not spontaneous because it is endothermic"
+       ],
+       "answer": 0,
+       "explain": "T = 310 K and ΔS = −0.3022 kJ mol⁻¹ K⁻¹. ΔG = ΔH − TΔS = −20.4 − (310 × −0.3022) = −20.4 + 93.7 = +73.3 kJ mol⁻¹. Positive, so endergonic and not spontaneous.",
+       "marks": 1,
+       "id": "oq-chem-1-q7a"
+      }
+     ],
+     "id": "oq-chem-1-q7"
+    },
+    {
+     "stem": "True or false: a closed system can only exchange energy with its environment.",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "True",
+        "False"
+       ],
+       "answer": 0,
+       "explain": "Closed: energy but not matter. Open: both. Isolated: neither.",
+       "marks": 1,
+       "id": "oq-chem-1-q8a"
+      }
+     ],
+     "id": "oq-chem-1-q8"
+    },
+    {
+     "stem": "C₄H₁₀O → C₄H₈ + H₂O. ΔHf: C₄H₁₀O −335, C₄H₈ −17, H₂O −242 kJ mol⁻¹. What is the enthalpy change of the reaction (kJ mol⁻¹)?",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "",
+       "value": 76,
+       "marks": 1,
+       "unit": "kJ mol⁻¹",
+       "working": "Hess cycle with the elements at the bottom. Reactants → elements is against the arrow: +335. Elements → products: −17 + (−242) = −259. ΔH = +335 − 259 = +76 kJ mol⁻¹.",
+       "tol": 0.5,
+       "id": "oq-chem-1-q9a"
+      }
+     ],
+     "id": "oq-chem-1-q9"
+    },
+    {
+     "stem": "True or false: 'Bond formation (in chemical reactions) requires input of energy.'",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "True",
+        "False"
+       ],
+       "answer": 1,
+       "explain": "False: bond breaking needs energy; bond formation releases it.",
+       "marks": 1,
+       "id": "oq-chem-1-q10a"
+      }
+     ],
+     "id": "oq-chem-1-q10"
+    },
+    {
+     "stem": "A + B ⇌ 2C at 35 °C. At equilibrium [A] = 0.5 M, [B] = 0.5 M, [C] = 0.1 M. Calculate ΔG° in kJ mol⁻¹ (3 s.f.).",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "",
+       "value": 8.25,
+       "marks": 1,
+       "unit": "kJ mol⁻¹",
+       "working": "K = [C]² ÷ ([A][B]) = 0.01 ÷ 0.25 = 0.04. T = 308 K. ΔG° = −RT ln K = −8.315 × 308 × ln 0.04 = +8.24 to 8.25 kJ mol⁻¹ (8.25 with 273.15). Either is accepted here.",
+       "tol": 0.015,
+       "id": "oq-chem-1-q11a"
+      }
+     ],
+     "id": "oq-chem-1-q11"
+    },
+    {
+     "stem": "A reaction in a glass flask makes the flask colder to the touch. What would you call it?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "exothermic",
+        "endothermic",
+        "none of the above",
+        "exergonic",
+        "endergonic"
+       ],
+       "answer": 1,
+       "explain": "The flask cools because the reaction takes heat in from its surroundings: endothermic.",
+       "marks": 1,
+       "id": "oq-chem-1-q12a"
+      }
+     ],
+     "id": "oq-chem-1-q12"
+    },
+    {
+     "stem": "2A + B ⇌ C. At equilibrium [A] = 0.1 M, [B] = 0.2 M, [C] = 0.1 M. What is K (no units)?",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "",
+       "value": 50,
+       "marks": 1,
+       "unit": "",
+       "working": "K = [C] ÷ ([A]² [B]) = 0.1 ÷ (0.01 × 0.2) = 0.1 ÷ 0.002 = 50.",
+       "tol": 0.01,
+       "id": "oq-chem-1-q13a"
+      }
+     ],
+     "id": "oq-chem-1-q13"
+    },
+    {
+     "stem": "Which of the following terms describes a spontaneous reaction?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "endothermic",
+        "exothermic",
+        "exergonic",
+        "endergonic",
+        "exotropic"
+       ],
+       "answer": 2,
+       "explain": "Spontaneous means ΔG &lt; 0: exergonic. Exothermic alone doesn't guarantee it.",
+       "marks": 1,
+       "id": "oq-chem-1-q14a"
+      }
+     ],
+     "id": "oq-chem-1-q14"
+    }
+   ]
+  },
+  {
+   "id": "oq-gen-1",
+   "title": "Genetics quiz: Mendel, meiosis and chromosomes",
+   "lecture": "Molecular Biology and Genetics",
+   "hub": "",
+   "marks": 20,
+   "questions": [
+    {
+     "stem": "The haploid human genome is about 670 times larger than the <em>E. coli</em> genome. This size difference is mostly because of which of the following?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "In E. coli each codon is made up of only two nucleotides",
+        "The human genome has much more repetitive DNA than E. coli",
+        "Human genes are on average 670 times larger than E. coli genes",
+        "The haploid human genome contains ~670 times more unique genes than the E. coli genome",
+        "Humans are diploid"
+       ],
+       "answer": 1,
+       "explain": "Most of the human genome is non-coding and repetitive. E. coli is almost all genes.",
+       "marks": 1,
+       "id": "oq-gen-1-q1a"
+      }
+     ],
+     "id": "oq-gen-1-q1"
+    },
+    {
+     "stem": "Dihybrid cross: LeLe II × lele ii. In the F2, what is the probability of genotype Lele Ii?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "0.5",
+        "0.0625",
+        "0.25",
+        "0.125",
+        "0.75"
+       ],
+       "answer": 2,
+       "explain": "One gene at a time: Le/le × Le/le gives Lele ½; I/i × I/i gives Ii ½. ½ × ½ = 0.25.",
+       "marks": 1,
+       "id": "oq-gen-1-q2a"
+      }
+     ],
+     "id": "oq-gen-1-q2"
+    },
+    {
+     "stem": "A diploid organism has a haploid set of 7 chromosomes. How many unique combinations of maternal and paternal chromosomes can independent assortment alone produce in gametes?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "256",
+        "7",
+        "128",
+        "64",
+        "8"
+       ],
+       "answer": 2,
+       "explain": "Each pair can line up 2 ways: 2⁷ = 128.",
+       "marks": 1,
+       "id": "oq-gen-1-q3a"
+      }
+     ],
+     "id": "oq-gen-1-q3"
+    },
+    {
+     "stem": "The haploid number in humans is 23. How many chromosomes are in the somatic cells of a trisomic human?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "45",
+        "47",
+        "46",
+        "22",
+        "23"
+       ],
+       "answer": 1,
+       "explain": "Normal 2n = 46; trisomy adds one: 47.",
+       "marks": 1,
+       "id": "oq-gen-1-q4a"
+      }
+     ],
+     "id": "oq-gen-1-q4"
+    },
+    {
+     "stem": "F2 fruit flies: P(red eyes) = 0.75 and P(long wings) = 0.75, genes assort independently. What is the probability of red eyes and short wings?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "1.0",
+        "0.0625",
+        "0.1875",
+        "2.25",
+        "0.5625"
+       ],
+       "answer": 2,
+       "explain": "Red ¾ × short (¼) = 3/16 = 0.1875.",
+       "marks": 1,
+       "id": "oq-gen-1-q5a"
+      }
+     ],
+     "id": "oq-gen-1-q5"
+    },
+    {
+     "stem": "When inserted into a coding sequence, which number of nucleotides is likely to have the least effect on the protein?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "1",
+        "2",
+        "5",
+        "4",
+        "3"
+       ],
+       "answer": 4,
+       "explain": "3 nucleotides add one codon and keep the reading frame. Any other number causes a frameshift.",
+       "marks": 1,
+       "id": "oq-gen-1-q6a"
+      }
+     ],
+     "id": "oq-gen-1-q6"
+    },
+    {
+     "stem": "House flies have a haploid number of 6. How many chromosomes are in a diploid house fly cell?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "6",
+        "0",
+        "12",
+        "9",
+        "3"
+       ],
+       "answer": 2,
+       "explain": "2n = 2 × 6 = 12.",
+       "marks": 1,
+       "id": "oq-gen-1-q7a"
+      }
+     ],
+     "id": "oq-gen-1-q7"
+    },
+    {
+     "stem": "In a cross of pea plants (Punnett square in the original quiz, assumed Rr × Rr), 2000 progeny are heterozygous. About how many progeny have round seed?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "1000",
+        "0",
+        "2000",
+        "3000",
+        "4000"
+       ],
+       "answer": 3,
+       "explain": "Assuming Rr × Rr: heterozygotes are ½, so 2000 means 4000 in total. Round (dominant) is ¾ of 4000 = 3000. The original Punnett square image wasn't included, so check it if you have it.",
+       "marks": 1,
+       "id": "oq-gen-1-q8a"
+      }
+     ],
+     "id": "oq-gen-1-q8"
+    },
+    {
+     "stem": "Tall yellow × dwarf green peas; all F1 tall yellow. Of 3200 F2 progeny, about how many are dwarf with green seed?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "600",
+        "800",
+        "200",
+        "1800",
+        "3200"
+       ],
+       "answer": 2,
+       "explain": "Double recessive is 1/16 of the F2: 3200 ÷ 16 = 200.",
+       "marks": 1,
+       "id": "oq-gen-1-q9a"
+      }
+     ],
+     "id": "oq-gen-1-q9"
+    },
+    {
+     "stem": "A diploid silk worm cell (2n = 56) undergoes mitosis. How many chromosomes does each daughter cell contain?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "14",
+        "28",
+        "112",
+        "56",
+        "224"
+       ],
+       "answer": 3,
+       "explain": "Mitosis keeps the chromosome number: 56.",
+       "marks": 1,
+       "id": "oq-gen-1-q10a"
+      }
+     ],
+     "id": "oq-gen-1-q10"
+    },
+    {
+     "stem": "1 = allelic segregation, 2 = pairing of homologous bivalents, 3 = separation of sister chromatids. In meiosis, which is the correct order?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "2 then 1 then 3",
+        "1 then 2 then 3",
+        "1 then 3 then 2",
+        "2 then 3 then 1",
+        "3 then 1 then 2"
+       ],
+       "answer": 0,
+       "explain": "Homologues pair in prophase I, alleles separate in anaphase I, sister chromatids separate in anaphase II.",
+       "marks": 1,
+       "id": "oq-gen-1-q11a"
+      }
+     ],
+     "id": "oq-gen-1-q11"
+    },
+    {
+     "stem": "Rarely, tortoiseshell cats can be male. What sex-chromosome genotype are they likely to have?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "XO",
+        "XY",
+        "XX",
+        "XXX",
+        "XXY"
+       ],
+       "answer": 4,
+       "explain": "Tortoiseshell needs two X chromosomes (two coat-colour alleles), and male needs a Y: XXY.",
+       "marks": 1,
+       "id": "oq-gen-1-q12a"
+      }
+     ],
+     "id": "oq-gen-1-q12"
+    },
+    {
+     "stem": "How many Barr bodies would be expected in each cell of a mammal with three X chromosomes?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "2",
+        "4",
+        "3",
+        "1",
+        "0"
+       ],
+       "answer": 0,
+       "explain": "Barr bodies = number of X chromosomes − 1 = 2.",
+       "marks": 1,
+       "id": "oq-gen-1-q13a"
+      }
+     ],
+     "id": "oq-gen-1-q13"
+    },
+    {
+     "stem": "A diploid silk worm cell (2n = 56) undergoes meiosis. How many chromosomes does each daughter cell contain?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "56",
+        "28",
+        "112",
+        "224",
+        "14"
+       ],
+       "answer": 1,
+       "explain": "Meiosis halves the number: 28.",
+       "marks": 1,
+       "id": "oq-gen-1-q14a"
+      }
+     ],
+     "id": "oq-gen-1-q14"
+    },
+    {
+     "stem": "A diploid human cell (2n = 46) undergoes meiosis. How many chromosomes does each gamete contain?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "92",
+        "184",
+        "23",
+        "46",
+        "1"
+       ],
+       "answer": 2,
+       "explain": "Meiosis halves it: 23.",
+       "marks": 1,
+       "id": "oq-gen-1-q15a"
+      }
+     ],
+     "id": "oq-gen-1-q15"
+    },
+    {
+     "stem": "Trihybrid cross: AA BB CC × aa bb cc, genes assort independently. What is the probability that an F2 individual is AA Bb Cc?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "0.125",
+        "0.0625",
+        "0.5",
+        "0.75",
+        "0.25"
+       ],
+       "answer": 1,
+       "explain": "AA ¼ × Bb ½ × Cc ½ = 1/16 = 0.0625.",
+       "marks": 1,
+       "id": "oq-gen-1-q16a"
+      }
+     ],
+     "id": "oq-gen-1-q16"
+    },
+    {
+     "stem": "A single human female germline cell undergoes meiosis. How many gametes (ova) are produced?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "2",
+        "5",
+        "3",
+        "1",
+        "4"
+       ],
+       "answer": 3,
+       "explain": "One ovum; the other products become polar bodies, which aren't gametes.",
+       "marks": 1,
+       "id": "oq-gen-1-q17a"
+      }
+     ],
+     "id": "oq-gen-1-q17"
+    },
+    {
+     "stem": "A single human male germline cell undergoes meiosis. How many gametes (spermatozoa) are produced?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "8",
+        "2",
+        "3",
+        "4",
+        "1"
+       ],
+       "answer": 3,
+       "explain": "All four products of male meiosis become sperm.",
+       "marks": 1,
+       "id": "oq-gen-1-q18a"
+      }
+     ],
+     "id": "oq-gen-1-q18"
+    },
+    {
+     "stem": "Tall round × dwarf wrinkled peas; all F1 tall round. Of 1600 F2 progeny, about how many are tall with wrinkled seed?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "400",
+        "300",
+        "100",
+        "900",
+        "1600"
+       ],
+       "answer": 1,
+       "explain": "Tall wrinkled is 3/16 of the F2: 1600 × 3/16 = 300.",
+       "marks": 1,
+       "id": "oq-gen-1-q19a"
+      }
+     ],
+     "id": "oq-gen-1-q19"
+    },
+    {
+     "stem": "F2 fruit flies: P(red eyes) = 0.75 and P(long wings) = 0.75, genes assort independently. What is the probability of white eyes and short wings?",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "",
+       "options": [
+        "1.0",
+        "0.0625",
+        "0.25",
+        "0.125",
+        "0.5"
+       ],
+       "answer": 1,
+       "explain": "White ¼ × short ¼ = 1/16 = 0.0625.",
+       "marks": 1,
+       "id": "oq-gen-1-q20a"
+      }
+     ],
+     "id": "oq-gen-1-q20"
+    }
+   ]
+  }
+ ]
+}
