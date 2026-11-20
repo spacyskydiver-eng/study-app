@@ -230,6 +230,31 @@ function ambient(page) {
   const host = h('<div class="ol-rays" aria-hidden="true"></div>'); page.prepend(host);
   return N.sideRays(host, { rayColor1: '#A78BFA', rayColor2: '#67E8F9', origin: 'top-right', intensity: 1.9, spread: 2.4, density: 5, speed: 1, glow: 1, opacity: 0.9, mouseInfluence: 0.35, maxRatio: 1, budget: 4.5e5 });
 }
+/* Phone alerts: a push notification at 7:30 each morning listing the day's sessions (time and place).
+   On an iPhone this needs the site added to the Home Screen and opened from there (iOS 16.4 or later). */
+const pushOK = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+async function pushState() { if (!pushOK()) return false; try { const reg = await navigator.serviceWorker.ready; return !!(await reg.pushManager.getSubscription()); } catch (e) { return false; } }
+async function pushToggle(view) {
+  const label = $('[data-push] span', view);
+  if (!pushOK()) return B.toast(/iPhone|iPad/.test(navigator.userAgent) ? 'On iPhone: Share › Add to Home Screen, open the site from that icon, then tap Phone alerts there.' : 'This browser can\'t show notifications from the site.', 6000);
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return B.toast('Notifications are blocked. Allow them for this site in your phone\'s settings.', 6000);
+      const k = await get('/api/push/key');
+      if (!k || !k.key) return B.toast('Could not reach the server.');
+      const raw = atob(k.key.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((k.key.length + 3) % 4));
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: Uint8Array.from(raw, c => c.charCodeAt(0)) });
+    }
+    const r = await post('/api/push/subscribe', { subscription: sub.toJSON() });
+    if (!r || r.error) return B.toast('Could not save the subscription.');
+    if (label) label.textContent = 'Alerts on · test';
+    await post('/api/push/test', {});
+    B.toast('Alerts on. A test notification is on its way; the real one comes at 7:30 on days with sessions.', 6000);
+  } catch (e) { B.toast('Could not turn alerts on: ' + (e.message || e), 6000); }
+}
 B.registerView('calendar', {
   title: () => 'Calendar', icon: 'calendar', cls: 'nv-view nv-view-ol',
   show(view) {
@@ -241,6 +266,7 @@ B.registerView('calendar', {
         <div><div class="nv-kicker">Outlook</div><h1 class="ol-cal-title">Calendar</h1></div>
         <div class="ol-cal-nav"><button class="ol-btn ol-icon" data-nav="-1" title="Previous">${icon('chevron-left')}</button><button class="ol-btn" data-nav="0">Today</button><button class="ol-btn ol-icon" data-nav="1" title="Next">${icon('chevron-right')}</button></div>
         <div class="ol-seg">${['month', 'agenda', 'year'].map(m => `<button data-mode="${m}"${m === mode ? ' class="is-on"' : ''}>${m[0].toUpperCase() + m.slice(1)}</button>`).join('')}</div>
+        <button class="ol-btn ol-push" data-push title="A notification at 7:30 each morning with the times and places of that day's sessions">${icon('bell')}<span>Phone alerts</span></button>
       </header>
       <div class="ol-cal-split"><div class="ol-cal-main"><div class="ol-empty">Loading…</div></div><aside class="ol-cal-side"></aside></div>
     </div>`;
@@ -304,7 +330,9 @@ B.registerView('calendar', {
     const render = () => { (mode === 'month' ? renderMonth : mode === 'agenda' ? renderAgenda : renderYear)(); countMonth(); $$('.ol-seg button', view).forEach(b => b.classList.toggle('is-on', b.dataset.mode === mode)); };
     let arrive = false, calRefs = new Set();
     O.focusEvent = p => { arrive = !!p.event; if (p.refs) calRefs = new Set(p.refs); if (p.day) { selDay = p.day; const d = new Date(p.day + 'T12:00:00'); cursor = new Date(d.getFullYear(), d.getMonth(), 1); } selEv = p.event || null; if (mode === 'year') mode = 'month'; render(); renderSide(); };
+    pushState().then(on => { const b = $('[data-push] span', view); if (b && on) b.textContent = 'Alerts on · test'; });
     view.onclick = e => {
+      if (e.target.closest('[data-push]')) { pushToggle(view); return; }
       const nav = e.target.closest('[data-nav]');
       if (nav) {
         const n = +nav.dataset.nav;

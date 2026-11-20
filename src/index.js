@@ -1,4 +1,5 @@
 import { investApi, cronTick } from "./invest.js";
+import { pushApi, morningPush } from "./push.js";
 import { t212Api } from "./t212.js";
 import { ttsApi } from "./tts.js";
 /* PIN-gates the whole site: every request must carry a valid signed session cookie, set by
@@ -905,7 +906,7 @@ Rules:
 
 export default {
   // the watchlist's update checks (every 15 minutes, set in wrangler.toml)
-  async scheduled(event, env, ctx) { ctx.waitUntil(cronTick(env)); },
+  async scheduled(event, env, ctx) { ctx.waitUntil(cronTick(env)); ctx.waitUntil(morningPush(env).catch(e => console.log("push", e && e.message))); },
   async email(message, env, ctx) { await handleSyncEmail(message, env); ctx.waitUntil(scanDeadlines(env, 10)); },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -922,6 +923,7 @@ export default {
       if (url.pathname.startsWith("/api/invest/")) return investApi(request, env, url, ctx);
       if (url.pathname.startsWith("/api/t212/")) return t212Api(request, env, url);
       if (url.pathname === "/api/tts") return ttsApi(request, env, ctx);
+      if (url.pathname.startsWith("/api/push/")) return pushApi(request, env, url);
       if (url.pathname.startsWith("/ms/") || url.pathname.startsWith("/api/ms/") || /^\/api\/(jarvis|todos|vision|progress|tutor)$/.test(url.pathname)) return handleMs(request, env, url, ctx);
       // pages are never kept by the browser: an expired session must reach the PIN screen, not a saved copy
       const res = await env.ASSETS.fetch(request);

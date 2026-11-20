@@ -74,3 +74,18 @@ self.addEventListener('fetch', e => {
   if (url.pathname.startsWith('/attachments/')) return e.respondWith(images(req));
   if (/^\/(assets|data)\//.test(url.pathname)) return e.respondWith(networkFirst(url.pathname + url.search, req, ASSET_WAIT));
 });
+
+// morning alerts (src/push.js): show the notification, open the calendar when it's tapped
+self.addEventListener('push', e => {
+  let d = {}; try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Today', { body: d.body || '', tag: d.tag || 'today', renotify: true, icon: '/assets/icons/icon-192.png', badge: '/assets/icons/icon-192.png', data: { url: d.url || '/#/calendar' } }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil((async () => {
+    const wins = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of wins) if (new URL(w.url).origin === location.origin) { await w.focus(); if ('navigate' in w) return w.navigate(url); return; }
+    return clients.openWindow(url);
+  })());
+});
