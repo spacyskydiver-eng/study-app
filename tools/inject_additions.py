@@ -66,7 +66,7 @@ def main(dirs):
             if pr.get('type') != 'hub' or not pr.get('subject') or pr.get('kind') not in ('lecture', 'seminar', 'practical'):
                 continue
             subj = pr['subject']
-            sid = next((k for k in data['notes'] if k.endswith('/' + subj) and data['notes'][k]['props'].get('type') in ('subject', 'module', 'hub', None)), None)
+            sid = next((k for k in data['notes'] if k.endswith('/' + subj) and data['notes'][k]['props'].get('type') in ('subject hub', 'subject', 'module', 'hub', None)), None)
             if not sid:
                 continue
             sh = data['notes'][sid]
@@ -82,7 +82,7 @@ def main(dirs):
             num = int(pr.get('number') or 0)
             items = re.findall(r'<li>.*?</li>', m.group(1), re.S)
             def numof(item):
-                mm = re.search(r'data-note="[^"]*/(\d+) ', item)
+                mm = re.search(r'data-note="[^"]*/(\d+) [^"/]*/[^"]*"', item)
                 return int(mm.group(1)) if mm else 0
             pos = len(items)
             for i, it in enumerate(items):

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" font-family="Arial, sans-serif">
+<rect width="760" height="300" fill="#fff"/>
+<text x="180" y="30" font-size="15" font-weight="bold" text-anchor="middle">Parent 1 (double heterozygote)</text>
+<text x="560" y="30" font-size="15" font-weight="bold" text-anchor="middle">Parent 2 (homozygous a/a)</text>
+<g stroke-width="5"><line x1="70" y1="80" x2="290" y2="80" stroke="#16a34a"/><line x1="70" y1="150" x2="290" y2="150" stroke="#7c3aed"/>
+<line x1="450" y1="80" x2="670" y2="80" stroke="#16a34a"/><line x1="450" y1="150" x2="670" y2="150" stroke="#16a34a"/></g>
+<g font-size="14"><text x="95" y="68" fill="#16a34a">M1a</text><text x="245" y="68" fill="#16a34a">M2a</text>
+<text x="95" y="138" fill="#7c3aed">M1b</text><text x="245" y="138" fill="#7c3aed">M2b</text>
+<text x="475" y="68" fill="#16a34a">M1a</text><text x="625" y="68" fill="#16a34a">M2a</text>
+<text x="475" y="138" fill="#16a34a">M1a</text><text x="625" y="138" fill="#16a34a">M2a</text></g>
+<text x="370" y="122" font-size="28" text-anchor="middle">×</text>
+<text x="180" y="200" font-size="13" text-anchor="middle">Gametes: M1a–M2a, M1b–M2b (parental)</text>
+<text x="180" y="220" font-size="13" text-anchor="middle" fill="#7c3aed">or M1a–M2b, M1b–M2a (recombinant, after a crossover)</text>
+<text x="560" y="200" font-size="13" text-anchor="middle">Gametes: always M1a–M2a</text>
+<text x="380" y="270" font-size="13" text-anchor="middle">Parent 2 adds only 'a' alleles, so each progeny genotype shows exactly which gamete Parent 1 gave</text>
+</svg>

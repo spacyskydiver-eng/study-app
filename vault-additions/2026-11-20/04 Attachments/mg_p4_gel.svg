@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 830 430" font-family="Arial, sans-serif">
+<rect width="830" height="430" fill="#ffffff"/>
+<rect x="90" y="45" width="625" height="350" rx="6" fill="#111827"/>
+<rect x="110" y="333.6329971669716" width="40" height="4" fill="#9ca3af"/>
+<text x="80" y="339.6329971669716" font-size="12" text-anchor="end" fill="#374151">500</text>
+<rect x="110" y="253.01551351494209" width="40" height="4" fill="#9ca3af"/>
+<text x="80" y="259.0155135149421" font-size="12" text-anchor="end" fill="#374151">750</text>
+<rect x="110" y="195.8164985834858" width="40" height="4" fill="#9ca3af"/>
+<text x="80" y="201.8164985834858" font-size="12" text-anchor="end" fill="#374151">1000</text>
+<rect x="110" y="115.19901493145625" width="40" height="4" fill="#9ca3af"/>
+<text x="80" y="121.19901493145625" font-size="12" text-anchor="end" fill="#374151">1500</text>
+<rect x="110" y="58.0" width="40" height="4" fill="#9ca3af"/>
+<text x="80" y="64.0" font-size="12" text-anchor="end" fill="#374151">2000</text>
+<text x="130" y="38" font-size="12" text-anchor="middle" fill="#111">1 kb ladder</text>
+<rect x="180" y="324.45286063342564" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="202" y="38" font-size="12" text-anchor="middle" fill="#111">M1</text>
+<rect x="238" y="190.87919806022816" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="260" y="38" font-size="12" text-anchor="middle" fill="#111">M2</text>
+<text x="231" y="412" font-size="13" text-anchor="middle" font-weight="bold" fill="#16a34a">i</text>
+<text x="231" y="428" font-size="11" text-anchor="middle" fill="#374151">M1a/M1a M2a/M2a</text>
+<text x="231" y="20" font-size="11" text-anchor="middle" fill="#16a34a">Non-recombinant</text>
+<rect x="320" y="324.45286063342564" width="44" height="6" rx="2" fill="#f9fafb"/>
+<rect x="320" y="249.12055969906058" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="342" y="38" font-size="12" text-anchor="middle" fill="#111">M1</text>
+<rect x="378" y="190.87919806022816" width="44" height="6" rx="2" fill="#f9fafb"/>
+<rect x="378" y="114.19901493145625" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="400" y="38" font-size="12" text-anchor="middle" fill="#111">M2</text>
+<text x="371" y="412" font-size="13" text-anchor="middle" font-weight="bold" fill="#16a34a">ii</text>
+<text x="371" y="428" font-size="11" text-anchor="middle" fill="#374151">M1a/M1b M2a/M2b</text>
+<text x="371" y="20" font-size="11" text-anchor="middle" fill="#16a34a">Non-recombinant</text>
+<rect x="460" y="324.45286063342564" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="482" y="38" font-size="12" text-anchor="middle" fill="#111">M1</text>
+<rect x="518" y="190.87919806022816" width="44" height="6" rx="2" fill="#f9fafb"/>
+<rect x="518" y="114.19901493145625" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="540" y="38" font-size="12" text-anchor="middle" fill="#111">M2</text>
+<text x="511" y="412" font-size="13" text-anchor="middle" font-weight="bold" fill="#7c3aed">iii</text>
+<text x="511" y="428" font-size="11" text-anchor="middle" fill="#374151">M1a/M1a M2a/M2b</text>
+<text x="511" y="20" font-size="11" text-anchor="middle" fill="#7c3aed">Recombinant</text>
+<rect x="600" y="324.45286063342564" width="44" height="6" rx="2" fill="#f9fafb"/>
+<rect x="600" y="249.12055969906058" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="622" y="38" font-size="12" text-anchor="middle" fill="#111">M1</text>
+<rect x="658" y="190.87919806022816" width="44" height="6" rx="2" fill="#f9fafb"/>
+<text x="680" y="38" font-size="12" text-anchor="middle" fill="#111">M2</text>
+<text x="651" y="412" font-size="13" text-anchor="middle" font-weight="bold" fill="#7c3aed">iv</text>
+<text x="651" y="428" font-size="11" text-anchor="middle" fill="#374151">M1a/M1b M2a/M2a</text>
+<text x="651" y="20" font-size="11" text-anchor="middle" fill="#7c3aed">Recombinant</text>
+<text x="724" y="331.45286063342564" font-size="12" text-anchor="start" fill="#374151">M1a 521</text>
+<text x="724" y="256.12055969906055" font-size="12" text-anchor="start" fill="#374151">M1b 761</text>
+<text x="724" y="197.87919806022816" font-size="12" text-anchor="start" fill="#374151">M2a 1020</text>
+<text x="724" y="121.19901493145625" font-size="12" text-anchor="start" fill="#374151">M2b 1500</text>
+</svg>
