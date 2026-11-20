@@ -14,7 +14,7 @@ const GRADE_XP = [2, 6, 10, 12];  // again, hard, good, easy
 /* ---------------------------------------------------------------- state */
 let D = null;           // { decks, cards, byId, deckById }
 let S = load();
-function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, optional: {}, optionalAt: {}, habits: {}, undone: {}, plansGone: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
+function blank() { return { v: 1, xp: 0, name: '', cards: {}, days: {}, best: { sprint: 0, combo: 0 }, badges: {}, optional: {}, optionalAt: {}, habits: {}, comeback: {}, undone: {}, plansGone: {}, newPerDay: 20, goal: 40, plans: [], created: Date.now() }; }
 function load() { const s = store.get(KEY, null); return s && s.v === 1 ? Object.assign(blank(), s) : blank(); }
 function save() { store.set(KEY, S); dirty = true; schedulePush(); }
 const today = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -63,6 +63,8 @@ function mergeProgress(local, remote) {
     const a = local.habits[h] || {}, b = remote.habits[h] || {}, o = out.habits[h] = {};
     for (const d of new Set([...Object.keys(a), ...Object.keys(b)])) o[d] = Math.abs(b[d] || 0) > Math.abs(a[d] || 0) ? b[d] : a[d];
   }
+  // comeback: a won-back day stays won back (the first win is kept)
+  out.comeback = Object.assign({}, remote.comeback, local.comeback);
   // exam practice (exam.js owns the format and the merge)
   const EX = B.examSync;
   out.exam = EX ? EX.merge(local.exam, remote.exam) : (remote.exam || local.exam);
@@ -253,7 +255,7 @@ const preview = (id, g) => { const now = Date.now(); return fmtIvl(schedule(S.ca
 function streak() {
   let n = 0, t = Date.now();
   if (!(S.days[today(t)] || {}).n) t -= DAY;           // today not started yet: count up to yesterday
-  while ((S.days[today(t)] || {}).n) { n++; t -= DAY; }
+  while ((S.days[today(t)] || {}).n || S.comeback[today(t)]) { n++; t -= DAY; }   // won-back days count
   return n;
 }
 const totalReviews = () => Object.values(S.days).reduce((s, d) => s + (d.n || 0), 0);
@@ -1481,6 +1483,7 @@ function undoRating() {
   else { S.undone[u.id] = rated.reps; delete S.cards[u.id]; }
   S.xp = u.xp; S.days[u.day] = u.dayRec; S.best.combo = u.bestCombo;
   if (sess.plan && u.planLog) sess.plan.log[u.day] = u.planLog;
+  if (u.comeback) S.comeback = u.comeback;
   Object.assign(sess, u.sess);
   sess.seen = new Set(u.seen);
   if (u.focus && !focusNow()) store.set(FOCUS_KEY, u.focus);
@@ -1606,13 +1609,14 @@ function clickSource(e) {
 function grade(id, g, fresh) {
   const ok = g >= 2;
   sess.undo.push({ id, card: S.cards[id], xp: S.xp, day: today(), dayRec: Object.assign({}, dayRec()), bestCombo: S.best.combo,
-    planLog: sess.plan ? Object.assign({}, plog(sess.plan)) : null, seen: [...sess.seen], focus: focusNow(),
+    planLog: sess.plan ? Object.assign({}, plog(sess.plan)) : null, comeback: Object.assign({}, S.comeback), seen: [...sess.seen], focus: focusNow(),
     sess: { queue: sess.queue.slice(), done: sess.done, right: sess.right, combo: sess.combo, xp: sess.xp, levels: sess.levels.slice(), focus: sess.focus } });
   if (sess.undo.length > 5) sess.undo.shift();
   S.cards[id] = schedule(S.cards[id], g);
   if (S.cards[id].reps <= (S.undone[id] || 0)) S.cards[id].reps = S.undone[id] + 1;   // a new rating after an undo counts
   const d = dayRec(); d.n++; if (ok) d.ok++; if (fresh && !isOptional(id) && !sess.seen.has(id)) d.fresh++;
   if (sess.plan) { const r = plog(sess.plan); r.n++; if (fresh && !sess.seen.has(id)) r.fresh++; }
+  if (d.n > S.goal && (d.n - S.goal) % S.goal === 0) for (const t of winBack()) B.toast(`Comeback: ${fmtDate(t)} won back`);
   sess.seen.add(id);
   sess.done++; if (ok) sess.right++;
   if (g === 0) sess.combo = 0; else if (g >= 2) sess.combo++;
@@ -1788,10 +1792,47 @@ function goalCell(t, now) {
 }
 function dailyPct(t, now, stats) {
   if (t > now) return null;
+  if (S.comeback[today(t)]) return 100;
   const run = S.plans.filter(p => planRuns(p, t));
   const pct = run.length ? Math.round(run.filter(p => planCell(p, t, stats(p), now).state === 'done').length / run.length * 100)
     : t < firstActive() ? null : Math.min(100, Math.round(((S.days[today(t)] || {}).n || 0) / S.goal * 100));
   return t === now && !pct ? null : pct;      // today isn't a zero until it's over
+}
+/* Comeback: missed card days in the last 30 can be won back. Today's first S.goal reviews count for
+   today; every further S.goal wins back the oldest missed day, up to three a day. A won-back day shows
+   amber, counts towards the rate and the streak, and keeps the date it was won on. */
+const COMEBACK = { window: 30, perDay: 3 };
+function rawMiss(t, now, stats) {
+  const run = S.plans.filter(p => planRuns(p, t));
+  return run.length ? run.some(p => planCell(p, t, stats(p), now).state === 'miss') : goalCell(t, now).state === 'miss';
+}
+function missedDays() {                     // oldest first, not yet won back
+  const now = dayStart(Date.now()), cache = new Map(), stats = p => { if (!cache.has(p)) cache.set(p, planStats(p)); return cache.get(p); };
+  const out = [];
+  for (let i = COMEBACK.window; i >= 1; i--) { const t = addDays(now, -i); if (!S.comeback[today(t)] && rawMiss(t, now, stats)) out.push(t); }
+  return out;
+}
+const wonToday = () => Object.values(S.comeback).filter(v => v === today()).length;
+const extraToday = () => Math.max(0, ((S.days[today()] || {}).n || 0) - S.goal);
+function winBack() {
+  const can = Math.min(COMEBACK.perDay, Math.floor(extraToday() / S.goal)) - wonToday();
+  if (can <= 0) return [];
+  const won = missedDays().slice(0, can);
+  for (const t of won) S.comeback[today(t)] = today();
+  if (won.length) save();
+  return won;
+}
+function comebackCard(now) {
+  const miss = missedDays(), left = miss.length, back = Object.keys(S.comeback).filter(k => new Date(k + 'T12:00').getTime() >= addDays(now, -COMEBACK.window)).length;
+  if (!left && !back) return '';
+  const n = (S.days[today()] || {}).n || 0, used = wonToday();
+  let line, f;
+  if (!left) { line = `All caught up. ${back} day${back === 1 ? '' : 's'} won back.`; f = 1; }
+  else if (used >= COMEBACK.perDay) { line = `${COMEBACK.perDay} days won back today, the most for one day. More tomorrow.`; f = 1; }
+  else if (n < S.goal) { line = `Finish today's ${S.goal} reviews first (${n} done), then every ${S.goal} more wins back a day.`; f = n / S.goal; }
+  else { const into = extraToday() - used * S.goal; line = `${S.goal - into} more reviews today wins back ${fmtDate(miss[0])}.`; f = into / S.goal; }
+  return `<section class="pg-card pg-comeback"><div class="pg-cardhead"><h3>Comeback</h3><span>${left} missed in the last ${COMEBACK.window} days · ${back} won back · ${used}/${COMEBACK.perDay} today</span></div>
+    <i class="pg-cb-bar"><u style="width:${Math.round(Math.min(1, f) * 100)}%"></u></i><small>${esc(line)}</small></section>`;
 }
 const habitOn = (h, t) => ((S.habits[h.id] || {})[today(t)] || 0) > 0;
 const isWeekend = t => [0, 6].includes(new Date(t).getDay());
@@ -1836,7 +1877,7 @@ function pgRange() {
 function pgRender() {
   const root = pgRoot; if (!root) return;
   const old = $('.pg-scroll', root), scroll = old ? old.scrollLeft : null;
-  markPlanDays();
+  markPlanDays(); winBack();
   const now = dayStart(Date.now()), days = pgRange(), phone = B.isPhone();
   const cache = new Map(), stats = p => { if (!cache.has(p)) cache.set(p, planStats(p)); return cache.get(p); };
   const shown = days.filter(t => t <= now);
@@ -1848,11 +1889,12 @@ function pgRender() {
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const head = days.map(t => { const d = new Date(t); return `<th class="pg-day${t === now ? ' is-today' : ''}${isWeekend(t) ? ' is-end' : ''}"><span>${DAYS2[d.getDay()]}</span><b>${d.getDate()}</b></th>`; }).join('');
   const rate = label => `<td class="pg-rate"><b>${label}</b></td>`;
-  const cellHtml = c => `<td class="${c.today ? 'is-today' : ''}"><span class="pg-box s-${c.state}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.state === 'done' ? icon('check') : ''}</span></td>`;
+  const cellHtml = c => `<td class="${c.today ? 'is-today' : ''}"><span class="pg-box s-${c.state}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.state === 'done' ? icon('check') : c.state === 'back' ? icon('rotate') : ''}</span></td>`;
+  const back = (t, c) => c.state === 'miss' && S.comeback[today(t)] ? { state: 'back', tip: `Won back on ${fmtDate(new Date(S.comeback[today(t)] + 'T12:00').getTime())}${c.tip ? ' · ' + c.tip : ''}` } : c;
   const cardRow = (name, sub, cell) => {
-    const cells = days.map(t => Object.assign(cell(t), { today: t === now }));
-    const judged = days.map((t, i) => [t, cells[i]]).filter(([t, c]) => c.state === 'done' || c.state === 'miss');
-    const hit = judged.filter(([, c]) => c.state === 'done').length, pct = judged.length ? Math.round(hit / judged.length * 100) : 0;
+    const cells = days.map(t => Object.assign(back(t, cell(t)), { today: t === now }));
+    const judged = days.map((t, i) => [t, cells[i]]).filter(([t, c]) => ['done', 'miss', 'back'].includes(c.state));
+    const hit = judged.filter(([, c]) => c.state !== 'miss').length, pct = judged.length ? Math.round(hit / judged.length * 100) : 0;
     return { html: `<tr><th class="pg-name"><b title="${esc(name)}">${esc(name)}</b><small>${esc(sub)}</small></th>${cells.map(cellHtml).join('')}${phone ? '' : rate(judged.length ? pct + '%' : '–')}</tr>`, name, sub: `${hit} of ${plural(judged.length, 'day')} · ${sub}`, pct, has: judged.length > 0 };
   };
   const cardRows = plans.map(p => cardRow(p.name, 'Due ' + fmtDate(p.due), t => planCell(p, t, stats(p), now)));
@@ -1884,6 +1926,7 @@ function pgRender() {
   root.innerHTML = `<div class="fc-view pg-view">
     <div class="pg-top"><div><h2>Progress</h2><p>Plans tick themselves. ${phone ? 'Tap' : 'Click'} a square to log a habit.</p></div>
       <div class="pg-nav"><button class="fc-mini" data-shift="-1" aria-label="Earlier">${icon('chevron-left')}</button><b>${esc(title)}</b><button class="fc-mini" data-shift="1" aria-label="Later"${atNow ? ' disabled' : ''}>${icon('chevron-right')}</button></div></div>
+    ${comebackCard(now)}
     <section class="pg-card pg-scroll"><table class="pg-table">
       <thead><tr><th class="pg-name pg-corner" rowspan="2">${days.length} days</th>${weeks.map((w, i) => `<th class="pg-week w${i % 5}" colspan="${w.n}">${weekLabel(w)}</th>`).join('')}${phone ? '' : '<th class="pg-ratehead" rowspan="2">RATE</th>'}</tr><tr>${head}</tr></thead>
       <tbody>${section('Cards')}${cardRows.map(r => r.html).join('')}${section('Habits')}${habitRows.map(r => r.html).join('')}${dailyRow}</tbody></table></section>

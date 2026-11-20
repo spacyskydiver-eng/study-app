@@ -234,6 +234,13 @@ button.pg-box:hover:not([disabled]) { border-color: var(--fc-violet); }
 .pg-box.s-done { background: var(--fc-accent); border-color: transparent; }
 .pg-box.s-miss { border-color: rgba(251,113,133,.42); background: rgba(251,113,133,.08); }
 .pg-box.s-today { border-color: var(--fc-accent); }
+.pg-box.s-back { background: #FBBF24; border-color: transparent; }
+.pg-comeback { padding: 14px 18px; margin-bottom: 14px; }
+.pg-comeback .pg-cardhead { margin-bottom: 8px; }
+.pg-comeback .pg-cardhead span { font-size: 12px; color: var(--text-muted); }
+.pg-cb-bar { display: block; height: 8px; border-radius: 99px; background: var(--fc-line); overflow: hidden; }
+.pg-cb-bar u { display: block; height: 100%; background: linear-gradient(90deg, #FBBF24, #34D399); }
+.pg-comeback small { display: block; margin-top: 7px; font-size: 12px; color: var(--text-muted); }
 .pg-box.s-off { border-color: transparent; opacity: .32; cursor: default; }
 .pg-box.s-off::after { content: ''; width: 3px; height: 3px; border-radius: 50%; background: var(--text-faint); }
 .pg-box.s-done[data-habit] { background: var(--fc-violet); }
