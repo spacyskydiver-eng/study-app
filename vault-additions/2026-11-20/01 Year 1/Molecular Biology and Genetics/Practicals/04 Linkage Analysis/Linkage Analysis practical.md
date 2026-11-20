@@ -15,7 +15,7 @@ updated: 2026-11-20
 > [!path] [[Molecular Biology and Genetics]] › Practical 4
 
 > [!abstract] Practical 4
-> 7 topics · 11 key terms · 22 questions
+> 8 topics · 11 key terms · 22 questions
 
 > [!key] At a glance
 >
@@ -29,6 +29,9 @@ updated: 2026-11-20
 > | Gel | 10 µL product + 2.5 µL 5X loading buffer, 1 kb ladder, UV transilluminator |
 > | RF | recombinants ÷ total; × 100 = cM |
 
+> [!tip] In the lab
+> Open the [[08 Step-by-step lab guide (Linkage Analysis)|step-by-step lab guide]] and tick each step as you go.
+
 ## Topics
 1. [[01 Aim and background (Linkage Analysis)|Aim and background]] *5 key terms · 3 questions*
 2. [[02 The M1 and M2 markers|The M1 and M2 markers]] *3 key terms · 3 questions*
@@ -37,6 +40,7 @@ updated: 2026-11-20
 5. [[05 Day 2 running the gel|Day 2: running the gel]] *1 key term · 3 questions*
 6. [[06 Calculating recombination frequency and map distance|Calculating recombination frequency and map distance]] *5 questions*
 7. [[07 Skills (Linkage Analysis)|Skills]]
+8. [[08 Step-by-step lab guide (Linkage Analysis)|Step-by-step lab guide]] *every bench step, pipettes and volumes*
 
 ## Key terms
 - [[Centimorgan]]
