@@ -14,6 +14,7 @@ const TYPES = {
   news: { label: 'News', color: '#94A3B8', short: 'N' },
   catalyst: { label: 'Coming up', color: '#F472B6', short: 'C' },
   mine: { label: 'My trades', color: '#E5E7EB', short: 'B' },
+  filing: { label: 'Filing', color: '#C084FC', short: 'F' },
 };
 const INTERVALS = [['5min', '5m'], ['1h', '1H'], ['1day', '1D'], ['1week', '1W']];
 const ZOOMS = [['1m', '1M', 31], ['3m', '3M', 92], ['6m', '6M', 183], ['1y', '1Y', 366], ['5y', '5Y', 1830], ['all', 'All', 0]];
@@ -29,6 +30,7 @@ const S = {
   topic: store.get('mk:topic', 'all'), fSym: 'all', fType: 'all', shown: 40, sel: null, explain: store.get('wl:explain', false), wtab: store.get('wl:wtab', 'learn'),
 };
 let tz = { status: null, account: null, accErr: null, orders: [], journal: [], mine: [] };   // Trading 212
+let secData = {};   // SEC EDGAR filings and key figures per company (src/sec.js), refreshed by the cron
 let quotes = null, quoteErr = null, events = [], bars = null, barsErr = null, jobs = null, checking = null;
 let gen = 0;          // bumped each time the page opens, so a check started by an earlier visit stops
 let chart = null, mainSeries = null, volSeries = null, ma50 = null, ma200 = null, groups = new Map();
@@ -75,7 +77,8 @@ function marketsShell(view) {
       <div class="wl-headbtns"><button class="wl-btn wl-iconbtn${S.explain ? ' is-on' : ''}" data-explain title="Show or hide explanations under every part of the page">ⓘ<span>Explain</span></button></div>
     </header>
     <div class="wl-chips wl-topics" data-topics>${tops.map(x => `<button data-topic="${x.id}" class="${S.topic === x.id ? 'is-active' : ''}">${esc(x.label)} <small>${x.id === 'all' ? CFG.companies.length : CFG.companies.filter(c => topicsOf(c).includes(x.id)).length}</small></button>`).join('')}</div>
-    ${t ? `<p class="wl-seminar">Seminar: ${esc(t.seminar)}</p>` : ''}
+    ${t && t.seminar ? `<p class="wl-seminar">Seminar: ${esc(t.seminar)}</p>` : ''}
+    ${t && t.blurb ? `<p class="wl-seminar">${esc(t.blurb)}${t.guide && B.exists(t.guide) ? ` <a class="internal-link" data-note="${esc(t.guide)}" href="${B.hashFor(t.guide)}">How to research one of these</a>` : ''}</p>` : ''}
     <div class="wl-notice" data-notice hidden></div>
     <p class="wl-ex">Each card is one company. The big number is the latest share price in US dollars, then today's change (green up, red down). "Live" means the US market is open (14:30 to 21:00 UK time). The bar is the 52-week range. Tap a card to chart it. Prices fill in a few at a time: the free price plan allows 8 a minute.</p>
     <div class="wl-cards" data-cards></div>
@@ -250,15 +253,43 @@ function cards(view) {
       <div class="wl-card-top"><b class="wl-tick">${c.symbol}</b><span class="wl-name">${esc(c.short)}</span><span class="wl-risk wl-risk-${c.risk.replace(' ', '-')}">${esc(c.risk)} risk</span></div>
       <div class="wl-price">${x ? money(x.price, x.currency) : '<span class="wl-dim">–</span>'}<span class="wl-chg ${x ? dir(x.pct) : ''}">${x ? signed(x.pct) : ''}</span>${x && x.marketOpen ? '<span class="wl-live">live</span>' : ''}</div>
       ${bar}
-      <dl><dt>Stage</dt><dd>${esc(c.stage || '')}</dd><dt>Programme</dt><dd>${esc(c.programme)}</dd><dt>Next</dt><dd>${esc(c.next)}</dd><dt>Runway</dt><dd>${esc(c.runway)}</dd></dl>
+      <dl><dt>Stage</dt><dd>${esc(c.stage || '')}</dd><dt>Programme</dt><dd>${esc(c.programme)}</dd><dt>Next</dt><dd>${esc(c.next)}</dd><dt>Runway</dt><dd>${(() => { const f = secData[c.symbol] && secData[c.symbol].facts; return f && f.runwayMonths != null ? `${mUSD(f.total)} · ${yrs(f.runwayMonths)}` : f && f.burnQ != null && f.burnQ <= 0 ? `${mUSD(f.total)} · cash-generating` : esc(c.runway); })()}</dd></dl>
     </button>`;
   }).join('');
+}
+
+const mUSD = v => v == null ? '–' : (Math.abs(v) >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'bn' : '$' + Math.round(v / 1e6).toLocaleString('en-GB') + 'm');
+const yrs = m => m == null ? '' : m >= 24 ? `~${(m / 12).toFixed(1)} years` : `~${m} months`;
+// the newest filing of each kind, from the live EDGAR list, or the hand-picked links if it hasn't loaded yet
+function docLinks(c) {
+  const d = secData[c.symbol], L = d && d.filings;
+  if (!L || !L.length) return (c.docs || []).map(x => [x.label, x.url, '']);
+  const pick = (re, label) => { const f = L.find(x => re.test(x.form)); return f ? [label || f.form, f.url, f.date] : null; };
+  const out = [pick(/^(10-Q|6-K)$/, null), pick(/^(10-K|20-F)$/, null), pick(/^(424B4|S-1|F-1)/, 'Prospectus'), pick(/^8-K$/, 'Latest 8-K')].filter(Boolean);
+  out.push(['All filings', `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${d.cik}&owner=include&count=40`, '']);
+  return out;
+}
+function secFacts(c) {
+  const d = secData[c.symbol], f = d && d.facts;
+  if (!f) return '';
+  const x = quotes && quotes.quotes ? quotes.quotes[c.symbol] : null;
+  const cap = x && f.shares ? x.price * f.shares.val : null;
+  const bits = [`<span><b>${mUSD(f.total)}</b> cash and investments</span>`];
+  if (f.burnQ != null) bits.push(f.burnQ > 0 ? `<span><b>${mUSD(f.burnQ)}</b> burn a quarter</span>` : `<span><b>${mUSD(-f.burnQ)}</b> cash made a quarter</span>`);
+  if (f.runwayMonths != null) bits.push(`<span>runway <b>${yrs(f.runwayMonths)}</b></span>`);
+  if (f.revenueQ) bits.push(`<span><b>${mUSD(f.revenueQ.val)}</b> revenue last quarter</span>`);
+  if (f.netIncomeQ) bits.push(`<span><b>${mUSD(f.netIncomeQ.val)}</b> net ${f.netIncomeQ.val < 0 ? 'loss' : 'income'} last quarter</span>`);
+  if (cap) bits.push(`<span>market cap <b>${mUSD(cap)}</b></span>`, `<span>enterprise value <b>${mUSD(cap - f.total)}</b></span>`);
+  return `<div class="wl-facts"><span class="wl-dim">From the ${esc(f.form)} to ${esc(fmtDate(f.asOf))}:</span> ${bits.join('')}</div>
+    <p class="wl-ex">Worked out automatically from the company's SEC filings. Burn is operating cash used per quarter; runway is cash and investments divided by that burn, before any change in spending. Market cap is today's price × shares outstanding; enterprise value is market cap minus cash and investments (what the market pays for the drugs themselves).</p>`;
 }
 
 /* ------------------------------------------------------------ chart */
 function chartTop(view) {
   const c = co(S.sym), x = quotes && quotes.quotes ? quotes.quotes[S.sym] : null;
   q(view, '[data-charttop]').innerHTML = `<div class="wl-ct-name" style="--co:${c.color}"><b>${c.symbol}</b> ${esc(c.name)}${c.note && B.exists(c.note) ? ` <a class="internal-link wl-notelink" data-note="${esc(c.note)}" href="${B.hashFor(c.note)}">notes</a>` : ''}</div>
+    ${(() => { const L = docLinks(c); return L.length ? `<div class="wl-docs"><span class="wl-dim">Filings:</span> ${L.map(([l, u, d]) => `<a href="${esc(u)}" target="_blank" rel="noopener" title="${d ? 'Filed ' + esc(fmtDate(d)) : ''}">${esc(l)}${d ? ` <small class="wl-dim">${esc(fmtDate(d))}</small>` : ''}</a>`).join(' · ')}</div>` : ''; })()}
+    ${secFacts(c)}
     <div class="wl-ct-price">${x ? money(x.price, x.currency) : ''}${x ? ` <span class="wl-chg ${dir(x.pct)}">${signed(x.pct)}</span><span class="wl-dim"> today</span>` : ''}${x && x.asOf ? `<span class="wl-dim wl-asof">as of ${esc(x.asOf.slice(0, 16))} ${x.exchange ? esc(x.exchange) + ' time' : ''}</span>` : ''}</div>`;
 }
 function tools(view) {
@@ -834,6 +865,10 @@ async function loadBars(view) {
   } catch (e) { barsErr = 'network'; }
   drawChart(view);
 }
+async function loadSec(view) {
+  try { secData = await api('sec?s=' + cos().map(c => c.symbol).join(',')); } catch (e) { secData = {}; }
+  if (q(view, '[data-cards]')) { cards(view); chartTop(view); }
+}
 async function loadEvents(view) {
   try { const r = await api('events'); events = r.events || []; } catch (e) { events = []; }
   upcoming(view); chips(view); feed(view);
@@ -879,9 +914,10 @@ function show(view, mode) {
     if (!shownSym(S.sym)) S.sym = cos()[0].symbol;
     S.fSym = 'all';
     shell(view); cards(view); chartTop(view); tools(view); drawChart(view);
-    loadQuotes(view); loadBars(view);
+    loadQuotes(view); loadBars(view); loadSec(view);
     loadEvents(view).then(() => alive && check(view, false));
     if (S.show.mine === undefined) S.show.mine = true;
+    if (S.show.filing === undefined) S.show.filing = true;
     if (MODE === 'cf') {
       loadT212(view).then(() => decidePanel(view));
       loadDecide(view);
@@ -916,7 +952,7 @@ function show(view, mode) {
         S.topic = tp.dataset.topic; store.set('mk:topic', S.topic); S.fSym = 'all'; S.shown = 40;
         const keep = shownSym(S.sym); if (!keep) { S.sym = cos()[0].symbol; S.sel = null; save(); }
         destroyChart(); marketsShell(view); cards(view); chartTop(view); tools(view); upcoming(view); chips(view); feed(view); sources(view); notice(view);
-        drawChart(view); loadBars(view); loadQuotes(view);
+        drawChart(view); loadBars(view); loadQuotes(view); loadSec(view);
         return;
       }
       const card = t.closest('[data-sym]');
@@ -978,6 +1014,6 @@ B.registerView('markets', { title: () => 'Markets', icon: 'candles', cls: 'wl-ho
 
 // the stylesheet loads with the script, so the page needs nothing else
 if (!document.querySelector('link[href^="assets/watchlist.css"]')) {
-  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261109m'; document.head.appendChild(l);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'assets/watchlist.css?v=20261123a'; document.head.appendChild(l);
 }
 })();

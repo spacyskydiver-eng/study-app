@@ -22,7 +22,8 @@
    "topics": [
     "cf",
     "stem"
-   ]
+   ],
+   "cik": 875320
   },
   {
    "symbol": "SION",
@@ -369,6 +370,368 @@
     "vosoritide"
    ],
    "note": ""
+  },
+  {
+   "symbol": "COAG",
+   "name": "Hemab Therapeutics",
+   "short": "Hemab",
+   "color": "#E11D48",
+   "programme": "Sutacimig, bispecific antibody for Glanzmann thrombasthenia (rare bleeding disorder)",
+   "stage": "Phase 3 (SOLARA, started Oct 2026)",
+   "risk": "high",
+   "runway": "$430m cash, ~4 years at current spend",
+   "next": "Factor VII deficiency Phase 2 data; Phase 1/2 completes Aug 2027",
+   "sponsor": "Hemab ApS",
+   "pubmed": "(sutacimig OR HMB-001) AND (Glanzmann OR thrombasthenia OR factor VII)",
+   "news": "Hemab sutacimig",
+   "newsMust": [
+    "hemab",
+    "sutacimig"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/2114044/000119312526201458/d50309d424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/2114044/000119312526455376/coag-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0002114044&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 2114044
+  },
+  {
+   "symbol": "APMD",
+   "name": "Apnimed",
+   "short": "Apnimed",
+   "color": "#0EA5E9",
+   "programme": "AD109 (Oxnimbi), aroxybutynin + atomoxetine pill for obstructive sleep apnoea",
+   "stage": "Phase 3 complete, FDA review",
+   "risk": "medium",
+   "runway": "$352m cash, ~4.5 years at current spend (before launch costs)",
+   "next": "FDA decision on AD109; launch spending",
+   "sponsor": "Apnimed",
+   "pubmed": "(AD109 OR aroxybutynin) AND sleep apnea",
+   "news": "Apnimed AD109 OR Oxnimbi",
+   "newsMust": [
+    "apnimed",
+    "ad109",
+    "oxnimbi"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526328422/apmd_424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526462185/apmd-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001745648&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 1745648
+  },
+  {
+   "symbol": "BRVE",
+   "name": "Braveheart Bio",
+   "short": "Braveheart",
+   "color": "#DC2626",
+   "programme": "BHB-1893, oral cardiac myosin inhibitor for hypertrophic cardiomyopathy",
+   "stage": "Phase 3 (obstructive HCM vs metoprolol)",
+   "risk": "high",
+   "runway": "$504m cash, ~8 years at current spend (will rise with Phase 3)",
+   "next": "Non-obstructive HCM Phase 3 starts Dec 2026; obstructive Phase 3 completes Oct 2028",
+   "sponsor": "Braveheart Bio, Inc.",
+   "pubmed": "BHB-1893 OR (cardiac myosin inhibitor AND hypertrophic cardiomyopathy)",
+   "news": "Braveheart Bio BHB-1893",
+   "newsMust": [
+    "braveheart"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/2131524/000162828026054354/braveheartbioinc-sx1a2.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/2131524/000162828026072709/bhb-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0002131524&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 2131524
+  },
+  {
+   "symbol": "ADRX",
+   "name": "ADARx Pharmaceuticals",
+   "short": "ADARx",
+   "color": "#7C3AED",
+   "programme": "Onvuzosiran (ADX-324), siRNA against prekallikrein for hereditary angioedema",
+   "stage": "Phase 3 (STOP-HAE)",
+   "risk": "high",
+   "runway": "$901m cash, ~9 years at current spend",
+   "next": "STOP-HAE Phase 3 completes Nov 2027",
+   "sponsor": "ADARx Pharmaceuticals, Inc.",
+   "pubmed": "(ADX-324 OR onvuzosiran) OR (prekallikrein siRNA AND hereditary angioedema)",
+   "news": "ADARx onvuzosiran",
+   "newsMust": [
+    "adarx",
+    "onvuzosiran"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/1802369/000119312526403094/d903461d424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/1802369/000119312526458444/adrx-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001802369&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 1802369
+  },
+  {
+   "symbol": "AVLN",
+   "name": "Avalyn Pharma",
+   "short": "Avalyn",
+   "color": "#059669",
+   "programme": "AP01, inhaled pirfenidone for progressive pulmonary fibrosis",
+   "stage": "Phase 2b",
+   "risk": "high",
+   "runway": "$387m cash, ~3.5 years at current spend",
+   "next": "AP01 Phase 2b completes Jun 2027",
+   "sponsor": "Avalyn Pharma Inc.",
+   "pubmed": "(AP01 OR inhaled pirfenidone) AND pulmonary fibrosis",
+   "news": "Avalyn Pharma AP01",
+   "newsMust": [
+    "avalyn"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/1540171/000119312526197686/424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/1540171/000119312526457071/ck0001540171-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001540171&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 1540171
+  },
+  {
+   "symbol": "KLRA",
+   "name": "Kailera Therapeutics",
+   "short": "Kailera",
+   "color": "#F59E0B",
+   "programme": "Ribupatide (KAI-9531), weekly GLP-1/GIP injection for obesity",
+   "stage": "Phase 3",
+   "risk": "high",
+   "runway": "$1.04bn cash, ~2.8 years at current spend",
+   "next": "Phase 2b (obesity) completes May 2027; Phase 3 (with diabetes) Mar 2028",
+   "sponsor": "Kailera",
+   "pubmed": "(ribupatide OR KAI-9531 OR HRS9531) AND (obesity OR diabetes)",
+   "news": "Kailera ribupatide",
+   "newsMust": [
+    "kailera",
+    "ribupatide"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/2096997/000119312526161521/d113532d424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/2096997/000119312526447257/ck0002096997-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0002096997&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 2096997
+  },
+  {
+   "symbol": "LYCA",
+   "name": "Lycia Therapeutics",
+   "short": "Lycia",
+   "color": "#DB2777",
+   "programme": "LCA-0061, IgE degrader (antibody-small molecule conjugate) for food allergy",
+   "stage": "Phase 1",
+   "risk": "very high",
+   "runway": "Company says into 2H 2029 (no 10-Q yet)",
+   "next": "More Phase 1 data in 2027",
+   "sponsor": "Lycia Therapeutics, Inc.",
+   "pubmed": "(LCA-0061 OR LYTAC) AND (IgE OR allergy)",
+   "news": "Lycia Therapeutics LCA-0061",
+   "newsMust": [
+    "lycia"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/1806540/000162828026067048/lyciatherapeutics-424b4.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001806540&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 1806540
+  },
+  {
+   "symbol": "SPTX",
+   "name": "Seaport Therapeutics",
+   "short": "Seaport",
+   "color": "#2563EB",
+   "programme": "GlyphAllo (SPT-300), oral allopregnanolone prodrug for major depression",
+   "stage": "Phase 2b",
+   "risk": "high",
+   "runway": "$404m cash, ~4.4 years at current spend",
+   "next": "SPT-300 Phase 2b completes Mar 2027",
+   "sponsor": "Seaport Therapeutics",
+   "pubmed": "(SPT-300 OR GlyphAllo OR allopregnanolone prodrug) AND depression",
+   "news": "Seaport Therapeutics SPT-300 OR GlyphAllo",
+   "newsMust": [
+    "seaport"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/2042347/000119312526201758/d73463d424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/2042347/000119312526442634/sptx-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0002042347&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 2042347
+  },
+  {
+   "symbol": "PBLS",
+   "name": "Parabilis Medicines",
+   "short": "Parabilis",
+   "color": "#9333EA",
+   "programme": "Zolucatetide (FOG-001), peptide blocking beta-catenin for desmoid and WNT-driven tumours",
+   "stage": "Phase 1/2",
+   "risk": "very high",
+   "runway": "$1.07bn cash, ~8.5 years at current spend",
+   "next": "Phase 1/2 completes Apr 2027",
+   "sponsor": "Parabilis Medicines, Inc.",
+   "pubmed": "(FOG-001 OR zolucatetide) OR (beta-catenin peptide AND desmoid)",
+   "news": "Parabilis zolucatetide",
+   "newsMust": [
+    "parabilis",
+    "zolucatetide"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/1657677/000119312526265983/pbls_424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/1657677/000119312526458388/ck0001657677-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001657677&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 1657677
+  },
+  {
+   "symbol": "SGP",
+   "name": "SpyGlass Pharma",
+   "short": "SpyGlass",
+   "color": "#0D9488",
+   "programme": "Bimatoprost implant on a cataract lens (BIM-IOL) for glaucoma",
+   "stage": "Phase 3",
+   "risk": "high",
+   "runway": "$216m cash, ~3.6 years at current spend",
+   "next": "Phase 3 trials complete Mar-May 2029",
+   "sponsor": "SpyGlass Pharma, Inc.",
+   "pubmed": "bimatoprost AND (intraocular lens OR implant) AND glaucoma",
+   "news": "SpyGlass Pharma glaucoma",
+   "newsMust": [
+    "spyglass"
+   ],
+   "docs": [
+    {
+     "label": "Prospectus",
+     "url": "https://www.sec.gov/Archives/edgar/data/1778922/000162828026006068/spyglass-424b4.htm"
+    },
+    {
+     "label": "10-Q (Q3 2026)",
+     "url": "https://www.sec.gov/Archives/edgar/data/1778922/000177892226000056/sgp-20260930.htm"
+    },
+    {
+     "label": "All filings",
+     "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001778922&owner=include&count=40"
+    }
+   ],
+   "topics": [
+    "new"
+   ],
+   "note": "",
+   "cik": 1778922
   }
  ],
  "events": [
@@ -436,6 +799,12 @@
    "id": "congenital",
    "label": "Congenital diseases",
    "seminar": "Congenital diseases"
+  },
+  {
+   "id": "new",
+   "label": "New biotechs (2026 listings)",
+   "blurb": "Ten companies that floated on Nasdaq in 2026, across different diseases. Each one links to its SEC documents: the prospectus (what the company is) and the latest 10-Q (where its money stands). Runway figures are cash divided by the last 9 months' spending, worked out from the 10-Q as of 30 Sep 2026.",
+   "guide": "03 Biotech Investing/04 Researching a Biotech/Researching a Biotech"
   }
  ]
 }

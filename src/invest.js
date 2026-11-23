@@ -4,6 +4,7 @@
    and kept in D1. The companies and the hand-written key events are in data/watchlist.json. */
 import CFG from "../data/watchlist.json";
 import HISTORY from "../data/watchlist-history.json";
+import { filingsFor, factsFor, secAll } from "./sec.js";
 
 const TD = "https://api.twelvedata.com";
 const UA = "BiomedVault-watchlist/1.0 (personal study site)";
@@ -270,7 +271,7 @@ async function seed(env) {
 // The work is split into small jobs (one source for one company), because the free plan stops a
 // Worker after a few milliseconds of processing. The cron runs a couple of the stalest jobs every
 // 15 minutes, so each is checked several times a day; "Check now" on the page runs them one by one.
-const SOURCES = { trials: trialsFor, papers: papersFor, news: newsFor };
+const SOURCES = { trials: trialsFor, papers: papersFor, news: newsFor, filings: filingsFor, facts: factsFor };
 const JOBS = CFG.companies.flatMap(c => Object.keys(SOURCES).map(k => `${c.symbol}:${k}`));
 async function jobsTable(env) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS inv_jobs (job TEXT PRIMARY KEY, at INTEGER, ok_at INTEGER, result TEXT)").run(); }
 async function jobState(env) {
@@ -322,7 +323,9 @@ export async function cronTick(env) {
   const st = await jobState(env);
   // never-run jobs first, then the oldest; a job is due again after six hours
   const due = JOBS.map(j => [j, st.get(j)]).filter(([, r]) => !r || Date.now() - r.at > 6 * 3600000).sort((a, b) => (a[1] ? a[1].at : 0) - (b[1] ? b[1].at : 0));
-  for (const [j] of due.slice(0, 3)) await runJob(env, j);
+  // SEC jobs are due after 12 hours (filings come out at most daily); the rest after six
+  const late = due.filter(([j, r]) => !/:(filings|facts)$/.test(j) || !r || Date.now() - r.at > 12 * 3600000);
+  for (const [j] of late.slice(0, 4)) await runJob(env, j);
 }
 
 /* ------------------------------------------------------------ routes */
@@ -364,6 +367,10 @@ export async function investApi(request, env, url, ctx) {
         out[sym] = hit ? hit.v.bars.slice(-520) : null;
       }
       return json({ bars: out });
+    }
+    if (p === "sec") {
+      const want = (url.searchParams.get("s") || "").toUpperCase().split(",").filter(x => SYMBOLS.includes(x));
+      return json(await secAll(env, want.length ? want : SYMBOLS));
     }
     if (p === "metrics") {
       const m = await metrics(env);

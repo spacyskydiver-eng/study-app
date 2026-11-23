@@ -390,3 +390,9 @@
 .wl-topics { margin: 4px 0 6px; }
 .wl-topics button small { opacity: .6; margin-left: 2px; }
 .wl-seminar { margin: 0 0 12px; font-size: .88em; color: var(--text-muted); }
+
+.wl-docs { flex-basis: 100%; font-size: .85em; display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 2px 0 4px; }
+.wl-docs a { white-space: nowrap; }
+.wl-facts { flex-basis: 100%; font-size: .85em; display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 4px; }
+.wl-facts b { font-variant-numeric: tabular-nums; }
+.wl-chart-top .wl-ex { flex-basis: 100%; margin: 0; }

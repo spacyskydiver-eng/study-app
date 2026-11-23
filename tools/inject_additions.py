@@ -63,7 +63,7 @@ def main(dirs):
         # lecture hubs into their subject hub's Lectures list
         for nid, n in new.items():
             pr = n['props']
-            if pr.get('type') != 'hub' or not pr.get('subject') or pr.get('kind') not in ('lecture', 'seminar', 'practical'):
+            if pr.get('type') != 'hub' or not pr.get('subject') or pr.get('kind') not in ('lecture', 'seminar', 'practical', 'section'):
                 continue
             subj = pr['subject']
             sid = next((k for k in data['notes'] if k.endswith('/' + subj) and data['notes'][k]['props'].get('type') in ('subject hub', 'subject', 'module', 'hub', None)), None)
@@ -74,7 +74,7 @@ def main(dirs):
                 continue
             topics = sum(1 for k, x in new.items() if x['props'].get('part_of') == os.path.basename(nid) and x['props'].get('type') == 'topic')
             li = f'<li><a class="internal-link" data-note="{BS.html.escape(nid)}" href="#/{BS.html.escape(nid)}">{BS.html.escape(os.path.basename(nid))}</a> <em>{topics} topics</em></li>'
-            head = {'lecture': 'Lectures', 'seminar': 'Seminars', 'practical': 'Practicals'}[pr['kind']]
+            head = {'lecture': 'Lectures', 'seminar': 'Seminars', 'practical': 'Practicals', 'section': 'Sections'}[pr['kind']]
             m = re.search(r'<h2 data-heading="' + head + r'"[^>]*>.*?</h2></div><div class="el-ol"><ol>(.*?)</ol>', sh['html'], re.S)
             if not m:
                 print('no list to extend in', sid, 'for', nid)
