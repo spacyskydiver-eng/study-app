@@ -1,0 +1,1144 @@
+{
+ "subject": "Professional Skills for Biosciences",
+ "module": "BIO-4008Y",
+ "keep_questions": true,
+ "papers": [
+  {
+   "id": "maths-mock-1",
+   "title": "Maths test mock 1",
+   "lecture": "Week 12 maths test",
+   "hub": "01 Year 1/Professional Skills for Biosciences/Professional Skills for Biosciences",
+   "marks": 20,
+   "note": "Same style as the week 12 maths test: calculator allowed, no notes, equations sheet given, each answer right or wrong. Aim for 30 to 40 minutes. Give numbers only (units are shown); scientific notation like 5.2e8 or 5.2 × 10^8 is fine.",
+   "printable": true,
+   "duration": "40 minutes (2 hours allowed in the real test)",
+   "code": "BIO-4008Y",
+   "equations": [
+    [
+     "Prefixes",
+     "G 10⁹ · M 10⁶ · k 10³ · m 10⁻³ · µ 10⁻⁶ · n 10⁻⁹ · p 10⁻¹² · f 10⁻¹⁵"
+    ],
+    [
+     "Magnification",
+     "magnification = image size / actual size"
+    ],
+    [
+     "Colony-forming units",
+     "CFU mL⁻¹ = (number of colonies × dilution factor) / volume plated (mL)"
+    ],
+    [
+     "Moles",
+     "moles (mol) = mass (g) / molar mass (g mol⁻¹)"
+    ],
+    [
+     "Molarity",
+     "molarity (mol L⁻¹) = moles / volume (L) = mass / (molar mass × volume (L))"
+    ],
+    [
+     "Dilution",
+     "M₁V₁ = M₂V₂"
+    ],
+    [
+     "Growth",
+     "N = N₀eᵏᵗ"
+    ],
+    [
+     "pH",
+     "pH = −log[H⁺];  pH = pKa + log([A⁻] / [HA])"
+    ],
+    [
+     "Straight line",
+     "y = mx + c"
+    ],
+    [
+     "Quadratic formula",
+     "x = (−b ± √(b² − 4ac)) / 2a"
+    ]
+   ],
+   "questions": [
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Convert 3.5 µL into nL.",
+       "value": 3500.0,
+       "marks": 1,
+       "unit": "nL",
+       "working": "3.5 × 10⁻⁶ L ÷ 10⁻⁹ = <b>3500 nL</b> (µL → nL is × 10³).",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q1a"
+      }
+     ],
+     "id": "maths-mock-1-q1"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Convert 250 mm² into m².",
+       "value": 0.00025,
+       "marks": 1,
+       "unit": "m²",
+       "working": "1 m² = 10⁶ mm², so 250 ÷ 10⁶ = <b>2.5 × 10⁻⁴ m²</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q2a"
+      }
+     ],
+     "id": "maths-mock-1-q2"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A mitochondrion measures 12 mm on a micrograph taken at × 15 000 magnification. What is its actual length in µm?",
+       "value": 0.8,
+       "marks": 1,
+       "unit": "µm",
+       "working": "actual = image ÷ magnification = 12 mm ÷ 15 000 = 8 × 10⁻⁴ mm = <b>0.8 µm</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q3a"
+      }
+     ],
+     "id": "maths-mock-1-q3"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A culture contains 4.2 × 10⁸ cells mL⁻¹. It goes through three 1 in 10 dilutions. What is the concentration in the last tube (cells mL⁻¹)?",
+       "value": 420000.0,
+       "marks": 1,
+       "unit": "cells mL⁻¹",
+       "working": "4.2 × 10⁸ × 10⁻³ = <b>4.2 × 10⁵ cells mL⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q4a"
+      }
+     ],
+     "id": "maths-mock-1-q4"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "100 µL of the 10⁻⁵ dilution of a culture gave 72 colonies. What was the concentration of the original culture (CFU mL⁻¹)?",
+       "value": 72000000.0,
+       "marks": 1,
+       "unit": "CFU mL⁻¹",
+       "working": "(72 × 10⁵) ÷ 0.1 mL = <b>7.2 × 10⁷ CFU mL⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q5a"
+      }
+     ],
+     "id": "maths-mock-1-q5"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "0.5 g of soil was suspended in 1.0 mL of water and serially diluted. 50 µL of the 10⁻⁴ dilution gave 120 colonies. How many CFU per gram of soil?",
+       "value": 48000000.0,
+       "marks": 1,
+       "unit": "CFU g⁻¹",
+       "working": "(120 × 10⁴) ÷ 0.05 mL = 2.4 × 10⁷ CFU mL⁻¹ of suspension; that mL held 0.5 g, so ÷ 0.5 = <b>4.8 × 10⁷ CFU g⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q6a"
+      }
+     ],
+     "id": "maths-mock-1-q6"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "How many moles are in 2.5 g of NaCl (Mr 58.44)?",
+       "value": 0.04278,
+       "marks": 1,
+       "unit": "mol",
+       "working": "2.5 ÷ 58.44 = <b>0.0428 mol</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q7a"
+      }
+     ],
+     "id": "maths-mock-1-q7"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What mass of glucose (Mr 180.2) is needed for 250 mL of a 0.2 M solution?",
+       "value": 9.01,
+       "marks": 1,
+       "unit": "g",
+       "working": "0.2 mol L⁻¹ × 0.25 L × 180.2 = <b>9.01 g</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q8a"
+      }
+     ],
+     "id": "maths-mock-1-q8"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A 500 mL solution contains 14.6 g of NaCl (Mr 58.44). What is its molarity?",
+       "value": 0.4997,
+       "marks": 1,
+       "unit": "M",
+       "working": "14.6 ÷ (58.44 × 0.5) = <b>0.500 M</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q9a"
+      }
+     ],
+     "id": "maths-mock-1-q9"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What volume of a 2 M stock is needed to make 400 mL of 50 mM solution?",
+       "value": 10.0,
+       "marks": 1,
+       "unit": "mL",
+       "working": "V₁ = M₂V₂ ÷ M₁ = 0.05 × 400 ÷ 2 = <b>10 mL</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q10a"
+      }
+     ],
+     "id": "maths-mock-1-q10"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What is the pH of a solution with [H⁺] = 3.2 × 10⁻⁵ M?",
+       "value": 4.495,
+       "marks": 1,
+       "unit": "",
+       "working": "−log(3.2 × 10⁻⁵) = <b>4.49</b>.",
+       "rtol": 0.005,
+       "id": "maths-mock-1-q11a"
+      }
+     ],
+     "id": "maths-mock-1-q11"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A buffer contains 0.1 M acetic acid and 0.4 M sodium acetate (pKa 4.76). What is its pH?",
+       "value": 5.362,
+       "marks": 1,
+       "unit": "",
+       "working": "4.76 + log(0.4/0.1) = 4.76 + 0.60 = <b>5.36</b>.",
+       "rtol": 0.005,
+       "id": "maths-mock-1-q12a"
+      }
+     ],
+     "id": "maths-mock-1-q12"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "Which expression equals log 6x³?",
+       "options": [
+        "log 3x + log 2x²",
+        "log 6 + 3 log x²",
+        "log 12x³ − log 6",
+        "log 3x × log 2x²"
+       ],
+       "answer": 0,
+       "explain": "Law 1: log 3x + log 2x² = log(3x × 2x²) = log 6x³. Option C gives log 2x³.",
+       "marks": 1,
+       "id": "maths-mock-1-q13a"
+      }
+     ],
+     "id": "maths-mock-1-q13"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A population of 400 bacteria grows to 2500 in 6 hours. Using N = N₀eᵏᵗ, what is the growth constant k (h⁻¹)?",
+       "value": 0.3054,
+       "marks": 1,
+       "unit": "h⁻¹",
+       "working": "k = ln(N/N₀) ÷ t = ln(6.25) ÷ 6 = 1.833 ÷ 6 = <b>0.305 h⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q14a"
+      }
+     ],
+     "id": "maths-mock-1-q14"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "An isotope has a decay constant of −0.035 day⁻¹. What is its half-life in days?",
+       "value": 19.8,
+       "marks": 1,
+       "unit": "days",
+       "working": "t½ = ln 0.5 ÷ k = −0.693 ÷ −0.035 = <b>19.8 days</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q15a"
+      }
+     ],
+     "id": "maths-mock-1-q15"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What is the gradient of the straight line through (2, 5) and (6, 17)?",
+       "value": 3.0,
+       "marks": 1,
+       "unit": "",
+       "working": "(17 − 5) ÷ (6 − 2) = 12 ÷ 4 = <b>3</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-1-q16a"
+      }
+     ],
+     "id": "maths-mock-1-q16"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "For that line through (2, 5) and (6, 17), what is the y-intercept c?",
+       "value": -1.0,
+       "marks": 1,
+       "unit": "",
+       "working": "c = y − mx = 5 − 3 × 2 = <b>−1</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-1-q17a"
+      }
+     ],
+     "id": "maths-mock-1-q17"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A standard curve gives A = 0.045 × [protein] + 0.012 (protein in µg mL⁻¹). A sample reads A = 0.687. What is its protein concentration?",
+       "value": 15.0,
+       "marks": 1,
+       "unit": "µg mL⁻¹",
+       "working": "[protein] = (0.687 − 0.012) ÷ 0.045 = <b>15.0 µg mL⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-1-q18a"
+      }
+     ],
+     "id": "maths-mock-1-q18"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What is the gradient of a line perpendicular to y = 4x − 3?",
+       "value": -0.25,
+       "marks": 1,
+       "unit": "",
+       "working": "m₂ = −1/m₁ = <b>−0.25</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-1-q19a"
+      }
+     ],
+     "id": "maths-mock-1-q19"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Give the positive root of x² + 4x − 12 = 0.",
+       "value": 2.0,
+       "marks": 1,
+       "unit": "",
+       "working": "x = (−4 ± √(16 + 48)) ÷ 2 = (−4 ± 8) ÷ 2 → <b>2</b> or −6 (or factorise: (x + 6)(x − 2)).",
+       "rtol": 0.001,
+       "id": "maths-mock-1-q20a"
+      }
+     ],
+     "id": "maths-mock-1-q20"
+    }
+   ]
+  },
+  {
+   "id": "maths-mock-2",
+   "title": "Maths test mock 2",
+   "lecture": "Week 12 maths test",
+   "hub": "01 Year 1/Professional Skills for Biosciences/Professional Skills for Biosciences",
+   "marks": 20,
+   "note": "Same style as the week 12 maths test: calculator allowed, no notes, equations sheet given, each answer right or wrong. Aim for 30 to 40 minutes. Give numbers only (units are shown); scientific notation like 5.2e8 or 5.2 × 10^8 is fine.",
+   "printable": true,
+   "duration": "40 minutes (2 hours allowed in the real test)",
+   "code": "BIO-4008Y",
+   "equations": [
+    [
+     "Prefixes",
+     "G 10⁹ · M 10⁶ · k 10³ · m 10⁻³ · µ 10⁻⁶ · n 10⁻⁹ · p 10⁻¹² · f 10⁻¹⁵"
+    ],
+    [
+     "Magnification",
+     "magnification = image size / actual size"
+    ],
+    [
+     "Colony-forming units",
+     "CFU mL⁻¹ = (number of colonies × dilution factor) / volume plated (mL)"
+    ],
+    [
+     "Moles",
+     "moles (mol) = mass (g) / molar mass (g mol⁻¹)"
+    ],
+    [
+     "Molarity",
+     "molarity (mol L⁻¹) = moles / volume (L) = mass / (molar mass × volume (L))"
+    ],
+    [
+     "Dilution",
+     "M₁V₁ = M₂V₂"
+    ],
+    [
+     "Growth",
+     "N = N₀eᵏᵗ"
+    ],
+    [
+     "pH",
+     "pH = −log[H⁺];  pH = pKa + log([A⁻] / [HA])"
+    ],
+    [
+     "Straight line",
+     "y = mx + c"
+    ],
+    [
+     "Quadratic formula",
+     "x = (−b ± √(b² − 4ac)) / 2a"
+    ]
+   ],
+   "questions": [
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Convert 0.075 mg into µg.",
+       "value": 75.0,
+       "marks": 1,
+       "unit": "µg",
+       "working": "0.075 × 10⁻³ g ÷ 10⁻⁶ = <b>75 µg</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q1a"
+      }
+     ],
+     "id": "maths-mock-2-q1"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "How many µm are in 2.4 cm?",
+       "value": 24000.0,
+       "marks": 1,
+       "unit": "µm",
+       "working": "2.4 × 10⁻² m ÷ 10⁻⁶ = <b>2.4 × 10⁴ µm</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q2a"
+      }
+     ],
+     "id": "maths-mock-2-q2"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A cell 25 µm across appears 50 mm long in a drawing. What is the magnification?",
+       "value": 2000.0,
+       "marks": 1,
+       "unit": "",
+       "working": "image ÷ actual = 50 × 10⁻³ m ÷ 25 × 10⁻⁶ m = <b>× 2000</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q3a"
+      }
+     ],
+     "id": "maths-mock-2-q3"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A 1.5 cm scale bar on an electron micrograph at × 30 000 represents what length in µm?",
+       "value": 0.5,
+       "marks": 1,
+       "unit": "µm",
+       "working": "1.5 cm ÷ 30 000 = 5 × 10⁻⁵ cm = 5 × 10⁻⁷ m = <b>0.5 µm</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q4a"
+      }
+     ],
+     "id": "maths-mock-2-q4"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "You want to go from 10⁹ cells mL⁻¹ to 10⁴ cells mL⁻¹ using 1 in 10 dilutions. How many dilution steps?",
+       "value": 5.0,
+       "marks": 1,
+       "unit": "",
+       "working": "10⁹ → 10⁴ is a 10⁻⁵ dilution: <b>5</b> ten-fold steps.",
+       "rtol": 0.001,
+       "id": "maths-mock-2-q5a"
+      }
+     ],
+     "id": "maths-mock-2-q5"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "10 µL of the 10⁻⁶ dilution of a yoghurt drink gave 48 colonies. CFU mL⁻¹ in the drink?",
+       "value": 4800000000.0,
+       "marks": 1,
+       "unit": "CFU mL⁻¹",
+       "working": "(48 × 10⁶) ÷ 0.01 mL = <b>4.8 × 10⁹ CFU mL⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q6a"
+      }
+     ],
+     "id": "maths-mock-2-q6"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "Plates from a serial dilution gave 2104, 312, 41 and 3 colonies for 10⁻², 10⁻³, 10⁻⁴ and 10⁻⁵. Which plate should be used to calculate CFU?",
+       "options": [
+        "10⁻²",
+        "10⁻³",
+        "10⁻⁴",
+        "10⁻⁵"
+       ],
+       "answer": 2,
+       "explain": "Use the plate in the countable range of about 30 to 300: 41 colonies at 10⁻⁴ (312 is just over 300).",
+       "marks": 1,
+       "id": "maths-mock-2-q7a"
+      }
+     ],
+     "id": "maths-mock-2-q7"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What is the molar mass of a compound if 0.25 mol weighs 34.0 g?",
+       "value": 136.0,
+       "marks": 1,
+       "unit": "g mol⁻¹",
+       "working": "34.0 ÷ 0.25 = <b>136 g mol⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q8a"
+      }
+     ],
+     "id": "maths-mock-2-q8"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "How many µmol are in 4.5 mg of TRIS (Mr 121.1)?",
+       "value": 37.16,
+       "marks": 1,
+       "unit": "µmol",
+       "working": "4.5 × 10⁻³ g ÷ 121.1 = 3.72 × 10⁻⁵ mol = <b>37.2 µmol</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q9a"
+      }
+     ],
+     "id": "maths-mock-2-q9"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What is the molarity of a solution of 0.85 mg of NaCl (Mr 58.44) in 0.5 mL? Give your answer in mM.",
+       "value": 29.09,
+       "marks": 1,
+       "unit": "mM",
+       "working": "0.85 × 10⁻³ ÷ (58.44 × 0.5 × 10⁻³) = 0.0291 M = <b>29.1 mM</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q10a"
+      }
+     ],
+     "id": "maths-mock-2-q10"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "How much glucose is in 60 mL of a 12 % (w/v) solution?",
+       "value": 7.2,
+       "marks": 1,
+       "unit": "g",
+       "working": "% (w/v) = g per 100 mL: 12 × 60 ÷ 100 = <b>7.2 g</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q11a"
+      }
+     ],
+     "id": "maths-mock-2-q11"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A drug stock is 20 mM. What volume of stock gives a final concentration of 10 µM in 5 mL of medium?",
+       "value": 2.5,
+       "marks": 1,
+       "unit": "µL",
+       "working": "V₁ = (10 × 10⁻⁶ × 5 mL) ÷ 20 × 10⁻³ = 2.5 × 10⁻³ mL = <b>2.5 µL</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q12a"
+      }
+     ],
+     "id": "maths-mock-2-q12"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What is [H⁺] in mol L⁻¹ for a solution of pH 8.3? Give it in nM.",
+       "value": 5.012,
+       "marks": 1,
+       "unit": "nM",
+       "working": "10⁻⁸·³ = 5.01 × 10⁻⁹ M = <b>5.01 nM</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q13a"
+      }
+     ],
+     "id": "maths-mock-2-q13"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "100 mL of 0.2 M acetic acid is mixed with 100 mL of 0.1 M sodium acetate (pKa 4.76). What is the pH?",
+       "value": 4.459,
+       "marks": 1,
+       "unit": "",
+       "working": "After mixing (200 mL): [HA] = 0.1 M, [A⁻] = 0.05 M. pH = 4.76 + log(0.05/0.1) = 4.76 − 0.30 = <b>4.46</b>.",
+       "rtol": 0.005,
+       "id": "maths-mock-2-q14a"
+      }
+     ],
+     "id": "maths-mock-2-q14"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A phosphate buffer (pKa 7.21) must be pH 7.51. What ratio [A⁻]/[HA] is needed?",
+       "value": 1.995,
+       "marks": 1,
+       "unit": "",
+       "working": "log ratio = 7.51 − 7.21 = 0.30, so ratio = 10⁰·³ = <b>2.0</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q15a"
+      }
+     ],
+     "id": "maths-mock-2-q15"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Simplify log 50 + log 4 − log 2 to a single number.",
+       "value": 2.0,
+       "marks": 1,
+       "unit": "",
+       "working": "log(50 × 4 ÷ 2) = log 100 = <b>2</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-2-q16a"
+      }
+     ],
+     "id": "maths-mock-2-q16"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A yeast population of 5000 has k = 0.25 h⁻¹. How many cells after 8 hours (N = N₀eᵏᵗ)?",
+       "value": 36950.0,
+       "marks": 1,
+       "unit": "cells",
+       "working": "5000 × e^(0.25 × 8) = 5000 × e² = 5000 × 7.389 = <b>36 900 cells</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q17a"
+      }
+     ],
+     "id": "maths-mock-2-q17"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Find the y-intercept of the line 2x − 5y + 10 = 0.",
+       "value": 2.0,
+       "marks": 1,
+       "unit": "",
+       "working": "5y = 2x + 10 → y = 0.4x + 2: <b>c = 2</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-2-q18a"
+      }
+     ],
+     "id": "maths-mock-2-q18"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A Lineweaver–Burk plot has y-intercept 0.025 (s µM⁻¹). What is Vmax (µM s⁻¹)?",
+       "value": 40.0,
+       "marks": 1,
+       "unit": "µM s⁻¹",
+       "working": "y-intercept = 1/Vmax, so Vmax = 1 ÷ 0.025 = <b>40 µM s⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-2-q19a"
+      }
+     ],
+     "id": "maths-mock-2-q19"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Fish numbers follow y = 2x² − 24x + 300 (x in months). After how many months is the population lowest?",
+       "value": 6.0,
+       "marks": 1,
+       "unit": "months",
+       "working": "Turning point at x = −b/2a = 24 ÷ 4 = <b>6 months</b> (y = 228).",
+       "rtol": 0.001,
+       "id": "maths-mock-2-q20a"
+      }
+     ],
+     "id": "maths-mock-2-q20"
+    }
+   ]
+  },
+  {
+   "id": "maths-mock-3",
+   "title": "Maths test mock 3",
+   "lecture": "Week 12 maths test",
+   "hub": "01 Year 1/Professional Skills for Biosciences/Professional Skills for Biosciences",
+   "marks": 20,
+   "note": "Same style as the week 12 maths test: calculator allowed, no notes, equations sheet given, each answer right or wrong. Aim for 30 to 40 minutes. Give numbers only (units are shown); scientific notation like 5.2e8 or 5.2 × 10^8 is fine.",
+   "printable": true,
+   "duration": "40 minutes (2 hours allowed in the real test)",
+   "code": "BIO-4008Y",
+   "equations": [
+    [
+     "Prefixes",
+     "G 10⁹ · M 10⁶ · k 10³ · m 10⁻³ · µ 10⁻⁶ · n 10⁻⁹ · p 10⁻¹² · f 10⁻¹⁵"
+    ],
+    [
+     "Magnification",
+     "magnification = image size / actual size"
+    ],
+    [
+     "Colony-forming units",
+     "CFU mL⁻¹ = (number of colonies × dilution factor) / volume plated (mL)"
+    ],
+    [
+     "Moles",
+     "moles (mol) = mass (g) / molar mass (g mol⁻¹)"
+    ],
+    [
+     "Molarity",
+     "molarity (mol L⁻¹) = moles / volume (L) = mass / (molar mass × volume (L))"
+    ],
+    [
+     "Dilution",
+     "M₁V₁ = M₂V₂"
+    ],
+    [
+     "Growth",
+     "N = N₀eᵏᵗ"
+    ],
+    [
+     "pH",
+     "pH = −log[H⁺];  pH = pKa + log([A⁻] / [HA])"
+    ],
+    [
+     "Straight line",
+     "y = mx + c"
+    ],
+    [
+     "Quadratic formula",
+     "x = (−b ± √(b² − 4ac)) / 2a"
+    ]
+   ],
+   "questions": [
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Convert 0.0042 L into µL.",
+       "value": 4200.0,
+       "marks": 1,
+       "unit": "µL",
+       "working": "0.0042 ÷ 10⁻⁶ = <b>4200 µL</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q1a"
+      }
+     ],
+     "id": "maths-mock-3-q1"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A spherical cell has a diameter of 6 µm. What is its volume in µm³? (V = 4/3 πr³)",
+       "value": 113.1,
+       "marks": 1,
+       "unit": "µm³",
+       "working": "r = 3 µm; 4/3 × π × 27 = <b>113 µm³</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q2a"
+      }
+     ],
+     "id": "maths-mock-3-q2"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A tank measures 40 cm × 30 cm × 25 cm. What is its volume in litres?",
+       "value": 30.0,
+       "marks": 1,
+       "unit": "L",
+       "working": "30 000 cm³ = 30 000 mL = <b>30 L</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q3a"
+      }
+     ],
+     "id": "maths-mock-3-q3"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A sewage sample: 10 µL of the 10⁻² dilution gave 80 colonies. What is the CFU mL⁻¹ of the sample?",
+       "value": 800000.0,
+       "marks": 1,
+       "unit": "CFU mL⁻¹",
+       "working": "(80 × 10²) ÷ 0.01 = <b>8 × 10⁵ CFU mL⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q4a"
+      }
+     ],
+     "id": "maths-mock-3-q4"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A culture has 3 × 10⁷ CFU mL⁻¹. You plate 100 µL from a 10⁻⁴ dilution. How many colonies do you expect?",
+       "value": 300.0,
+       "marks": 1,
+       "unit": "colonies",
+       "working": "3 × 10⁷ × 10⁻⁴ = 3000 mL⁻¹; × 0.1 mL = <b>300 colonies</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q5a"
+      }
+     ],
+     "id": "maths-mock-3-q5"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What mass of CaCl₂ (Mr 111) is needed for 50 mL of a 150 mM solution?",
+       "value": 0.8325,
+       "marks": 1,
+       "unit": "g",
+       "working": "0.15 × 0.05 × 111 = <b>0.833 g</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q6a"
+      }
+     ],
+     "id": "maths-mock-3-q6"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "8.0 g of NaOH (Mr 40.0) is dissolved to make 400 mL. What is the molarity?",
+       "value": 0.5,
+       "marks": 1,
+       "unit": "M",
+       "working": "8.0 ÷ 40.0 = 0.2 mol; 0.2 ÷ 0.4 L = <b>0.5 M</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q7a"
+      }
+     ],
+     "id": "maths-mock-3-q7"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "You need 30 mL of 80 mM MgSO₄ from a 1.5 M stock. What volume of stock (mL)?",
+       "value": 1.6,
+       "marks": 1,
+       "unit": "mL",
+       "working": "0.08 × 30 ÷ 1.5 = <b>1.6 mL</b> (plus 28.4 mL water).",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q8a"
+      }
+     ],
+     "id": "maths-mock-3-q8"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "10 mL of 50 mM NaCl is diluted to 80 mL. What is the final concentration in mM?",
+       "value": 6.25,
+       "marks": 1,
+       "unit": "mM",
+       "working": "50 × 10 ÷ 80 = <b>6.25 mM</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q9a"
+      }
+     ],
+     "id": "maths-mock-3-q9"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "What is the pH of 0.025 M HCl (fully dissociated)?",
+       "value": 1.602,
+       "marks": 1,
+       "unit": "",
+       "working": "−log(0.025) = <b>1.60</b>.",
+       "rtol": 0.005,
+       "id": "maths-mock-3-q10a"
+      }
+     ],
+     "id": "maths-mock-3-q10"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A buffer of 0.05 M NaH₂PO₄ and 0.2 M K₂HPO₄ (pKa 7.21). What is the pH?",
+       "value": 7.812,
+       "marks": 1,
+       "unit": "",
+       "working": "7.21 + log(0.2/0.05) = 7.21 + 0.60 = <b>7.81</b>.",
+       "rtol": 0.005,
+       "id": "maths-mock-3-q11a"
+      }
+     ],
+     "id": "maths-mock-3-q11"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "mcq",
+       "stem": "A buffer contains more HA than A⁻. Its pH is:",
+       "options": [
+        "above the pKa",
+        "below the pKa",
+        "equal to the pKa",
+        "always 7"
+       ],
+       "answer": 1,
+       "explain": "log([A⁻]/[HA]) is negative when [HA] > [A⁻], so pH < pKa.",
+       "marks": 1,
+       "id": "maths-mock-3-q12a"
+      }
+     ],
+     "id": "maths-mock-3-q12"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Write 3 log 2 + log 5 as the log of a single number. What is that number?",
+       "value": 40.0,
+       "marks": 1,
+       "unit": "",
+       "working": "log 2³ + log 5 = log(8 × 5) = <b>log 40</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-3-q13a"
+      }
+     ],
+     "id": "maths-mock-3-q13"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Measles cases rose from 600 to 1500 in 2 years. What is k (year⁻¹)?",
+       "value": 0.4581,
+       "marks": 1,
+       "unit": "year⁻¹",
+       "working": "ln(1500/600) ÷ 2 = ln 2.5 ÷ 2 = <b>0.458 year⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q14a"
+      }
+     ],
+     "id": "maths-mock-3-q14"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A population doubles every 20 minutes. What is k (min⁻¹)?",
+       "value": 0.03466,
+       "marks": 1,
+       "unit": "min⁻¹",
+       "working": "ln 2 ÷ 20 = <b>0.0347 min⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q15a"
+      }
+     ],
+     "id": "maths-mock-3-q15"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "A ln N against t graph has gradient 0.12 day⁻¹ and y-intercept 4.6. What was N₀?",
+       "value": 99.48,
+       "marks": 1,
+       "unit": "",
+       "working": "ln N₀ = 4.6, so N₀ = e⁴·⁶ = <b>99.5 (about 100)</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q16a"
+      }
+     ],
+     "id": "maths-mock-3-q16"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "DMSP was 2.8 mol L⁻¹ at 5 min and 5.6 mol L⁻¹ at 10 min. What is the gradient of the line?",
+       "value": 0.56,
+       "marks": 1,
+       "unit": "mol L⁻¹ min⁻¹",
+       "working": "(5.6 − 2.8) ÷ (10 − 5) = <b>0.56</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q17a"
+      }
+     ],
+     "id": "maths-mock-3-q17"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Line A: y = 0.5x + 3. A parallel line passes through (4, 10). What is its y-intercept?",
+       "value": 8.0,
+       "marks": 1,
+       "unit": "",
+       "working": "same m = 0.5; c = 10 − 0.5 × 4 = <b>8</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-3-q18a"
+      }
+     ],
+     "id": "maths-mock-3-q18"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Shrimp numbers follow y = −0.064x² + 2.4977x + 2.3273 (x = salinity, g L⁻¹). At what salinity are shrimp highest?",
+       "value": 19.51,
+       "marks": 1,
+       "unit": "g L⁻¹",
+       "working": "x = −b/2a = −2.4977 ÷ (2 × −0.064) = <b>19.5 g L⁻¹</b>.",
+       "rtol": 0.02,
+       "id": "maths-mock-3-q19a"
+      }
+     ],
+     "id": "maths-mock-3-q19"
+    },
+    {
+     "stem": "",
+     "parts": [
+      {
+       "type": "num",
+       "stem": "Give the negative root of 2x² + 3x − 9 = 0.",
+       "value": -3.0,
+       "marks": 1,
+       "unit": "",
+       "working": "x = (−3 ± √(9 + 72)) ÷ 4 = (−3 ± 9) ÷ 4 → 1.5 or <b>−3</b>.",
+       "rtol": 0.001,
+       "id": "maths-mock-3-q20a"
+      }
+     ],
+     "id": "maths-mock-3-q20"
+    }
+   ]
+  }
+ ]
+}

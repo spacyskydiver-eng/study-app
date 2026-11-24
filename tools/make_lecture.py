@@ -14,7 +14,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 TAGS = {'Molecular Biology and Genetics': ('genetics', 'subject-genetics'),
         'Biological Chemistry': ('chemistry', 'subject-chemistry'),
-        'Introduction to Biomedicine': ('biomedicine', 'subject-biomedicine')}
+        'Introduction to Biomedicine': ('biomedicine', 'subject-biomedicine'),
+        'Professional Skills for Biosciences': ('skills', 'subject-skills')}
 
 
 def q(s):
