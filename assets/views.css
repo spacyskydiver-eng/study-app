@@ -776,3 +776,22 @@ body.is-phone .rd-bar { bottom: calc(72px + env(safe-area-inset-bottom)); }
 .exam-check-one { margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: transparent; color: var(--text-muted); font: 600 12.5px/1 inherit; cursor: pointer; }
 .exam-check-one:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
 .exam-check-one svg { width: 13px; height: 13px; }
+
+/* printable papers: section headings, print / paper-marking tools, answer entry */
+.exam-section { font-size: 18px; margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--background-modifier-border); }
+.exam-section span { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-left: 8px; }
+.exam-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 18px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--background-modifier-border); }
+.exam-tools > span { color: var(--text-muted); font-size: 13.5px; margin-right: auto; }
+.exam-agrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 18px; margin-bottom: 8px; }
+.exam-arow { display: flex; align-items: center; gap: 10px; }
+.exam-arow > b { width: 26px; text-align: right; color: var(--text-muted); }
+.exam-bubbles { display: flex; gap: 6px; flex-wrap: wrap; }
+.exam-bubbles button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font: inherit; font-weight: 650; cursor: pointer; }
+.exam-bubbles.wide button { width: 42px; height: 42px; }
+.exam-bubbles button:hover { border-color: var(--text-faint); }
+.exam-bubbles button.on { background: var(--interactive-accent); border-color: var(--interactive-accent); color: #06281d; }
+.exam-tickbox { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--background-secondary); }
+.exam-tickbox label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; line-height: 1.45; }
+.exam-tickbox input { margin-top: 4px; accent-color: var(--interactive-accent); }
+.exam-tickbox details { color: var(--text-muted); font-size: 14px; }
+.exam-tickbox summary { cursor: pointer; }

@@ -167,11 +167,12 @@ def apply(data, deck, root=ROOT, log=print):
         if not base:
             log(f'curate: no hub for {subject}, skipped')
             continue
-        # 1. remove Questions / Test notes and sections
-        gone = {nid for nid in notes if nid.startswith(base + 'Questions/') or nid.startswith(base + 'Test/')}
+        # 1. remove Questions / Test notes and sections (unless the subject's exam spec keeps them)
+        keep = any(e.get('keep_questions') for e in exams if e['subject'] == subject)
+        gone = set() if keep else {nid for nid in notes if nid.startswith(base + 'Questions/') or nid.startswith(base + 'Test/')}
         for nid in gone:
             del notes[nid]
-        stripped = sum(strip_sections(n) for nid, n in notes.items() if nid.startswith(base))
+        stripped = 0 if keep else sum(strip_sections(n) for nid, n in notes.items() if nid.startswith(base))
         if gone:
             pat = re.compile(r'<a class="internal-link" data-note="(' + '|'.join(re.escape(H.escape(g, quote=True)) for g in gone) + r')"[^>]*>(.*?)</a>', re.S)
             for n in notes.values():
